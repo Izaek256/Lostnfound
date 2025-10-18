@@ -76,6 +76,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $sql = "INSERT INTO items (user_id, title, description, type, location, contact, image) 
                 VALUES ($userIdValue, '$title', '$description', 'found', '$location', '$contact', '$imageName')";
         
+        // Optional debug logging to help diagnose NULL user_id issues
+        $enableDebugLog = true; // set to false to disable
+        if ($enableDebugLog) {
+            if (!is_dir('logs')) {
+                mkdir('logs', 0755, true);
+            }
+            $debug = [];
+            $debug[] = "---- " . date('Y-m-d H:i:s') . " ----";
+            $debug[] = 'PAGE: report_found.php';
+            $debug[] = 'SESSION user_id: ' . (isset($_SESSION['user_id']) ? $_SESSION['user_id'] : 'NULL');
+            $debug[] = 'SESSION username: ' . (isset($_SESSION['username']) ? $_SESSION['username'] : 'NULL');
+            $debug[] = 'computed userIdValue: ' . $userIdValue;
+            $debug[] = 'SQL: ' . $sql;
+            $debug[] = 'mysqli_error: ' . mysqli_error($conn);
+            file_put_contents('logs/upload_debug.log', implode("\n", $debug) . "\n\n", FILE_APPEND | LOCK_EX);
+        }
+
         // Execute query
         if (mysqli_query($conn, $sql)) {
             $message = 'Found item reported successfully!';

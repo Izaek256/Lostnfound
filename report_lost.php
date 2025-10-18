@@ -78,20 +78,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
         
-        // Prepare data for insertion by escaping special characters
-        // mysqli_real_escape_string() prevents SQL injection attacks
-        // It escapes characters like quotes that could break the SQL query
-        $title = mysqli_real_escape_string($conn, $title);
-        $description = mysqli_real_escape_string($conn, $description);
-        $location = mysqli_real_escape_string($conn, $location);
-        $contact = mysqli_real_escape_string($conn, $contact);
-        $imageName = mysqli_real_escape_string($conn, $imageName);
+    // Prepare data for insertion by escaping special characters
+    // mysqli_real_escape_string() prevents SQL injection attacks
+    // It escapes characters like quotes that could break the SQL query
+    $title = mysqli_real_escape_string($conn, $title);
+    $description = mysqli_real_escape_string($conn, $description);
+    $location = mysqli_real_escape_string($conn, $location);
+    $contact = mysqli_real_escape_string($conn, $contact);
+    $imageName = mysqli_real_escape_string($conn, $imageName);
+
+    // Get user ID for logged in users (NULL for guest posts)
+    // This ensures lost reports by logged-in users are linked to their account
+    $userIdValue = $currentUserId ? "'$currentUserId'" : 'NULL';
+
+    // Build SQL INSERT query
+    // This adds a new row to the items table and includes user_id
+    $sql = "INSERT INTO items (user_id, title, description, type, location, contact, image) 
+        VALUES ($userIdValue, '$title', '$description', 'lost', '$location', '$contact', '$imageName')";
         
-        // Build SQL INSERT query
-        // This adds a new row to the items table
-        $sql = "INSERT INTO items (title, description, type, location, contact, image) 
-                VALUES ('$title', '$description', 'lost', '$location', '$contact', '$imageName')";
-        
+        // Optional debug logging to help diagnose NULL user_id issues
+        $enableDebugLog = true; // set to false to disable
+        if ($enableDebugLog) {
+            if (!is_dir('logs')) {
+                mkdir('logs', 0755, true);
+            }
+            $debug = [];
+            $debug[] = "---- " . date('Y-m-d H:i:s') . " ----";
+            $debug[] = 'PAGE: report_lost.php';
+            $debug[] = 'SESSION user_id: ' . (isset($_SESSION['user_id']) ? $_SESSION['user_id'] : 'NULL');
+            $debug[] = 'SESSION username: ' . (isset($_SESSION['username']) ? $_SESSION['username'] : 'NULL');
+            $debug[] = 'computed userIdValue: ' . $userIdValue;
+            $debug[] = 'SQL: ' . $sql;
+            $debug[] = 'mysqli_error: ' . mysqli_error($conn);
+            file_put_contents('logs/upload_debug.log', implode("\n", $debug) . "\n\n", FILE_APPEND | LOCK_EX);
+        }
+
         // Execute the query
         // mysqli_query() runs the SQL command
         if (mysqli_query($conn, $sql)) {
