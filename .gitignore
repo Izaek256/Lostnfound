@@ -1,0 +1,123 @@
+# Dependency directories
+/vendor/
+/node_modules/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+/storage/logs/*
+
+# Cache
+/storage/framework/cache/
+/storage/framework/sessions/
+/storage/framework/views/
+
+# IDE specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Local development
+*.local
+
+# Composer
+composer.lock
+composer.phar
+
+# XAMPP specific
+/xampp/
+/xampp_*
+
+# Temporary files
+*.tmp
+*.temp
+
+# Uploaded files (adjust according to your upload directory)
+/public/uploads/
+/storage/app/public/
+
+# Debug files
+*.sublime-workspace
+*.sublime-project
+
+# Testing
+/phpunit.xml
+
+# Local development environment
+/.env.local
+/.env.*.local
+
+# Laravel specific
+bootstrap/cache/
+public/storage
+public/hot
+
+# Laravel 4 specific
+bootstrap/compiled.php
+app/storage/
+
+# Laravel 5 & Lumen specific with changed public path
+public_html/storage
+public_html/public/storage
+
+# Laravel 5 & Lumen specific with no public directory
+/public/storage
+/public/hot
+
+# Laravel 5 & Lumen specific with changed public path
+/public_html/storage
+/public_html/public/storage
+
+# Laravel 5 & Lumen specific with no public directory
+/public/storage
+/public/hot
+
+# Laravel 5 & Lumen specific with changed public path
+/public_html/storage
+/public_html/public/storage
+
+# Laravel 5 & Lumen specific with no public directory
+/public/storage
+/public/hot
+
+# Laravel 5 & Lumen specific with changed public path
+/public_html/storage
+/public_html/public/storage
+
+# Laravel 5 & Lumen specific with no public directory
+/public/storage
+/public/hot
+
+# Laravel 5 & Lumen specific with changed public path
+/public_html/storage
+/public_html/public/storage
+
+# Laravel 5 & Lumen specific with no public directory
+/public/storage
+/public/hot
+
+# Laravel 5 & Lumen specific with changed public path
+/public_html/storage
+/public_html/public/storage
+
+# Laravel 5 & Lumen specific with no public directory
+/public/storage
+/public/hot
+
+# Laravel 5 & Lumen specific with changed public path
+/public_html/storage
+/public_html/public/storage
+
+# Laravel 5 & Lumen specific with no public directory
+/public/storage
+/public/hot
+.htaccess
+/uploads/
+/logs/
