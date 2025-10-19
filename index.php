@@ -60,8 +60,14 @@ $stats = mysqli_fetch_assoc($result);
     <header>
         <div class="header-content">
             <div class="logo">
-                <h1>🎓 University Lost & Found</h1>
+                <img src="./assets/logo.webp" alt="Lost & Found Logo">
+                <h1>University Lost & Found</h1>
             </div>
+            <button class="menu-toggle" aria-label="Toggle menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
             <nav>
                 <ul>
                     <li><a href="index.php" class="active">Home</a></li>
@@ -75,7 +81,6 @@ $stats = mysqli_fetch_assoc($result);
                         <li><a href="user_login.php">Login</a></li>
                         <li><a href="user_register.php">Register</a></li>
                     <?php endif; ?>
-                    <li><a href="admin_login.php" style="background: rgba(220, 53, 69, 0.3); border: 1px solid rgba(220, 53, 69, 0.4);">🛡️ Admin</a></li>
                 </ul>
             </nav>
         </div>

@@ -49,79 +49,51 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Login - University Lost and Found</title>
     <link rel="stylesheet" href="style.css">
-    <style>
-        .login-container {
-            max-width: 400px;
-            margin: 10vh auto;
-            padding: 0 20px;
-        }
-        
-        .login-form {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            padding: 3rem 2rem;
-            border-radius: 24px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            text-align: center;
-        }
-        
-        .admin-icon {
-            font-size: 4rem;
-            margin-bottom: 1rem;
-            color: white;
-        }
-        
-        .login-title {
-            color: white;
-            font-size: 1.8rem;
-            font-weight: 600;
-            margin-bottom: 2rem;
-        }
-        
-        .security-notice {
-            background: rgba(255, 193, 7, 0.2);
-            border: 1px solid rgba(255, 193, 7, 0.3);
-            color: white;
-            padding: 1rem;
-            border-radius: 12px;
-            margin-bottom: 2rem;
-            font-size: 0.9rem;
-        }
-        
-        .back-link {
-            margin-top: 2rem;
-        }
-        
-        .back-link a {
-            color: rgba(255, 255, 255, 0.8);
-            text-decoration: none;
-            font-size: 0.9rem;
-            transition: color 0.3s ease;
-        }
-        
-        .back-link a:hover {
-            color: white;
-        }
-    </style>
 </head>
 <body>
-    <div class="login-container">
-        <div class="login-form">
-            <div class="admin-icon">🔐</div>
-            <h1 class="login-title">Admin Access</h1>
-            
-            <div class="security-notice">
-                <strong>⚠️ Authorized Personnel Only</strong><br>
-                This area is restricted to administrators only. All access attempts are logged.
+    <header>
+        <div class="header-content">
+            <div class="logo">
+                <img src="./assets/logo.webp" alt="Lost & Found Logo">
+                <h1>University Lost & Found</h1>
+            </div>
+            <button class="menu-toggle" aria-label="Toggle menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <nav>
+                <ul>
+                    <li><a href="index.php">Home</a></li>
+                    <li><a href="report_lost.php">Report Lost</a></li>
+                    <li><a href="report_found.php">Report Found</a></li>
+                    <li><a href="items.php">View Items</a></li>
+                    <li><a href="user_login.php">Login</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <?php if ($error != ''): ?>
+            <div class="alert alert-error">
+                <?php echo $error; ?>
+            </div>
+        <?php endif; ?>
+
+        <div class="form-container" style="max-width: 500px; margin: 2rem auto;">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <div style="font-size: 3.5rem; margin-bottom: 1rem;">🔐</div>
+                <h2>Admin Access</h2>
+                <p style="color: var(--text-secondary); margin-top: 0.5rem;">
+                    Restricted area for authorized administrators only
+                </p>
             </div>
             
-            <?php if ($error != ''): ?>
-                <div class="alert alert-error">
-                    <?php echo $error; ?>
-                </div>
-            <?php endif; ?>
+            <div style="background: #fff3cd; border: 1px solid #ffc107; color: #856404; padding: 1rem; border-radius: 8px; margin-bottom: 2rem; text-align: center;">
+                <strong>⚠️ Authorized Personnel Only</strong><br>
+                All access attempts are logged and monitored.
+            </div>
             
             <form method="POST">
                 <div class="form-group">
@@ -143,26 +115,34 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                            required>
                 </div>
                 
-                <button type="submit" 
-                        class="btn" 
-                        style="width: 100%; margin-top: 1rem;">
-                    🔓 Login to Admin Panel
-                </button>
+                <div style="text-align: center; margin-top: 2rem;">
+                    <button type="submit" class="btn" style="width: 100%;">
+                        🔓 Login to Admin Panel
+                    </button>
+                </div>
             </form>
             
-            <div class="back-link">
-                <a href="index.php">← Back to Portal</a>
+            <div style="text-align: center; margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border);">
+                <p style="color: var(--text-secondary);">
+                    <a href="index.php" style="color: var(--primary); font-weight: 600; text-decoration: none;">← Back to Portal</a>
+                </p>
             </div>
         </div>
         
         <!-- Default Credentials Info (Remove in production) -->
-        <div style="background: rgba(0, 123, 255, 0.1); backdrop-filter: blur(20px); border: 1px solid rgba(0, 123, 255, 0.2); padding: 1.5rem; border-radius: 16px; margin-top: 2rem; text-align: center;">
-            <h3 style="color: white; margin-bottom: 1rem;">🔑 Default Credentials</h3>
-            <p style="color: rgba(255, 255, 255, 0.9); margin-bottom: 0.5rem;"><strong>Username:</strong> admin</p>
-            <p style="color: rgba(255, 255, 255, 0.9); margin-bottom: 1rem;"><strong>Password:</strong> lostfound2024</p>
-            <p style="color: rgba(255, 255, 255, 0.7); font-size: 0.8rem;">⚠️ Change these credentials in admin_config.php for production use</p>
+        <div class="form-container" style="max-width: 500px; margin: 0 auto; background: #e7f3ff; border: 1px solid #2563eb;">
+            <div style="text-align: center;">
+                <h3 style="color: var(--text-primary); margin-bottom: 1rem;">🔑 Default Credentials</h3>
+                <p style="color: var(--text-primary); margin-bottom: 0.5rem;"><strong>Username:</strong> admin</p>
+                <p style="color: var(--text-primary); margin-bottom: 1rem;"><strong>Password:</strong> lostfound2024</p>
+                <p style="color: var(--text-secondary); font-size: 0.9rem;">⚠️ Change these credentials in admin_config.php for production use</p>
+            </div>
         </div>
-    </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 University Lost and Found Portal. Built to help our campus community stay connected.</p>
+    </footer>
 
     <script>
         // Focus on username field when page loads
