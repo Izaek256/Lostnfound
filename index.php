@@ -60,8 +60,14 @@ $stats = mysqli_fetch_assoc($result);
     <header>
         <div class="header-content">
             <div class="logo">
-                <h1>🎓 University Lost & Found</h1>
+                <img src="./assets/logo.webp" alt="Lost & Found Logo">
+                <h1>University Lost & Found</h1>
             </div>
+            <button class="menu-toggle" aria-label="Toggle menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
             <nav>
                 <ul>
                     <li><a href="index.php" class="active">Home</a></li>
