@@ -65,7 +65,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <li><a href="report_found.php">Report Found</a></li>
                     <li><a href="items.php">View Items</a></li>
                     <li><a href="user_login.php">Login</a></li>
-                    <li><a href="admin_login.php" style="background: rgba(220, 53, 69, 0.3); border: 1px solid rgba(220, 53, 69, 0.4);">🛡️ Admin</a></li>
                 </ul>
             </nav>
         </div>
