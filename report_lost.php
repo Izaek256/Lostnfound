@@ -17,7 +17,10 @@ require_once 'db.php';
 // Include user functions to check if user is logged in
 require_once 'user_config.php';
 
-// Get current user ID if logged in (NULL if not logged in)
+// Require authentication - redirect to login if not logged in
+requireUser();
+
+// Get current user ID (guaranteed to exist since requireUser() passed)
 $currentUserId = getCurrentUserId();
 
 // Variable to store success or error messages
@@ -87,9 +90,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $contact = mysqli_real_escape_string($conn, $contact);
     $imageName = mysqli_real_escape_string($conn, $imageName);
 
-    // Get user ID for logged in users (NULL for guest posts)
-    // This ensures lost reports by logged-in users are linked to their account
-    $userIdValue = $currentUserId ? "'$currentUserId'" : 'NULL';
+    // Get user ID (guaranteed to exist since user must be logged in)
+    $userIdValue = "'$currentUserId'";
 
     // Build SQL INSERT query
     // This adds a new row to the items table and includes user_id
