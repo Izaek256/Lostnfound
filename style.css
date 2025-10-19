@@ -313,6 +313,7 @@ main {
     border-radius: 12px;
     border: 1px solid var(--border);
     box-shadow: var(--shadow-md);
+    margin-bottom: 20px;
 }
 
 .items-container:hover {
