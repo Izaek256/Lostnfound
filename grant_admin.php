@@ -62,6 +62,83 @@ $users = mysqli_fetch_all($result, MYSQLI_ASSOC);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Grant Admin Rights - University Lost and Found</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        .user-item {
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+        
+        .user-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .user-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .user-badge {
+            flex-shrink: 0;
+        }
+        
+        @media (max-width: 768px) {
+            .form-container {
+                margin: 1rem;
+                padding: 1.5rem;
+            }
+            
+            .user-content {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.75rem;
+            }
+            
+            .user-badge {
+                width: 100%;
+                text-align: center;
+            }
+            
+            .user-badge span {
+                display: inline-block;
+                width: 100%;
+            }
+            
+            .warning-box {
+                padding: 0.85rem;
+                font-size: 0.9rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .form-container {
+                margin: 0.5rem;
+                padding: 1rem;
+            }
+            
+            h2 {
+                font-size: 1.5rem;
+            }
+            
+            h3 {
+                font-size: 1.2rem;
+            }
+            
+            .btn {
+                font-size: 0.9rem;
+                padding: 0.6rem 1rem;
+            }
+            
+            .warning-box {
+                padding: 0.75rem;
+                font-size: 0.85rem;
+            }
+        }
+    </style>
 </head>
 <body>
     <header>
@@ -89,7 +166,7 @@ $users = mysqli_fetch_all($result, MYSQLI_ASSOC);
 
     <main>
         <div class="form-container" style="max-width: 600px; margin: 2rem auto;">
-            <div style="background: #ff6b6b; color: white; padding: 1rem; border-radius: 8px; margin-bottom: 2rem; text-align: center;">
+            <div class="warning-box" style="background: #ff6b6b; color: white; padding: 1rem; border-radius: 8px; margin-bottom: 2rem; text-align: center;">
                 <strong>⚠️ SECURITY WARNING</strong><br>
                 Delete this file after granting admin rights to prevent unauthorized access!
             </div>
@@ -130,14 +207,14 @@ $users = mysqli_fetch_all($result, MYSQLI_ASSOC);
                 <?php if (count($users) > 0): ?>
                     <div style="max-height: 300px; overflow-y: auto; margin-top: 1rem;">
                         <?php foreach ($users as $user): ?>
-                            <div style="padding: 1rem; background: var(--bg-secondary); border-radius: 8px; margin-bottom: 1rem;">
-                                <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <div>
+                            <div class="user-item">
+                                <div class="user-content">
+                                    <div class="user-info">
                                         <strong><?php echo htmlspecialchars($user['username']); ?></strong>
                                         <br>
                                         <small style="color: var(--text-secondary);"><?php echo htmlspecialchars($user['email']); ?></small>
                                     </div>
-                                    <div>
+                                    <div class="user-badge">
                                         <?php if ($user['is_admin'] == 1): ?>
                                             <span style="background: #10b981; color: white; padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.85rem; font-weight: 600;">
                                                 ⭐ ADMIN

@@ -270,19 +270,142 @@ $recentItems = mysqli_fetch_all($result, MYSQLI_ASSOC);
                 gap: 1rem;
             }
             
+            .admin-title {
+                font-size: 1.3rem;
+                text-align: center;
+            }
+            
             .admin-actions {
                 flex-wrap: wrap;
                 justify-content: center;
+                width: 100%;
             }
             
-            .item-row {
-                grid-template-columns: 1fr;
-                gap: 0.5rem;
+            .admin-actions span {
+                font-size: 0.9rem;
+                width: 100%;
                 text-align: center;
+                margin-bottom: 0.5rem;
+            }
+            
+            .admin-actions .btn {
+                font-size: 0.85rem;
+                padding: 0.5rem 1rem;
             }
             
             .stats-grid {
                 grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+            }
+            
+            .stat-card {
+                padding: 1.5rem 1rem;
+            }
+            
+            .stat-number {
+                font-size: 2rem;
+            }
+            
+            .stat-label {
+                font-size: 0.85rem;
+            }
+            
+            .table-header h3 {
+                font-size: 1.2rem;
+            }
+            
+            .item-row {
+                grid-template-columns: 1fr;
+                gap: 0.75rem;
+                text-align: left;
+                padding: 1.25rem;
+            }
+            
+            .item-type-badge {
+                font-size: 0.7rem;
+                padding: 0.3rem 0.7rem;
+                display: inline-block;
+                margin-bottom: 0.5rem;
+            }
+            
+            .item-info h4 {
+                font-size: 1rem;
+            }
+            
+            .item-info p {
+                font-size: 0.85rem;
+            }
+            
+            .item-date {
+                font-size: 0.85rem;
+            }
+            
+            .item-row form {
+                width: 100%;
+            }
+            
+            .delete-btn,
+            .item-row .btn {
+                width: 100%;
+                margin-top: 0.5rem;
+                font-size: 0.8rem;
+                padding: 0.5rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .admin-header {
+                padding: 1rem 0;
+            }
+            
+            .admin-title {
+                font-size: 1.1rem;
+            }
+            
+            .admin-actions .btn {
+                font-size: 0.8rem;
+                padding: 0.45rem 0.8rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 0.75rem;
+            }
+            
+            .stat-card {
+                padding: 1.25rem 0.75rem;
+            }
+            
+            .stat-number {
+                font-size: 1.75rem;
+            }
+            
+            .stat-label {
+                font-size: 0.8rem;
+            }
+            
+            .table-header {
+                padding: 1rem;
+            }
+            
+            .table-header h3 {
+                font-size: 1.1rem;
+            }
+            
+            .item-row {
+                padding: 1rem;
+            }
+            
+            .item-info h4 {
+                font-size: 0.95rem;
+            }
+            
+            .item-info p {
+                font-size: 0.8rem;
+            }
+            
+            main {
+                padding: 1rem 0.5rem;
             }
         }
     </style>
