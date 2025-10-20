@@ -7,10 +7,10 @@
  */
 
 // Database configuration
-$host = 'localhost';
-$username = 'root';
-$password = 'kpet';
-$database = 'lostfound_db';
+$host = 'sql8.freesqldatabase.com';
+$username = 'sql8803807';
+$password = 'es6rFSds5G';
+$database = 'sql8803807';
 
 // Connect to MySQL server first
 $conn = mysqli_connect($host, $username, $password);
