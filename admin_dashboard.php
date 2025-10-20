@@ -199,11 +199,28 @@ $recentItems = mysqli_fetch_all($result, MYSQLI_ASSOC);
         
         .item-row {
             display: grid;
-            grid-template-columns: auto 1fr auto auto auto;
+            grid-template-columns: 80px 1fr auto;
             gap: 1rem;
             padding: 1.5rem;
             border-bottom: 1px solid var(--border);
+            align-items: start;
+        }
+        
+        .item-image-container {
+            width: 80px;
+            height: 80px;
+            border-radius: 6px;
+            overflow: hidden;
+            background: #f0f0f0;
+            display: flex;
             align-items: center;
+            justify-content: center;
+        }
+        
+        .item-image-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
         }
         
         .item-row:hover {
@@ -237,10 +254,57 @@ $recentItems = mysqli_fetch_all($result, MYSQLI_ASSOC);
             line-height: 1.5;
         }
         
+        .item-description {
+            max-height: 3em;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        
+        .item-description.expanded {
+            max-height: none;
+        }
+        
+        .read-more {
+            color: var(--primary);
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-decoration: underline;
+            margin-top: 0.25rem;
+            display: inline-block;
+        }
+        
+        .item-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
         .item-date {
             color: var(--text-secondary);
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+        
+        .user-row {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 1rem;
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            align-items: center;
+        }
+        
+        .user-row:hover {
+            background: var(--bg-secondary);
+        }
+        
+        .user-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            justify-content: flex-end;
         }
         
         .delete-btn {
@@ -319,6 +383,41 @@ $recentItems = mysqli_fetch_all($result, MYSQLI_ASSOC);
                 gap: 0.75rem;
                 text-align: left;
                 padding: 1.25rem;
+            }
+            
+            .item-image-container {
+                width: 100%;
+                height: 150px;
+                margin-bottom: 0.5rem;
+            }
+            
+            .item-actions {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .item-actions .btn,
+            .item-actions form {
+                width: 100%;
+            }
+            
+            .user-row {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .user-actions {
+                width: 100%;
+                justify-content: stretch;
+            }
+            
+            .user-actions .btn,
+            .user-actions form {
+                flex: 1;
+            }
+            
+            .user-actions button {
+                width: 100%;
             }
             
             .item-type-badge {
@@ -404,6 +503,14 @@ $recentItems = mysqli_fetch_all($result, MYSQLI_ASSOC);
                 font-size: 0.8rem;
             }
             
+            .item-image-container {
+                height: 120px;
+            }
+            
+            .user-actions {
+                flex-direction: column;
+            }
+            
             main {
                 padding: 1rem 0.5rem;
             }
@@ -419,6 +526,7 @@ $recentItems = mysqli_fetch_all($result, MYSQLI_ASSOC);
             </div>
             <div class="admin-actions">
                 <span>Welcome, <?php echo isset($_SESSION['username']) ? htmlspecialchars($_SESSION['username']) : 'Admin'; ?></span>
+                <a href="grant_admin.php" class="btn btn-success">Grant Admin</a>
                 <a href="index.php" class="btn btn-secondary">View Portal</a>
                 <a href="?logout=1" class="btn btn-danger" onclick="return confirm('Are you sure you want to logout?')">Logout</a>
             </div>
@@ -461,29 +569,39 @@ $recentItems = mysqli_fetch_all($result, MYSQLI_ASSOC);
                 <?php if (count($recentItems) > 0): ?>
                     <?php foreach ($recentItems as $item): ?>
                     <div class="item-row">
-                        <span class="item-type-badge <?php echo $item['type']; ?>">
-                            <?php echo $item['type'] === 'lost' ? '❌ Lost' : '✅ Found'; ?>
-                        </span>
+                        <div class="item-image-container">
+                            <?php if ($item['image'] && file_exists('uploads/' . $item['image'])): ?>
+                                <img src="uploads/<?php echo htmlspecialchars($item['image']); ?>" alt="<?php echo htmlspecialchars($item['title']); ?>">
+                            <?php else: ?>
+                                <span style="font-size: 2rem; color: #999;">📷</span>
+                            <?php endif; ?>
+                        </div>
                         
                         <div class="item-info">
-                            <h4><?php echo $item['title']; ?></h4>
-                            <p><strong>Location:</strong> <?php echo $item['location']; ?></p>
-                            <p><strong>Contact:</strong> <?php echo $item['contact']; ?></p>
+                            <span class="item-type-badge <?php echo $item['type']; ?>">
+                                <?php echo $item['type'] === 'lost' ? '❌ Lost' : '✅ Found'; ?>
+                            </span>
+                            <h4><?php echo htmlspecialchars($item['title']); ?></h4>
+                            <div class="item-description" id="desc-<?php echo $item['id']; ?>">
+                                <p><strong>Description:</strong> <?php echo htmlspecialchars($item['description']); ?></p>
+                            </div>
+                            <?php if (strlen($item['description']) > 100): ?>
+                                <span class="read-more" onclick="toggleDescription(<?php echo $item['id']; ?>)" id="toggle-<?php echo $item['id']; ?>">Read more...</span>
+                            <?php endif; ?>
+                            <p><strong>Location:</strong> <?php echo htmlspecialchars($item['location']); ?></p>
+                            <p><strong>Contact:</strong> <?php echo htmlspecialchars($item['contact']); ?></p>
+                            <div class="item-date">
+                                <?php echo date('M j, Y g:i A', strtotime($item['created_at'])); ?>
+                            </div>
                         </div>
-          
                         
-                        <div class="item-date">
-                            <?php echo date('M j, Y', strtotime($item['created_at'])); ?>
-                        </div>
-                        
-                        <div>
+                        <div class="item-actions">
                             <a href="items.php" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">View</a>
+                            <form method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this item? This action cannot be undone.')">
+                                <input type="hidden" name="item_id" value="<?php echo $item['id']; ?>">
+                                <button type="submit" name="delete_item" class="delete-btn">🗑️ Delete</button>
+                            </form>
                         </div>
-                        
-                        <form method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this item? This action cannot be undone.')">
-                            <input type="hidden" name="item_id" value="<?php echo $item['id']; ?>">
-                            <button type="submit" name="delete_item" class="delete-btn">🗑️ Delete</button>
-                        </form>
                     </div>
                     <?php endforeach; ?>
                 <?php else: ?>
@@ -506,7 +624,7 @@ $recentItems = mysqli_fetch_all($result, MYSQLI_ASSOC);
             <div class="table-content" style="max-height: 400px;">
                 <?php if (count($allUsers) > 0): ?>
                     <?php foreach ($allUsers as $user): ?>
-                    <div class="item-row" style="grid-template-columns: 1fr auto auto auto auto;">
+                    <div class="user-row">
                         <div class="item-info">
                             <h4>
                                 <?php echo htmlspecialchars($user['username']); ?>
@@ -518,22 +636,22 @@ $recentItems = mysqli_fetch_all($result, MYSQLI_ASSOC);
                             <p><strong>Items Posted:</strong> <?php echo $user['item_count']; ?> | <strong>Joined:</strong> <?php echo date('M j, Y', strtotime($user['created_at'])); ?></p>
                         </div>
                         
-                        <div>
+                        <div class="user-actions">
                             <a href="items.php" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">View Items</a>
+                            
+                            <form method="POST" style="display: inline;">
+                                <input type="hidden" name="user_id" value="<?php echo $user['id']; ?>">
+                                <input type="hidden" name="current_status" value="<?php echo $user['is_admin']; ?>">
+                                <button type="submit" name="toggle_admin" class="btn <?php echo $user['is_admin'] == 1 ? 'btn-secondary' : 'btn-success'; ?>" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">
+                                    <?php echo $user['is_admin'] == 1 ? '❌ Remove Admin' : '⭐ Make Admin'; ?>
+                                </button>
+                            </form>
+                            
+                            <form method="POST" style="display: inline;" onsubmit="return confirm('Delete this user? This will also delete all their items.')">
+                                <input type="hidden" name="user_id" value="<?php echo $user['id']; ?>">
+                                <button type="submit" name="delete_user" class="delete-btn">🗑️ Delete User</button>
+                            </form>
                         </div>
-                        
-                        <form method="POST" style="display: inline;">
-                            <input type="hidden" name="user_id" value="<?php echo $user['id']; ?>">
-                            <input type="hidden" name="current_status" value="<?php echo $user['is_admin']; ?>">
-                            <button type="submit" name="toggle_admin" class="btn <?php echo $user['is_admin'] == 1 ? 'btn-secondary' : 'btn-success'; ?>" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">
-                                <?php echo $user['is_admin'] == 1 ? '❌ Remove Admin' : '⭐ Make Admin'; ?>
-                            </button>
-                        </form>
-                        
-                        <form method="POST" style="display: inline;" onsubmit="return confirm('Delete this user? This will also delete all their items.')">
-                            <input type="hidden" name="user_id" value="<?php echo $user['id']; ?>">
-                            <button type="submit" name="delete_user" class="delete-btn">🗑️ Delete User</button>
-                        </form>
                     </div>
                     <?php endforeach; ?>
                 <?php else: ?>
@@ -543,33 +661,6 @@ $recentItems = mysqli_fetch_all($result, MYSQLI_ASSOC);
                 <?php endif; ?>
             </div>
         </div>
-
-        <!-- Quick Actions -->
-        <div class="form-container" style="margin-top: 2rem;">
-            <h2>⚡ Quick Actions</h2>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-top: 2rem;">
-                <div style="text-align: center;">
-                    <div style="font-size: 2.5rem; margin-bottom: 1rem;">📊</div>
-                    <h4 style="color: white; margin-bottom: 1rem;">View All Items</h4>
-                    <p style="color: rgba(255, 255, 255, 0.8); margin-bottom: 1.5rem;">Browse and manage all lost and found items</p>
-                    <a href="items.php" class="btn">View Items</a>
-                </div>
-                
-                <div style="text-align: center;">
-                    <div style="font-size: 2.5rem; margin-bottom: 1rem;">👑</div>
-                    <h4 style="color: white; margin-bottom: 1rem;">Grant Admin Rights</h4>
-                    <p style="color: rgba(255, 255, 255, 0.8); margin-bottom: 1.5rem;">Give admin privileges to users</p>
-                    <a href="grant_admin.php" class="btn btn-secondary">Manage Admins</a>
-                </div>
-                
-                <div style="text-align: center;">
-                    <div style="font-size: 2.5rem; margin-bottom: 1rem;">🏠</div>
-                    <h4 style="color: white; margin-bottom: 1rem;">Portal Home</h4>
-                    <p style="color: rgba(255, 255, 255, 0.8); margin-bottom: 1.5rem;">Return to the main portal interface</p>
-                    <a href="index.php" class="btn btn-success">Go to Portal</a>
-                </div>
-            </div>
-        </div>
     </main>
 
     <footer>
@@ -577,9 +668,17 @@ $recentItems = mysqli_fetch_all($result, MYSQLI_ASSOC);
     </footer>
 
     <script>
-        // Confirm before deleting
-        function confirmDelete() {
-            return confirm('Are you sure you want to delete this item?');
+        function toggleDescription(id) {
+            var desc = document.getElementById('desc-' + id);
+            var toggle = document.getElementById('toggle-' + id);
+            
+            if (desc.classList.contains('expanded')) {
+                desc.classList.remove('expanded');
+                toggle.textContent = 'Read more...';
+            } else {
+                desc.classList.add('expanded');
+                toggle.textContent = 'Show less';
+            }
         }
     </script>
 </body>
