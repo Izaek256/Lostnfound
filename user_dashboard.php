@@ -252,5 +252,7 @@ $stats = mysqli_fetch_assoc($result);
     <footer>
         <p>&copy; 2024 University Lost and Found Portal. Built to help our campus community stay connected.</p>
     </footer>
+    
+    <script src="script.js"></script>
 </body>
 </html>

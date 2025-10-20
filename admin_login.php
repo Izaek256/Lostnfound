@@ -155,6 +155,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <p>&copy; 2024 University Lost and Found Portal. Built to help our campus community stay connected.</p>
     </footer>
 
+    <script src="script.js"></script>
     <script>
         // Focus on username field when page loads
         document.getElementById('username').focus();

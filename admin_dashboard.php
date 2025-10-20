@@ -681,5 +681,6 @@ $recentItems = mysqli_fetch_all($result, MYSQLI_ASSOC);
             }
         }
     </script>
+    <script src="script.js"></script>
 </body>
 </html>
