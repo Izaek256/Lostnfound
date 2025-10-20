@@ -3,106 +3,55 @@
  * Report Found Item Page
  * 
  * This page allows users to report items they have found.
- * It handles:
- * - Displaying the report form
- * - Processing form submissions
- * - Uploading images
- * - Inserting data into the database
- * - Showing recent found items for reference
  */
 
-// Include database connection
 require_once 'db.php';
-
-// Include user functions to check if user is logged in
 require_once 'user_config.php';
 
-// Require authentication - redirect to login if not logged in
 requireUser();
-
-// Get current user ID (guaranteed to exist since requireUser() passed)
 $currentUserId = getCurrentUserId();
-
-// Variable to store success or error messages
 $message = '';
 
-// Check if the form was submitted
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    
-    // Get form data from $_POST array
     $title = $_POST['title'];
     $description = $_POST['description'];
     $location = $_POST['location'];
     $contact = $_POST['contact'];
     
-    // Validate that all required fields are filled
+    // Validate required fields
     if (empty($title) || empty($description) || empty($location) || empty($contact)) {
         $message = 'Please fill in all fields';
+    } elseif (!isset($_FILES['image']) || $_FILES['image']['error'] != 0) {
+        $message = 'Please upload an image';
     } else {
+        // Handle image upload
+        $uploadDir = 'uploads/';
+        $imageFileType = strtolower(pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION));
+        $allowedTypes = array('jpg', 'jpeg', 'png', 'gif');
         
-        // Handle image upload (same process as report_lost.php)
-        $imageName = null;
-        
-        if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
-            $uploadDir = 'uploads/';
-            
-            if (!is_dir($uploadDir)) {
-                mkdir($uploadDir);
-            }
-            
-            // Get file extension
-            $imageFileType = strtolower(pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION));
-            
-            // Only allow certain image formats for security
-            $allowedTypes = array('jpg', 'jpeg', 'png', 'gif');
-            
-            if (in_array($imageFileType, $allowedTypes)) {
-                // Generate unique filename
-                $imageName = uniqid() . '.' . $imageFileType;
-                // Move file to uploads directory
-                move_uploaded_file($_FILES['image']['tmp_name'], $uploadDir . $imageName);
-            }
-        }
-        
-        // Escape data to prevent SQL injection
-        $title = mysqli_real_escape_string($conn, $title);
-        $description = mysqli_real_escape_string($conn, $description);
-        $location = mysqli_real_escape_string($conn, $location);
-        $contact = mysqli_real_escape_string($conn, $contact);
-        $imageName = mysqli_real_escape_string($conn, $imageName);
-        
-        // Get user ID (guaranteed to exist since user must be logged in)
-        $userIdValue = "'$currentUserId'";
-        
-        // Insert into database with type='found'
-        // Note: The only difference from lost items is the 'found' type
-        $sql = "INSERT INTO items (user_id, title, description, type, location, contact, image) 
-                VALUES ($userIdValue, '$title', '$description', 'found', '$location', '$contact', '$imageName')";
-        
-        // Optional debug logging to help diagnose NULL user_id issues
-        $enableDebugLog = true; // set to false to disable
-        if ($enableDebugLog) {
-            if (!is_dir('logs')) {
-                mkdir('logs', 0755, true);
-            }
-            $debug = [];
-            $debug[] = "---- " . date('Y-m-d H:i:s') . " ----";
-            $debug[] = 'PAGE: report_found.php';
-            $debug[] = 'SESSION user_id: ' . (isset($_SESSION['user_id']) ? $_SESSION['user_id'] : 'NULL');
-            $debug[] = 'SESSION username: ' . (isset($_SESSION['username']) ? $_SESSION['username'] : 'NULL');
-            $debug[] = 'computed userIdValue: ' . $userIdValue;
-            $debug[] = 'SQL: ' . $sql;
-            $debug[] = 'mysqli_error: ' . mysqli_error($conn);
-            file_put_contents('logs/upload_debug.log', implode("\n", $debug) . "\n\n", FILE_APPEND | LOCK_EX);
-        }
-
-        // Execute query
-        if (mysqli_query($conn, $sql)) {
-            $message = 'Found item reported successfully!';
-            // Clear form variables
-            $title = $description = $location = $contact = '';
+        if (!in_array($imageFileType, $allowedTypes)) {
+            $message = 'Only JPG, JPEG, PNG & GIF files are allowed';
         } else {
-            $message = 'Error: ' . mysqli_error($conn);
+            $imageName = uniqid() . '.' . $imageFileType;
+            move_uploaded_file($_FILES['image']['tmp_name'], $uploadDir . $imageName);
+            
+            // Prepare data for database
+            $title = mysqli_real_escape_string($conn, $title);
+            $description = mysqli_real_escape_string($conn, $description);
+            $location = mysqli_real_escape_string($conn, $location);
+            $contact = mysqli_real_escape_string($conn, $contact);
+            $imageName = mysqli_real_escape_string($conn, $imageName);
+            
+            // Insert into database
+            $sql = "INSERT INTO items (user_id, title, description, type, location, contact, image) 
+                    VALUES ('$currentUserId', '$title', '$description', 'found', '$location', '$contact', '$imageName')";
+            
+            if (mysqli_query($conn, $sql)) {
+                $message = 'Found item reported successfully!';
+                $title = $description = $location = $contact = '';
+            } else {
+                $message = 'Error: ' . mysqli_error($conn);
+            }
         }
     }
 }
@@ -206,13 +155,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
 
                 <div class="form-group">
-                    <label for="image">Upload Image (Optional but Recommended)</label>
+                    <label for="image">Upload Image *</label>
                     <input type="file" 
                            id="image" 
                            name="image" 
-                           accept="image/*">
+                           accept="image/*"
+                           required>
                     <small style="color: var(--color-medium-light); font-size: 0.875rem;">
-                        A photo helps owners quickly identify their items. Please avoid showing personal information like names, addresses, or phone numbers. Accepted formats: JPG, JPEG, PNG, GIF (Max 5MB)
+                        A photo is required to help owners identify their items. Accepted formats: JPG, JPEG, PNG, GIF
                     </small>
                 </div>
 

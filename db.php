@@ -2,32 +2,57 @@
 /**
  * Database Connection File
  * 
- * This file establishes a connection to the MySQL database using MySQLi.
- * It is included in all pages that need database access.
- * 
- * MySQLi provides a simple procedural interface for database operations,
- * making it beginner-friendly and easy to understand.
+ * This file establishes a connection to the MySQL database.
+ * It automatically creates the database and tables if they don't exist.
  */
 
-// Database configuration settings
-$host = 'localhost';        // Database server address (localhost for XAMPP)
-$username = 'root';         // MySQL username (default is 'root' for XAMPP)
-$password = 'isaacK@12345';         // MySQL password (empty by default in XAMPP)
-$database = 'lostfound_db'; // Name of our database
+// Database configuration
+$host = 'localhost';
+$username = 'root';
+$password = 'kpet';
+$database = 'lostfound_db';
 
-// Create a new MySQLi connection
-// mysqli_connect() creates a connection to the MySQL server
-// Parameters: host, username, password, database name
-$conn = mysqli_connect($host, $username, $password, $database);
+// Connect to MySQL server first
+$conn = mysqli_connect($host, $username, $password);
 
-// Check if the connection was successful
-// If connection fails, mysqli_connect() returns false
 if (!$conn) {
-    // If connection fails, stop execution and show error message
     die("Connection failed: " . mysqli_connect_error());
 }
 
-// Optional: Set character encoding to UTF-8 to support special characters
-// This ensures proper handling of international characters and emojis
+// Create database if it doesn't exist
+mysqli_query($conn, "CREATE DATABASE IF NOT EXISTS $database");
+mysqli_select_db($conn, $database);
+
+// Create users table
+$sql = "CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)";
+mysqli_query($conn, $sql);
+
+// Create items table
+$sql = "CREATE TABLE IF NOT EXISTS items (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT DEFAULT NULL,
+    title VARCHAR(100) NOT NULL,
+    description TEXT NOT NULL,
+    type ENUM('lost', 'found') NOT NULL,
+    location VARCHAR(100) NOT NULL,
+    contact VARCHAR(100) NOT NULL,
+    image VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+)";
+mysqli_query($conn, $sql);
+
+// Create uploads directory if it doesn't exist
+if (!is_dir('uploads')) {
+    mkdir('uploads', 0755, true);
+}
+
+// Set character encoding
 mysqli_set_charset($conn, "utf8mb4");
 ?>

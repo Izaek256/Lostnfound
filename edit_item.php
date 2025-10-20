@@ -8,9 +8,7 @@
 require_once 'db.php';
 require_once 'user_config.php';
 
-// Require user to be logged in
 requireUser();
-
 $userId = getCurrentUserId();
 $message = '';
 $messageType = '';
@@ -46,7 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $messageType = 'error';
     } else {
         // Handle new image upload
-        $imageName = $item['image']; // Keep existing image by default
+        $imageName = $item['image'];
         
         if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
             $uploadsDir = 'uploads/';
@@ -54,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $allowedTypes = array('jpg', 'jpeg', 'png', 'gif');
             
             if (in_array($imageFileType, $allowedTypes)) {
-                // Delete old image if exists
+                // Delete old image
                 if ($item['image'] && file_exists($uploadsDir . $item['image'])) {
                     unlink($uploadsDir . $item['image']);
                 }
@@ -79,7 +77,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (mysqli_query($conn, $sql)) {
             $message = 'Item updated successfully!';
             $messageType = 'success';
-            // Refresh item data
             $item['title'] = $title;
             $item['description'] = $description;
             $item['location'] = $location;

@@ -56,7 +56,6 @@ A full-stack web application built with PHP and MySQL that facilitates the repor
 │  MySQL Database: lostfound_db          │
 │  - users table                         │
 │  - items table                         │
-│  - deletion_requests table             │
 └───────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────┐
@@ -77,14 +76,13 @@ A full-stack web application built with PHP and MySQL that facilitates the repor
 - Public pages: `index.php`, `items.php`, `report_lost.php`, `report_found.php`
 - User pages: `user_login.php`, `user_register.php`, `user_dashboard.php`, `edit_item.php`
 - Admin pages: `admin_login.php`, `admin_dashboard.php`
-- Setup: `setup.php`
 
 #### 3. **Frontend Assets**
 - `style.css` - Professional, clean UI styling
 - `script.js` - Client-side form validation
 
 #### 4. **Data Storage**
-- MySQL database with 3 tables
+- MySQL database with 2 tables (auto-created by db.php)
 - File system for uploaded images (`uploads/` directory)
 
 ---
@@ -93,7 +91,27 @@ A full-stack web application built with PHP and MySQL that facilitates the repor
 
 ### 👥 User Management System
 
-#### 1. **User Registration**
+#### 1. **Database Connection & Auto-Setup**
+**File:** `db.php`
+
+**Features:**
+- Automatically creates database if not exists
+- Automatically creates required tables
+- Creates uploads directory for images
+- No manual setup required
+
+**Tables Created:**
+- `users` - User accounts with authentication
+- `items` - Lost and found item records (image required)
+
+**Process:**
+1. Connect to MySQL server
+2. Create database `lostfound_db` if not exists
+3. Create `users` table if not exists
+4. Create `items` table if not exists (image field is NOT NULL)
+5. Create `uploads/` directory if not exists
+6. Set UTF-8 character encoding
+#### 2. **User Registration**
 **File:** `user_register.php`
 
 **Process Flow:**
@@ -114,7 +132,7 @@ A full-stack web application built with PHP and MySQL that facilitates the repor
 - SQL injection prevention via `mysqli_real_escape_string()`
 - Input validation
 
-#### 2. **User Login**
+#### 3. **User Login**
 **File:** `user_login.php`
 
 **Process Flow:**
@@ -133,7 +151,7 @@ $_SESSION['username'] = $user['username'];
 $_SESSION['user_email'] = $user['email'];
 ```
 
-#### 3. **User Dashboard**
+#### 4. **User Dashboard**
 **File:** `user_dashboard.php`
 
 **Features:**
@@ -147,7 +165,7 @@ $_SESSION['user_email'] = $user['email'];
 - Protected by `requireUser()` function
 - Users can only view/edit/delete their own items
 
-#### 4. **Edit Item**
+#### 5. **Edit Item**
 **File:** `edit_item.php`
 
 **Features:**
@@ -174,7 +192,7 @@ $_SESSION['user_email'] = $user['email'];
    - Description (required)
    - Location where lost (required)
    - Contact email (required)
-   - Image (optional)
+   - Image (required)
 2. Form validation (client-side via `script.js` and server-side)
 3. Image upload handling:
    - Check file type (jpg, jpeg, png, gif only)
@@ -195,6 +213,7 @@ $_SESSION['user_email'] = $user['email'];
 - Item type set to `type='found'`
 - Different UI messaging (privacy guidelines emphasized)
 - Tips about protecting personal information on found items
+- Image is required for all submissions
 
 **Privacy Features:**
 - Guidelines warn against sharing personal info from found items
@@ -288,12 +307,6 @@ define('ADMIN_PASSWORD', 'isaacK@12345');
 - Delete users (cascades to their items)
 - User activity monitoring
 
-**D. Deletion Request Management:**
-- View pending deletion requests from users
-- Approve requests (deletes item)
-- Reject requests (keeps item, marks request rejected)
-- See requester information
-
 **Operations:**
 
 1. **Delete Item:**
@@ -311,12 +324,8 @@ define('ADMIN_PASSWORD', 'isaacK@12345');
    ```
 
 2. **Delete User:**
-   - Cascades to all user's items and deletion requests
+   - Cascades to all user's items
    - Foreign key constraints handle cleanup
-
-3. **Approve Deletion Request:**
-   - Deletes the item
-   - Request auto-deleted via CASCADE constraint
 
 ---
 
@@ -324,15 +333,22 @@ define('ADMIN_PASSWORD', 'isaacK@12345');
 
 **Location:** Used in `report_lost.php`, `report_found.php`, `edit_item.php`
 
+**Important:** Images are now REQUIRED for all item submissions.
+
 **Process:**
 
 1. **Validation:**
    ```php
+   // Check if image was uploaded
+   if (!isset($_FILES['image']) || $_FILES['image']['error'] != 0) {
+       $message = 'Please upload an image';
+   }
+   
    $allowedTypes = array('jpg', 'jpeg', 'png', 'gif');
    $imageFileType = strtolower(pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION));
    
-   if (in_array($imageFileType, $allowedTypes)) {
-       // Proceed with upload
+   if (!in_array($imageFileType, $allowedTypes)) {
+       $message = 'Only JPG, JPEG, PNG & GIF files are allowed';
    }
    ```
 
@@ -400,40 +416,30 @@ $_SESSION['admin_logged_in'] = true  // Admin authentication flag
 
 ---
 
-### 📦 Database Setup System
+### 📦 Database Auto-Setup System
 
-**File:** `setup.php`
+**File:** `db.php`
 
 **Features:**
-1. **Automated Database Creation:**
-   ```sql
-   CREATE DATABASE IF NOT EXISTS lostfound_db;
+1. **Automatic Database Creation:**
+   ```php
+   mysqli_query($conn, "CREATE DATABASE IF NOT EXISTS lostfound_db");
+   mysqli_select_db($conn, $database);
    ```
 
-2. **Table Creation:**
-   - Creates `users` table
-   - Creates `items` table
-   - Creates `deletion_requests` table
+2. **Automatic Table Creation:**
+   - Creates `users` table if not exists
+   - Creates `items` table if not exists (image field is NOT NULL)
    - Sets up foreign key relationships
 
-3. **Sample Data Insertion:**
-   - Optional checkbox to include test data
-   - Inserts 4 sample items (2 lost, 2 found)
-
-4. **Directory Setup:**
+3. **Directory Setup:**
    - Creates `uploads/` directory if missing
    - Sets permissions to 0755
 
-5. **System Information Display:**
-   - PHP version
-   - Server software
-   - Upload size limits
-   - Post size limits
-
-**Smart Detection:**
-- Checks if database already exists
-- Prevents duplicate setup
-- Shows appropriate messages
+**Benefits:**
+- No manual setup required
+- Database automatically initializes on first access
+- Simplified deployment process
 
 ---
 
@@ -615,7 +621,6 @@ lostfound/
 
 **Relationships:**
 - One user can have many items (1:N)
-- One user can have many deletion requests (1:N)
 
 #### Table 2: `items`
 **Purpose:** Stores all lost and found item reports
@@ -629,27 +634,12 @@ lostfound/
 | `type` | ENUM('lost', 'found') | NOT NULL | Item status type |
 | `location` | VARCHAR(100) | NOT NULL | Where item was lost/found |
 | `contact` | VARCHAR(100) | NOT NULL | Contact email |
-| `image` | VARCHAR(255) | NULL | Uploaded image filename |
+| `image` | VARCHAR(255) | NOT NULL | Uploaded image filename (required) |
 | `created_at` | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | Post creation time |
 
 **Relationships:**
 - Foreign key to `users.id` with CASCADE delete
 - When user is deleted, all their items are deleted
-
-#### Table 3: `deletion_requests`
-**Purpose:** User-initiated deletion requests pending admin approval
-
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| `id` | INT | PRIMARY KEY, AUTO_INCREMENT | Unique request identifier |
-| `item_id` | INT | FOREIGN KEY, NOT NULL | Item to be deleted |
-| `user_id` | INT | FOREIGN KEY, NOT NULL | User requesting deletion |
-| `status` | ENUM('pending', 'approved', 'rejected') | DEFAULT 'pending' | Request status |
-| `created_at` | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | Request creation time |
-
-**Relationships:**
-- Foreign key to `items.id` with CASCADE delete
-- Foreign key to `users.id` with CASCADE delete
 
 ### Entity Relationship Diagram
 
@@ -704,7 +694,7 @@ lostfound/
 - `type` - 'lost' or 'found' (ENUM)
 - `location` - Where item was lost/found (VARCHAR 100)
 - `contact` - Email address (VARCHAR 100)
-- `image` - Image filename (VARCHAR 255)
+- `image` - Image filename (VARCHAR 255, REQUIRED)
 - `created_at` - Timestamp (TIMESTAMP)
 
 ## 🚀 Installation & Setup Guide
@@ -769,48 +759,16 @@ C:\xampp\htdocs\lostfound\
 └── uploads/  (will be created by setup)
 ```
 
-#### **Step 3: Configure Database Connection**
-
-Open `db.php` and verify/update settings:
-
-```php
-$host = 'localhost';        // Usually 'localhost'
-$username = 'root';         // Default for XAMPP/WAMP
-$password = '';             // Empty for XAMPP (default)
-                            // 'kpet' for current WAMP setup
-$database = 'lostfound_db'; // Database name
-```
-
-**WAMP Users:** If your MySQL password is not empty, update it:
-```php
-$password = 'your_mysql_password';
-```
-
-#### **Step 4: Run Database Setup**
+#### **Step 3: Access the Application**
 
 1. **Open browser and navigate to:**
    ```
-   http://localhost/lostfound/setup.php
+   http://localhost/lostfound/
    ```
 
-2. **Setup page will display:**
-   - System information (PHP version, upload limits)
-   - Database creation options
-   - Sample data checkbox
+2. **The database will be automatically created** on first access
 
-3. **Check "Include sample data"** (recommended for testing)
-
-4. **Click "Setup Database" button**
-
-5. **Verify success messages:**
-   ```
-   ✓ Database 'lostfound_db' created successfully!
-   ✓ Table 'users' created successfully!
-   ✓ Table 'items' created successfully!
-   ✓ Table 'deletion_requests' created successfully!
-   ✓ Sample data inserted successfully!
-   ✓ Uploads directory created successfully!
-   ```
+3. **You're ready to use the portal!**
 
 6. **Click "Go to Portal" button**
 

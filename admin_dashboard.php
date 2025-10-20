@@ -2,52 +2,34 @@
 /**
  * Admin Dashboard
  * 
- * This is the main admin control panel.
- * It provides:
- * - Overview statistics (total items, lost, found)
- * - List of recent items
- * - Ability to delete items
- * - Links to other admin functions
- * 
- * Only accessible to logged-in administrators.
+ * Main admin control panel for managing the Lost and Found portal.
  */
 
-// Include admin authentication functions
 require_once 'admin_config.php';
-
-// Include database connection
 require_once 'db.php';
 
-// Check if user is logged in as admin
-// If not, this will redirect to login page
 requireAdmin();
 
-// Handle logout request
-// If user clicked logout button, log them out
+// Handle logout
 if (isset($_GET['logout'])) {
     logoutAdmin();
 }
 
 // Handle item deletion
-// If admin clicked delete button on an item
 if (isset($_POST['delete_item'])) {
-    // Get the ID of the item to delete
-    $itemId = $_POST['item_id'];
+    $itemId = mysqli_real_escape_string($conn, $_POST['item_id']);
     
-    // Escape the ID to prevent SQL injection
-    $itemId = mysqli_real_escape_string($conn, $itemId);
-    
-    // First, get the image filename so we can delete the file too
+    // Get image filename
     $sql = "SELECT image FROM items WHERE id = '$itemId'";
     $result = mysqli_query($conn, $sql);
     $item = mysqli_fetch_assoc($result);
     
-    // Delete the image file if it exists
+    // Delete image file
     if ($item['image'] && file_exists('uploads/' . $item['image'])) {
         unlink('uploads/' . $item['image']);
     }
     
-    // Delete the item from the database
+    // Delete item from database
     $sql = "DELETE FROM items WHERE id = '$itemId'";
     
     if (mysqli_query($conn, $sql)) {
@@ -57,48 +39,10 @@ if (isset($_POST['delete_item'])) {
     }
 }
 
-// Handle deletion request approval
-if (isset($_POST['approve_deletion'])) {
-    $requestId = mysqli_real_escape_string($conn, $_POST['request_id']);
-    $itemId = mysqli_real_escape_string($conn, $_POST['item_id']);
-    
-    // Get item image
-    $sql = "SELECT image FROM items WHERE id = '$itemId'";
-    $result = mysqli_query($conn, $sql);
-    $item = mysqli_fetch_assoc($result);
-    
-    // Delete image
-    if ($item && $item['image'] && file_exists('uploads/' . $item['image'])) {
-        unlink('uploads/' . $item['image']);
-    }
-    
-    // Delete item
-    $sql = "DELETE FROM items WHERE id = '$itemId'";
-    if (mysqli_query($conn, $sql)) {
-        // Mark request as approved (will be auto-deleted due to CASCADE)
-        $success = "Deletion request approved and item deleted";
-    } else {
-        $error = "Error deleting item: " . mysqli_error($conn);
-    }
-}
-
-// Handle deletion request rejection
-if (isset($_POST['reject_deletion'])) {
-    $requestId = mysqli_real_escape_string($conn, $_POST['request_id']);
-    
-    $sql = "UPDATE deletion_requests SET status = 'rejected' WHERE id = '$requestId'";
-    if (mysqli_query($conn, $sql)) {
-        $success = "Deletion request rejected";
-    } else {
-        $error = "Error rejecting request: " . mysqli_error($conn);
-    }
-}
-
 // Handle user deletion
 if (isset($_POST['delete_user'])) {
     $userId = mysqli_real_escape_string($conn, $_POST['user_id']);
     
-    // This will cascade delete user's items and requests
     $sql = "DELETE FROM users WHERE id = '$userId'";
     if (mysqli_query($conn, $sql)) {
         $success = "User deleted successfully";
@@ -106,16 +50,6 @@ if (isset($_POST['delete_user'])) {
         $error = "Error deleting user: " . mysqli_error($conn);
     }
 }
-
-// Get pending deletion requests
-$sql = "SELECT dr.*, items.title, items.type, users.username 
-        FROM deletion_requests dr
-        JOIN items ON dr.item_id = items.id
-        JOIN users ON dr.user_id = users.id
-        WHERE dr.status = 'pending'
-        ORDER BY dr.created_at DESC";
-$result = mysqli_query($conn, $sql);
-$deletionRequests = mysqli_fetch_all($result, MYSQLI_ASSOC);
 
 // Get all users
 $sql = "SELECT users.*, COUNT(items.id) as item_count 
@@ -126,7 +60,7 @@ $sql = "SELECT users.*, COUNT(items.id) as item_count
 $result = mysqli_query($conn, $sql);
 $allUsers = mysqli_fetch_all($result, MYSQLI_ASSOC);
 
-// Get statistics for dashboard display
+// Get statistics
 $sql = "SELECT 
     COUNT(*) as total,
     SUM(CASE WHEN type = 'lost' THEN 1 ELSE 0 END) as lost_count,
@@ -136,8 +70,7 @@ $sql = "SELECT
 $result = mysqli_query($conn, $sql);
 $stats = mysqli_fetch_assoc($result);
 
-// Get the 10 most recent items
-// Admin can see recent activity at a glance
+// Get recent items
 $sql = "SELECT * FROM items ORDER BY created_at DESC LIMIT 10";
 $result = mysqli_query($conn, $sql);
 $recentItems = mysqli_fetch_all($result, MYSQLI_ASSOC);
@@ -426,44 +359,6 @@ $recentItems = mysqli_fetch_all($result, MYSQLI_ASSOC);
         </div>
 
         <!-- Pending Deletion Requests -->
-        <?php if (count($deletionRequests) > 0): ?>
-        <div class="admin-table" style="margin-top: 2rem;">
-            <div class="table-header">
-                <h3>⌛ Pending Deletion Requests (<?php echo count($deletionRequests); ?>)</h3>
-            </div>
-            
-            <div class="table-content">
-                <?php foreach ($deletionRequests as $request): ?>
-                <div class="item-row">
-                    <span class="item-type-badge <?php echo $request['type']; ?>">
-                        <?php echo $request['type'] === 'lost' ? '❌ Lost' : '✅ Found'; ?>
-                    </span>
-                    
-                    <div class="item-info">
-                        <h4><?php echo htmlspecialchars($request['title']); ?></h4>
-                        <p><strong>Requested by:</strong> <?php echo htmlspecialchars($request['username']); ?></p>
-                        <p><strong>Requested on:</strong> <?php echo date('M j, Y', strtotime($request['created_at'])); ?></p>
-                    </div>
-                    
-                    <form method="POST" style="display: inline;" onsubmit="return confirm('Approve deletion and delete this item?')">
-                        <input type="hidden" name="request_id" value="<?php echo $request['id']; ?>">
-                        <input type="hidden" name="item_id" value="<?php echo $request['item_id']; ?>">
-                        <button type="submit" name="approve_deletion" class="btn btn-success" style="padding: 0.5rem 1rem; font-size: 0.8rem;">
-                            ✅ Approve
-                        </button>
-                    </form>
-                    
-                    <form method="POST" style="display: inline;" onsubmit="return confirm('Reject this deletion request?')">
-                        <input type="hidden" name="request_id" value="<?php echo $request['id']; ?>">
-                        <button type="submit" name="reject_deletion" class="delete-btn">
-                            ❌ Reject
-                        </button>
-                    </form>
-                </div>
-                <?php endforeach; ?>
-            </div>
-        </div>
-        <?php endif; ?>
 
         <!-- User Management -->
         <div class="admin-table" style="margin-top: 2rem;">

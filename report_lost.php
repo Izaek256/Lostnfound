@@ -3,127 +3,55 @@
  * Report Lost Item Page
  * 
  * This page allows users to report items they have lost.
- * It handles:
- * - Displaying the report form
- * - Processing form submissions
- * - Uploading images
- * - Inserting data into the database
- * - Showing recent lost items for reference
  */
 
-// Include database connection
 require_once 'db.php';
-
-// Include user functions to check if user is logged in
 require_once 'user_config.php';
 
-// Require authentication - redirect to login if not logged in
 requireUser();
-
-// Get current user ID (guaranteed to exist since requireUser() passed)
 $currentUserId = getCurrentUserId();
-
-// Variable to store success or error messages
 $message = '';
 
-// Check if the form was submitted
-// $_SERVER['REQUEST_METHOD'] === 'POST' means form was submitted
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $title = $_POST['title'];
+    $description = $_POST['description'];
+    $location = $_POST['location'];
+    $contact = $_POST['contact'];
     
-    // Get form data from $_POST array
-    // $_POST contains all form field values
-    $title = $_POST['title'];             // Item title/name
-    $description = $_POST['description']; // Detailed description
-    $location = $_POST['location'];       // Where item was lost
-    $contact = $_POST['contact'];         // Email for contact
-    
-    // Validate that all required fields are filled
-    // empty() checks if a variable is empty
+    // Validate required fields
     if (empty($title) || empty($description) || empty($location) || empty($contact)) {
         $message = 'Please fill in all fields';
+    } elseif (!isset($_FILES['image']) || $_FILES['image']['error'] != 0) {
+        $message = 'Please upload an image';
     } else {
-        
         // Handle image upload
-        // Images are optional, so we initialize as null
-        $imageName = null;
+        $uploadsDir = 'uploads/';
+        $imageFileType = strtolower(pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION));
+        $allowedTypes = array('jpg', 'jpeg', 'png', 'gif');
         
-        // Check if an image was uploaded
-        // $_FILES contains information about uploaded files
-        // error == 0 means upload was successful
-        if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
-            
-            // Directory where images will be stored
-            $uploadsDir = 'uploads/';
-            
-            // Create uploads directory if it doesn't exist
-            if (!is_dir($uploadsDir)) {
-                mkdir($uploadsDir);
-            }
-            
-            // Get the file extension (jpg, png, etc.)
-            // pathinfo() extracts information from the file path
-            // PATHINFO_EXTENSION gets just the extension
-            $imageFileType = strtolower(pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION));
-            
-            // List of allowed image types for security
-            $allowedTypes = array('jpg', 'jpeg', 'png', 'gif');
-            
-            // Check if uploaded file type is allowed
-            // in_array() checks if a value exists in an array
-            if (in_array($imageFileType, $allowedTypes)) {
-                // Create a unique filename using uniqid() to avoid conflicts
-                // uniqid() generates a unique ID based on current time
-                $imageName = uniqid() . '.' . $imageFileType;
-                
-                // Move uploaded file from temporary location to uploads directory
-                // move_uploaded_file() moves the file to permanent location
-                move_uploaded_file($_FILES['image']['tmp_name'], $uploadsDir . $imageName);
-            }
-        }
-        
-    // Prepare data for insertion by escaping special characters
-    // mysqli_real_escape_string() prevents SQL injection attacks
-    // It escapes characters like quotes that could break the SQL query
-    $title = mysqli_real_escape_string($conn, $title);
-    $description = mysqli_real_escape_string($conn, $description);
-    $location = mysqli_real_escape_string($conn, $location);
-    $contact = mysqli_real_escape_string($conn, $contact);
-    $imageName = mysqli_real_escape_string($conn, $imageName);
-
-    // Get user ID (guaranteed to exist since user must be logged in)
-    $userIdValue = "'$currentUserId'";
-
-    // Build SQL INSERT query
-    // This adds a new row to the items table and includes user_id
-    $sql = "INSERT INTO items (user_id, title, description, type, location, contact, image) 
-        VALUES ($userIdValue, '$title', '$description', 'lost', '$location', '$contact', '$imageName')";
-        
-        // Optional debug logging to help diagnose NULL user_id issues
-        $enableDebugLog = true; // set to false to disable
-        if ($enableDebugLog) {
-            if (!is_dir('logs')) {
-                mkdir('logs', 0755, true);
-            }
-            $debug = [];
-            $debug[] = "---- " . date('Y-m-d H:i:s') . " ----";
-            $debug[] = 'PAGE: report_lost.php';
-            $debug[] = 'SESSION user_id: ' . (isset($_SESSION['user_id']) ? $_SESSION['user_id'] : 'NULL');
-            $debug[] = 'SESSION username: ' . (isset($_SESSION['username']) ? $_SESSION['username'] : 'NULL');
-            $debug[] = 'computed userIdValue: ' . $userIdValue;
-            $debug[] = 'SQL: ' . $sql;
-            $debug[] = 'mysqli_error: ' . mysqli_error($conn);
-            file_put_contents('logs/upload_debug.log', implode("\n", $debug) . "\n\n", FILE_APPEND | LOCK_EX);
-        }
-
-        // Execute the query
-        // mysqli_query() runs the SQL command
-        if (mysqli_query($conn, $sql)) {
-            $message = 'Lost item reported successfully!';
-            // Clear form variables so form appears empty after submission
-            $title = $description = $location = $contact = '';
+        if (!in_array($imageFileType, $allowedTypes)) {
+            $message = 'Only JPG, JPEG, PNG & GIF files are allowed';
         } else {
-            // If query failed, show error message
-            $message = 'Error: ' . mysqli_error($conn);
+            $imageName = uniqid() . '.' . $imageFileType;
+            move_uploaded_file($_FILES['image']['tmp_name'], $uploadsDir . $imageName);
+            
+            // Prepare data for database
+            $title = mysqli_real_escape_string($conn, $title);
+            $description = mysqli_real_escape_string($conn, $description);
+            $location = mysqli_real_escape_string($conn, $location);
+            $contact = mysqli_real_escape_string($conn, $contact);
+            $imageName = mysqli_real_escape_string($conn, $imageName);
+            
+            // Insert into database
+            $sql = "INSERT INTO items (user_id, title, description, type, location, contact, image) 
+                    VALUES ('$currentUserId', '$title', '$description', 'lost', '$location', '$contact', '$imageName')";
+            
+            if (mysqli_query($conn, $sql)) {
+                $message = 'Lost item reported successfully!';
+                $title = $description = $location = $contact = '';
+            } else {
+                $message = 'Error: ' . mysqli_error($conn);
+            }
         }
     }
 }
@@ -227,13 +155,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
 
                 <div class="form-group">
-                    <label for="image">Upload Image (Optional)</label>
+                    <label for="image">Upload Image *</label>
                     <input type="file" 
                            id="image" 
                            name="image" 
-                           accept="image/*">
+                           accept="image/*"
+                           required>
                     <small style="color: var(--color-medium-light); font-size: 0.875rem;">
-                        Adding a photo greatly increases the chances of recovering your item. Accepted formats: JPG, JPEG, PNG, GIF (Max 5MB)
+                        A photo is required to help identify your item. Accepted formats: JPG, JPEG, PNG, GIF
                     </small>
                 </div>
 
