@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+    <style>
+        .sec{
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            /* gap: 10px; */
+            border-color: black;
+            
+        }
+        .ch1, .ch2, .ch3{
+            width: 100px;
+            height: 100px;
+            border: 2px solid black;
+        }
+        @media (max-width: 480px) {
+            .sec{
+                grid-template-columns: 1fr;
+                
+            }
+            .ch1, .ch2, .ch3{
+            width: 100px;
+            height: 100px;
+            border: 2px solid rgb(165, 51, 51);
+            border-radius: 10%;
+            margin: 25px auto;
+            }
+        }
+        
+    </style>
+    <div class="sec">
+        <div class="ch1"></div>
+        <div class="ch2"></div>
+        <div class="ch3"></div>
+
+    </div>
+</body>
+</html>

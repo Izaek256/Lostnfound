@@ -87,8 +87,14 @@ A full-stack web application built with PHP and MySQL that facilitates the repor
 
 ### Component Architecture
 
+#### 0. **Environment Configuration**
+- `.env` - Environment variables (database credentials, app settings)
+- `env_loader.php` - Loads and parses .env file
+- `.env.example` - Template for environment configuration
+- `.gitignore` - Protects sensitive files from version control
+
 #### 1. **Configuration Layer**
-- `db.php` - Database connection singleton
+- `db.php` - Database connection singleton (uses .env variables)
 - `admin_config.php` - Admin authentication functions
 - `user_config.php` - User authentication functions
 
@@ -104,6 +110,76 @@ A full-stack web application built with PHP and MySQL that facilitates the repor
 #### 4. **Data Storage**
 - MySQL database with 2 tables (auto-created by db.php)
 - File system for uploaded images (`uploads/` directory)
+
+---
+
+## 🔐 Security & Environment Configuration
+
+### Environment Variables (.env)
+
+The application uses a `.env` file to store sensitive configuration securely. This prevents hardcoding credentials in source code.
+
+**Environment Variables:**
+
+```env
+# Database Configuration
+DB_HOST=localhost              # Database server hostname
+DB_USERNAME=root               # Database username
+DB_PASSWORD=                   # Database password (empty for XAMPP default)
+DB_DATABASE=lostfound_db       # Database name
+
+# Application Configuration
+APP_NAME="Lost and Found System"
+APP_ENV=development            # development or production
+
+# Security Configuration
+SESSION_NAME=lostnfound_session
+SESSION_LIFETIME=7200          # Session timeout in seconds (2 hours)
+
+# Upload Configuration
+UPLOAD_DIR=uploads
+MAX_UPLOAD_SIZE=5242880        # Max file size in bytes (5MB)
+
+# Timezone
+APP_TIMEZONE=UTC
+```
+
+**Security Best Practices:**
+
+1. **Never Commit `.env`:**
+   - The `.env` file is in `.gitignore`
+   - Never push it to version control
+   - Share configuration via `.env.example` instead
+
+2. **Use Strong Credentials:**
+   - Production databases should have strong passwords
+   - Never use default credentials in production
+   - Rotate database passwords regularly
+
+3. **File Permissions:**
+   - Set `.env` permissions to 600 (read/write for owner only)
+   - Restrict access to configuration files
+
+4. **Environment-Specific Settings:**
+   - Use `APP_ENV=production` for live sites
+   - Enable error logging instead of display in production
+   - Use HTTPS in production environments
+
+### Environment Loader (`env_loader.php`)
+
+This file reads the `.env` file and makes variables available via the `env()` helper function:
+
+```php
+// Usage in code
+$host = env('DB_HOST', 'localhost');  // Second parameter is default value
+$password = env('DB_PASSWORD', '');
+```
+
+**Features:**
+- Parses KEY=VALUE format
+- Removes quotes from values
+- Provides fallback defaults
+- Dies with error message if .env is missing
 
 ---
 
@@ -775,7 +851,50 @@ lostfound/
 
 ### Step-by-Step Installation
 
-#### **Step 1: Install XAMPP/WAMP**
+#### **Step 1: Configure Environment Variables**
+
+**IMPORTANT:** Before running the application, you must configure the `.env` file with your database credentials.
+
+1. **Copy the example environment file:**
+   ```bash
+   # Navigate to project directory
+   cd C:\xampp\htdocs\lostfound
+   
+   # Copy .env.example to .env
+   copy .env.example .env
+   ```
+
+2. **Edit `.env` file with your database credentials:**
+   ```env
+   # Database Configuration
+   DB_HOST=localhost
+   DB_USERNAME=root
+   DB_PASSWORD=
+   DB_DATABASE=lostfound_db
+   
+   # Application Configuration
+   APP_NAME="Lost and Found System"
+   APP_ENV=development
+   
+   # Security Configuration
+   SESSION_NAME=lostnfound_session
+   SESSION_LIFETIME=7200
+   
+   # Upload Configuration
+   UPLOAD_DIR=uploads
+   MAX_UPLOAD_SIZE=5242880
+   
+   # Timezone
+   APP_TIMEZONE=UTC
+   ```
+
+3. **Security Notes:**
+   - NEVER commit `.env` file to version control (already in `.gitignore`)
+   - Use strong database passwords in production
+   - Keep `.env` file readable only by web server user
+   - For production: Set `APP_ENV=production`
+
+#### **Step 2: Install XAMPP/WAMP**
 
 **Windows (XAMPP):**
 1. Download XAMPP from https://www.apachefriends.org/
@@ -791,7 +910,7 @@ lostfound/
 4. Launch WAMP
 5. Ensure icon is green (all services running)
 
-#### **Step 2: Copy Project Files**
+#### **Step 3: Copy Project Files**
 
 ```bash
 # For XAMPP
@@ -811,7 +930,7 @@ C:\xampp\htdocs\lostfound\
 └── uploads/  (will be created by setup)
 ```
 
-#### **Step 3: Access the Application**
+#### **Step 4: Access the Application**
 
 1. **Open browser and navigate to:**
    ```
@@ -841,6 +960,8 @@ http://localhost/lostfound/items.php  → Should show items (if sample data)
 5. Should see user dashboard
 ```
 
+#### **Step 6: Configure Admin Access**
+
 **Test Admin Access:**
 ```
 1. Register a user at http://localhost/lostfound/user_register.php
@@ -855,7 +976,7 @@ http://localhost/lostfound/items.php  → Should show items (if sample data)
 7. Should see admin dashboard with statistics
 ```
 
-#### **Step 6: Configure File Uploads (Optional)**
+#### **Step 7: Configure File Uploads (Optional)**
 
 If file uploads fail, check `php.ini`:
 

@@ -6,11 +6,14 @@
  * It automatically creates the database and tables if they don't exist.
  */
 
-// Database configuration
-$host = 'sql8.freesqldatabase.com';
-$username = 'sql8803807';
-$password = 'es6rFSds5G';
-$database = 'sql8803807';
+// Load environment variables
+require_once __DIR__ . '/env_loader.php';
+
+// Database configuration from .env file
+$host = env('DB_HOST', 'localhost');
+$username = env('DB_USERNAME', 'root');
+$password = env('DB_PASSWORD', '');
+$database = env('DB_DATABASE', 'lostfound_db');
 
 // Connect to MySQL server first
 $conn = mysqli_connect($host, $username, $password);
