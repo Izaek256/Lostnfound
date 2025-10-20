@@ -35,8 +35,11 @@ $sql = "CREATE TABLE IF NOT EXISTS users (
 mysqli_query($conn, $sql);
 
 // Add is_admin column if it doesn't exist (for existing databases)
-$sql = "ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin TINYINT(1) DEFAULT 0";
-@mysqli_query($conn, $sql);
+$checkColumn = mysqli_query($conn, "SHOW COLUMNS FROM users LIKE 'is_admin'");
+if (mysqli_num_rows($checkColumn) == 0) {
+    $sql = "ALTER TABLE users ADD COLUMN is_admin TINYINT(1) DEFAULT 0 AFTER password";
+    mysqli_query($conn, $sql);
+}
 
 // Create items table
 $sql = "CREATE TABLE IF NOT EXISTS items (
