@@ -64,4 +64,42 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
+    
+    // Initialize read more functionality
+    initializeReadMore();
 });
+
+// Read More functionality for item descriptions
+function initializeReadMore() {
+    var descriptions = document.querySelectorAll('.item-description');
+    
+    descriptions.forEach(function(desc) {
+        var fullText = desc.textContent.trim();
+        
+        // Check if text is longer than 3 lines (approximately 200 characters)
+        if (fullText.length > 200) {
+            desc.classList.add('truncated');
+            desc.setAttribute('data-full-text', fullText);
+            
+            // Create read more button
+            var readMoreBtn = document.createElement('span');
+            readMoreBtn.className = 'read-more-btn';
+            readMoreBtn.textContent = 'Read more...';
+            readMoreBtn.onclick = function() {
+                toggleDescription(desc, readMoreBtn);
+            };
+            
+            desc.parentNode.insertBefore(readMoreBtn, desc.nextSibling);
+        }
+    });
+}
+
+function toggleDescription(descElement, btnElement) {
+    if (descElement.classList.contains('truncated')) {
+        descElement.classList.remove('truncated');
+        btnElement.textContent = 'Show less';
+    } else {
+        descElement.classList.add('truncated');
+        btnElement.textContent = 'Read more...';
+    }
+}

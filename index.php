@@ -134,23 +134,66 @@ $stats = mysqli_fetch_assoc($result);
             <div class="items-grid">
                 <?php foreach ($recentItems as $item): ?>
                 <div class="item-card">
-                    <span class="item-type <?php echo $item['type']; ?>">
-                        <?php echo $item['type'] === 'lost' ? '❌ Lost' : '✅ Found'; ?>
-                    </span>
+                    <div class="item-card-header">
+                        <span class="item-type <?php echo $item['type']; ?>">
+                            <?php echo $item['type'] === 'lost' ? '🔴 Lost' : '🟢 Found'; ?>
+                        </span>
+                        
+                        <?php if ($item['image'] && file_exists('uploads/' . $item['image'])): ?>
+                            <img src="uploads/<?php echo htmlspecialchars($item['image']); ?>" 
+                                 alt="<?php echo htmlspecialchars($item['title']); ?>" 
+                                 class="item-image">
+                        <?php else: ?>
+                            <div class="no-image-placeholder">
+                                <span>📷</span>
+                            </div>
+                        <?php endif; ?>
+                    </div>
                     
-                    <?php if ($item['image'] && file_exists('uploads/' . $item['image'])): ?>
-                        <img src="uploads/<?php echo htmlspecialchars($item['image']); ?>" 
-                             alt="<?php echo htmlspecialchars($item['title']); ?>" 
-                             class="item-image">
-                    <?php endif; ?>
-                    
-                    <h3><?php echo $item['title']; ?></h3>
-                    <p><strong>Description:</strong> <?php echo substr($item['description'], 0, 100); ?><?php if(strlen($item['description']) > 100) echo '...'; ?></p>
-                    <p><strong>📍 Location:</strong> <?php echo $item['location']; ?></p>
-                    <p><strong>📧 Contact:</strong> <?php echo $item['contact']; ?></p>
-                    
-                    <div class="item-meta">
-                        <p><strong>Posted:</strong> <?php echo date('M j, Y g:i A', strtotime($item['created_at'])); ?></p>
+                    <div class="item-card-body">
+                        <h3>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="9" y1="3" x2="9" y2="21"></line>
+                            </svg>
+                            <?php echo htmlspecialchars($item['title']); ?>
+                        </h3>
+                        
+                        <div class="item-card-section">
+                            <div class="item-description"><?php echo htmlspecialchars($item['description']); ?></div>
+                        </div>
+                        
+                        <div class="item-card-section">
+                            <div class="item-detail">
+                                <svg class="item-detail-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                    <circle cx="12" cy="10" r="3"></circle>
+                                </svg>
+                                <div class="item-detail-content">
+                                    <strong>Location:</strong> <?php echo htmlspecialchars($item['location']); ?>
+                                </div>
+                            </div>
+                            
+                            <div class="item-detail">
+                                <svg class="item-detail-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                                    <polyline points="22,6 12,13 2,6"></polyline>
+                                </svg>
+                                <div class="item-detail-content">
+                                    <strong>Contact:</strong> <a href="mailto:<?php echo htmlspecialchars($item['contact']); ?>" style="color: var(--primary);"><?php echo htmlspecialchars($item['contact']); ?></a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="item-meta">
+                            <p>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <polyline points="12 6 12 12 16 14"></polyline>
+                                </svg>
+                                <?php echo date('M j, Y g:i A', strtotime($item['created_at'])); ?>
+                            </p>
+                        </div>
                     </div>
                 </div>
                 <?php endforeach; ?>

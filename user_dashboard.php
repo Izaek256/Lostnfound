@@ -152,36 +152,87 @@ $stats = mysqli_fetch_assoc($result);
                 <div class="items-grid">
                     <?php foreach ($userItems as $item): ?>
                     <div class="item-card">
-                        <span class="item-type <?php echo $item['type']; ?>">
-                            <?php echo $item['type'] === 'lost' ? '❌ Lost' : '✅ Found'; ?>
-                        </span>
-                        
-                        <?php if ($item['image'] && file_exists('uploads/' . $item['image'])): ?>
-                            <img src="uploads/<?php echo htmlspecialchars($item['image']); ?>" 
-                                 alt="<?php echo htmlspecialchars($item['title']); ?>" 
-                                 class="item-image">
-                        <?php endif; ?>
-                        
-                        <h3><?php echo htmlspecialchars($item['title']); ?></h3>
-                        <p><strong>Description:</strong> <?php echo htmlspecialchars($item['description']); ?></p>
-                        <p><strong>📍 Location:</strong> <?php echo htmlspecialchars($item['location']); ?></p>
-                        <p><strong>📧 Contact:</strong> <?php echo htmlspecialchars($item['contact']); ?></p>
-                        
-                        <div class="item-meta">
-                            <p><strong>Posted:</strong> <?php echo date('M j, Y g:i A', strtotime($item['created_at'])); ?></p>
+                        <div class="item-card-header">
+                            <span class="item-type <?php echo $item['type']; ?>">
+                                <?php echo $item['type'] === 'lost' ? '🔴 Lost' : '🟢 Found'; ?>
+                            </span>
+                            
+                            <?php if ($item['image'] && file_exists('uploads/' . $item['image'])): ?>
+                                <img src="uploads/<?php echo htmlspecialchars($item['image']); ?>" 
+                                     alt="<?php echo htmlspecialchars($item['title']); ?>" 
+                                     class="item-image">
+                            <?php else: ?>
+                                <div class="no-image-placeholder">
+                                    <span>📷</span>
+                                </div>
+                            <?php endif; ?>
                         </div>
                         
-                        <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
-                            <a href="edit_item.php?id=<?php echo $item['id']; ?>" class="btn btn-secondary" style="flex: 1; text-align: center; padding: 0.6rem;">
-                                ✏️ Edit
-                            </a>
+                        <div class="item-card-body">
+                            <h3>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                    <line x1="9" y1="3" x2="9" y2="21"></line>
+                                </svg>
+                                <?php echo htmlspecialchars($item['title']); ?>
+                            </h3>
                             
-                            <form method="POST" style="flex: 1;" onsubmit="return confirm('Are you sure you want to delete this item? This cannot be undone.')">
-                                <input type="hidden" name="item_id" value="<?php echo $item['id']; ?>">
-                                <button type="submit" name="delete_item" class="btn btn-danger" style="width: 100%; padding: 0.6rem;">
-                                    🗑️ Delete
-                                </button>
-                            </form>
+                            <div class="item-card-section">
+                                <div class="item-description"><?php echo htmlspecialchars($item['description']); ?></div>
+                            </div>
+                            
+                            <div class="item-card-section">
+                                <div class="item-detail">
+                                    <svg class="item-detail-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                        <circle cx="12" cy="10" r="3"></circle>
+                                    </svg>
+                                    <div class="item-detail-content">
+                                        <strong>Location:</strong> <?php echo htmlspecialchars($item['location']); ?>
+                                    </div>
+                                </div>
+                                
+                                <div class="item-detail">
+                                    <svg class="item-detail-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                                        <polyline points="22,6 12,13 2,6"></polyline>
+                                    </svg>
+                                    <div class="item-detail-content">
+                                        <strong>Contact:</strong> <?php echo htmlspecialchars($item['contact']); ?>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="item-meta">
+                                <p>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <polyline points="12 6 12 12 16 14"></polyline>
+                                    </svg>
+                                    <?php echo date('M j, Y g:i A', strtotime($item['created_at'])); ?>
+                                </p>
+                            </div>
+                            
+                            <div style="margin-top: 1rem; display: flex; gap: 0.75rem; padding-top: 1rem; border-top: 1px solid var(--border);">
+                                <a href="edit_item.php?id=<?php echo $item['id']; ?>" class="btn btn-secondary" style="flex: 1; text-align: center; padding: 0.7rem; font-size: 0.9rem;">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;">
+                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                    </svg>
+                                    Edit
+                                </a>
+                                
+                                <form method="POST" style="flex: 1;" onsubmit="return confirm('Are you sure you want to delete this item? This cannot be undone.')">
+                                    <input type="hidden" name="item_id" value="<?php echo $item['id']; ?>">
+                                    <button type="submit" name="delete_item" class="btn btn-danger" style="width: 100%; padding: 0.7rem; font-size: 0.9rem;">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;">
+                                            <polyline points="3 6 5 6 21 6"></polyline>
+                                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                        </svg>
+                                        Delete
+                                    </button>
+                                </form>
+                            </div>
                         </div>
                     </div>
                     <?php endforeach; ?>
