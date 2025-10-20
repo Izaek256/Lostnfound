@@ -93,6 +93,7 @@ $recentItems = mysqli_fetch_all($result, MYSQLI_ASSOC);
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    Lorem ipsum dolor sit amet consectetur adipisicing elit. Tempora ea ullam ad nisi id beatae sit at et laborum non, optio consequatur laboriosam dignissimos, quos quam, sapiente placeat quibusdam voluptatum!
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - University Lost and Found</title>

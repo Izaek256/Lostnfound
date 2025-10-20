@@ -1,24 +1,22 @@
 # 🎓 University Lost and Found Portal - System Architecture & Analysis
 
-## 🔄 RECENT UPDATE: Role-Based Admin System
+## 🔄 CURRENT SYSTEM: Role-Based Admin System
 
-**Important Change:** The system now uses **role-based authentication** instead of separate admin credentials!
+**Important Feature:** The system uses **role-based authentication** for admin access!
 
-### What's New:
-- ✅ **Single User System**: Admins are regular users with elevated privileges
+### Admin System Features:
+- ✅ **Role-Based Access**: Admins are regular users with elevated privileges
 - ✅ **`is_admin` Field**: Database field determines admin rights (0 = user, 1 = admin)
-- ✅ **Easy Management**: Grant/revoke admin rights through admin dashboard
+- ✅ **Easy Management**: Grant/revoke admin rights through admin dashboard or grant_admin.php
 - ✅ **Multiple Admins**: Support unlimited admin accounts
-- ✅ **No Hardcoded Credentials**: Admin credentials removed from code
+- ✅ **Unified Login**: Admins use their regular user credentials at admin_login.php
 
-### Quick Setup:
+### Admin Setup:
 1. Register a user account at `user_register.php`
-2. Visit `grant_admin.php` to make your account admin
-3. **DELETE** `grant_admin.php` after use!
-4. Login at `admin_login.php` with your user credentials
-
-📖 **See `ADMIN_SETUP_GUIDE.md` for detailed instructions**
-📋 **See `ADMIN_QUICK_REFERENCE.md` for quick reference**
+2. Visit `grant_admin.php` (requires existing admin login) to grant admin rights to users
+3. **SECURITY TIP**: Restrict access to `grant_admin.php` in production!
+4. Login at `admin_login.php` with your user credentials (if you have admin rights)
+5. Admins can grant/revoke admin rights to other users via the admin dashboard
 
 ---
 
@@ -289,23 +287,26 @@ $_SESSION['user_email'] = $user['email'];
 ### 🛡️ Admin Management System
 
 #### 1. **Admin Authentication**
-**File:** `admin_config.php`, `admin_login.php`
+**Files:** `admin_config.php`, `admin_login.php`, `user_config.php`
 
-**Credentials:**
-```php
-define('ADMIN_USERNAME', 'admin');
-define('ADMIN_PASSWORD', 'isaacK@12345');
-```
+**Role-Based Authentication:**
+- Admins are regular users with `is_admin = 1` in the database
+- Admin login uses same authentication as regular users
+- No hardcoded credentials - all stored in database
+- Supports unlimited admin accounts
 
 **Session-Based Auth:**
-- `$_SESSION['admin_logged_in'] = true` on successful login
+- Login sets `$_SESSION['user_id']`, `$_SESSION['username']`, `$_SESSION['is_admin']`
+- `isAdminLoggedIn()` checks if user is logged in AND has admin rights
 - `requireAdmin()` function protects admin pages
-- Simple username/password comparison (not database-stored)
+- `isCurrentUserAdmin()` checks admin status for conditional UI elements
 
-**Security Note:** This is a hardcoded authentication system. In production, admin credentials should be:
-- Stored in database with hashed passwords
-- Support multiple admin accounts
-- Include role-based permissions
+**Admin Login Process:**
+1. User enters credentials at `admin_login.php`
+2. System authenticates via `loginUser()` function
+3. Checks if `is_admin = 1` in session
+4. Grants access to admin dashboard if authorized
+5. Denies access and destroys session if user lacks admin rights
 
 #### 2. **Admin Dashboard**
 **File:** `admin_dashboard.php`
@@ -316,17 +317,21 @@ define('ADMIN_PASSWORD', 'isaacK@12345');
 - Total items count
 - Lost items count
 - Found items count
+- Real-time statistics from database
 
 **B. Item Management:**
-- View recent 10 items
-- Delete any item directly
-- View item details
-- Image deletion on item removal
+- View recent 10 items with full details
+- Delete any item directly (with confirmation)
+- View item images and metadata
+- Automatic image file deletion on item removal
+- Expandable descriptions for long text
 
 **C. User Management:**
-- View all registered users
-- See user statistics (items posted, join date)
+- View all registered users with statistics
+- See user details (email, join date, items posted)
+- Grant/revoke admin rights to any user
 - Delete users (cascades to their items)
+- Visual admin badges for admin users
 - User activity monitoring
 
 **Operations:**
@@ -346,8 +351,19 @@ define('ADMIN_PASSWORD', 'isaacK@12345');
    ```
 
 2. **Delete User:**
-   - Cascades to all user's items
-   - Foreign key constraints handle cleanup
+   - Cascades to all user's items via foreign key
+   - Deletes all associated item images
+   - Permanent action with confirmation dialog
+
+3. **Toggle Admin Rights:**
+   ```php
+   // Toggle admin status
+   $newStatus = $currentStatus == 1 ? 0 : 1;
+   UPDATE users SET is_admin = '$newStatus' WHERE id = '$userId';
+   ```
+   - Grant admin rights: Change `is_admin` from 0 to 1
+   - Revoke admin rights: Change `is_admin` from 1 to 0
+   - Instant effect - user gains/loses admin access immediately
 
 ---
 
@@ -423,17 +439,22 @@ $_SESSION['user_email']  // Email address
 ```
 
 #### **Admin Authentication**
-**File:** `admin_config.php`
+**File:** `admin_config.php`, `user_config.php`
 
 **Functions:**
-- `isAdminLoggedIn()` - Check admin session
-- `authenticateAdmin($username, $password)` - Validate credentials
-- `logoutAdmin()` - End admin session
-- `requireAdmin()` - Protect admin pages
+- `isAdminLoggedIn()` - Check if user is logged in AND has admin rights
+- `isCurrentUserAdmin()` - Check current user's admin status
+- `loginUser($conn, $username, $password)` - Authenticate user (sets is_admin in session)
+- `logoutAdmin()` - End admin session and redirect to admin login
+- `logoutUser()` - End user session and redirect to home
+- `requireAdmin()` - Protect admin pages (redirect if not admin)
 
 **Session Variables:**
 ```php
-$_SESSION['admin_logged_in'] = true  // Admin authentication flag
+$_SESSION['user_id']     // User's database ID
+$_SESSION['username']    // Display name
+$_SESSION['user_email']  // Email address
+$_SESSION['is_admin']    // Admin status (0 or 1)
 ```
 
 ---
@@ -709,15 +730,28 @@ lostfound/
 
 **Database**: `lostfound_db`
 
-**Table**: `items`
-- `id` - Unique identifier (AUTO_INCREMENT)
-- `title` - Item name (VARCHAR 100)
-- `description` - Detailed description (TEXT)
-- `type` - 'lost' or 'found' (ENUM)
-- `location` - Where item was lost/found (VARCHAR 100)
-- `contact` - Email address (VARCHAR 100)
-- `image` - Image filename (VARCHAR 255, REQUIRED)
-- `created_at` - Timestamp (TIMESTAMP)
+**Table 1: `users`**
+- `id` - Unique user identifier (INT, PRIMARY KEY, AUTO_INCREMENT)
+- `username` - User's login name (VARCHAR 50, UNIQUE, NOT NULL)
+- `email` - User's email address (VARCHAR 100, UNIQUE, NOT NULL)
+- `password` - Hashed password (VARCHAR 255, NOT NULL)
+- `is_admin` - Admin status: 0 = regular user, 1 = admin (TINYINT(1), DEFAULT 0)
+- `created_at` - Account creation timestamp (TIMESTAMP, DEFAULT CURRENT_TIMESTAMP)
+
+**Table 2: `items`**
+- `id` - Unique identifier (INT, PRIMARY KEY, AUTO_INCREMENT)
+- `user_id` - Owner of the post (INT, FOREIGN KEY to users.id, NULL for guest posts)
+- `title` - Item name (VARCHAR 100, NOT NULL)
+- `description` - Detailed description (TEXT, NOT NULL)
+- `type` - 'lost' or 'found' (ENUM, NOT NULL)
+- `location` - Where item was lost/found (VARCHAR 100, NOT NULL)
+- `contact` - Email address (VARCHAR 100, NOT NULL)
+- `image` - Image filename (VARCHAR 255, REQUIRED, NOT NULL)
+- `created_at` - Post creation timestamp (TIMESTAMP, DEFAULT CURRENT_TIMESTAMP)
+
+**Relationships:**
+- Foreign key: items.user_id → users.id (CASCADE on delete)
+- When user is deleted, all their items are automatically deleted
 
 ## 🚀 Installation & Setup Guide
 
@@ -743,23 +777,19 @@ lostfound/
 
 #### **Step 1: Install XAMPP/WAMP**
 
-```bash
-# Windows (XAMPP)
+**Windows (XAMPP):**
 1. Download XAMPP from https://www.apachefriends.org/
 2. Run installer (xampp-windows-x64-8.x.x-installer.exe)
 3. Install to C:\xampp
 4. Launch XAMPP Control Panel
 5. Start Apache and MySQL services
-```
 
-```bash
-# Windows (WAMP)
+**Windows (WAMP):**
 1. Download WAMP from https://www.wampserver.com/
 2. Run installer
 3. Install to C:\wamp64
 4. Launch WAMP
 5. Ensure icon is green (all services running)
-```
 
 #### **Step 2: Copy Project Files**
 
@@ -813,10 +843,16 @@ http://localhost/lostfound/items.php  → Should show items (if sample data)
 
 **Test Admin Access:**
 ```
-1. Go to http://localhost/lostfound/admin_login.php
-2. Username: admin
-3. Password: isaacK@12345
-4. Should see admin dashboard with statistics
+1. Register a user at http://localhost/lostfound/user_register.php
+2. Visit http://localhost/lostfound/grant_admin.php
+3. You'll need to be an admin to access grant_admin.php
+4. For first-time setup, manually update database:
+   - Open phpMyAdmin (http://localhost/phpmyadmin)
+   - Navigate to lostfound_db → users table
+   - Edit your user record, set is_admin = 1
+5. Go to http://localhost/lostfound/admin_login.php
+6. Login with your user credentials
+7. Should see admin dashboard with statistics
 ```
 
 #### **Step 6: Configure File Uploads (Optional)**
@@ -920,15 +956,26 @@ Restart Apache after changes.
 
 ## 🔐 Admin Access
 
-**Default Credentials** (Change in production!):
-- Username: `admin`
-- Password: `isaacK@12345`
+**Role-Based Admin System:**
+- Admins are regular users with `is_admin = 1` in the database
+- No hardcoded credentials - stored securely in database
+- Multiple admin accounts supported
 
-Modify in `admin_config.php`:
-```php
-define('ADMIN_USERNAME', 'admin');
-define('ADMIN_PASSWORD', 'isaacK@12345');
+**First Admin Setup:**
+1. Register a user account
+2. Manually set `is_admin = 1` in database via phpMyAdmin
+3. Login at `admin_login.php` with your user credentials
+4. Use admin dashboard or `grant_admin.php` to grant rights to other users
+
+**Grant Admin Rights via Database:**
+```sql
+-- Via phpMyAdmin or MySQL command line
+UPDATE users SET is_admin = 1 WHERE username = 'your_username';
 ```
+
+**Grant Admin Rights via Web Interface:**
+- Use `grant_admin.php` (requires admin login)
+- Or use Admin Dashboard → User Management → Make Admin button
 
 ## 💻 Code Functionality
 

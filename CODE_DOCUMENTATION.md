@@ -7,16 +7,15 @@
 4. [Core Pages](#core-pages)
 5. [Item Management](#item-management)
 6. [Admin System](#admin-system)
-7. [Setup System](#setup-system)
-8. [User Account Pages](#user-account-pages)
-9. [Frontend Assets](#frontend-assets)
-10. [Database Schema](#database-schema)
+7. [User Account Pages](#user-account-pages)
+8. [Frontend Assets](#frontend-assets)
+9. [Database Schema](#database-schema)
 
 ---
 
 ## Overview
 
-This is a University Lost and Found Portal built with PHP and MySQL. The system allows users to report lost items, report found items, browse all items with search/filter capabilities, and includes an admin panel for management.
+This is a University Lost and Found Portal built with PHP and MySQL. The system allows users to report lost items, report found items, browse all items with search/filter capabilities, and includes a role-based admin panel for management.
 
 **Technology Stack:**
 - **Backend:** PHP (procedural style with MySQLi)
@@ -26,36 +25,93 @@ This is a University Lost and Found Portal built with PHP and MySQL. The system 
 
 **Key Features:**
 - Guest and registered user support
-- Image upload functionality
+- Image upload functionality (required for all items)
 - Search and filter capabilities
-- Admin management panel
-- User deletion request system
-- Responsive design
+- Role-based admin management panel
+- User authentication with password hashing
+- Responsive design with mobile support
+- Multiple admin accounts support
 
 ---
 
 ## Database Layer
 
 ### db.php
-**File Reference:** [`db.php`](c:\wamp64\www\lostfound\db.php)
+**File Reference:** [`db.php`](db.php)
 
-**Purpose:** Establishes MySQL database connection for the entire application.
+**Purpose:** Establishes MySQL database connection and automatically creates database/tables if they don't exist.
 
 **Configuration Variables:**
 ```php
 $host = 'localhost';        // Database server address (localhost for local development)
 $username = 'root';         // MySQL username (default XAMPP/WAMP username)
-$password = 'kpet';         // MySQL password
+$password = 'kpet';         // MySQL password (update for your environment)
 $database = 'lostfound_db'; // Database name
 ```
 
-**Connection Creation:**
+**Automatic Database Setup:**
 ```php
-$conn = mysqli_connect($host, $username, $password, $database);
+// Connect to MySQL server first
+$conn = mysqli_connect($host, $username, $password);
+
+// Create database if it doesn't exist
+mysqli_query($conn, "CREATE DATABASE IF NOT EXISTS $database");
+mysqli_select_db($conn, $database);
 ```
-- Creates connection using MySQLi (MySQL Improved extension)
-- Returns connection object stored in `$conn` variable
-- This connection is used throughout the application
+
+**Automatic Table Creation:**
+
+1. **Users Table:**
+```php
+$sql = "CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    is_admin TINYINT(1) DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)";
+```
+- Stores user accounts with hashed passwords
+- `is_admin` field: 0 = regular user, 1 = administrator
+- Automatically migrates existing databases by adding `is_admin` column if missing
+
+2. **Items Table:**
+```php
+$sql = "CREATE TABLE IF NOT EXISTS items (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT DEFAULT NULL,
+    title VARCHAR(100) NOT NULL,
+    description TEXT NOT NULL,
+    type ENUM('lost', 'found') NOT NULL,
+    location VARCHAR(100) NOT NULL,
+    contact VARCHAR(100) NOT NULL,
+    image VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+)";
+```
+- Stores lost and found items
+- `image` field is NOT NULL (required for all items)
+- Foreign key cascade: deleting user deletes their items
+
+3. **Automatic Migration:**
+```php
+// Add is_admin column if it doesn't exist (for existing databases)
+$checkColumn = mysqli_query($conn, "SHOW COLUMNS FROM users LIKE 'is_admin'");
+if (mysqli_num_rows($checkColumn) == 0) {
+    $sql = "ALTER TABLE users ADD COLUMN is_admin TINYINT(1) DEFAULT 0 AFTER password";
+    mysqli_query($conn, $sql);
+}
+```
+
+4. **Directory Creation:**
+```php
+// Create uploads directory if it doesn't exist
+if (!is_dir('uploads')) {
+    mkdir('uploads', 0755, true);
+}
+```
 
 **Error Handling:**
 ```php
@@ -86,22 +142,43 @@ require_once 'db.php';
 
 **Referenced By:** All PHP files that interact with database
 
+**Key Features:**
+- Zero-configuration setup - database auto-creates on first run
+- Automatic migration for existing databases
+- Creates necessary directory structure
+- UTF-8 character encoding support
+- Foreign key relationships for data integrity
+
 ---
 
 ## Authentication System
 
 ### user_config.php
-**File Reference:** [`user_config.php`](c:\wamp64\www\lostfound\user_config.php)
+**File Reference:** [`user_config.php`](user_config.php)
 
 **Purpose:** Manages user authentication, registration, login/logout, and session handling.
 
 **Session Initialization:**
 ```php
-session_start();
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
 ```
 - Starts PHP session for user tracking
-- Must be called before any output to browser
+- Only starts if not already active
 - Sessions persist data in `$_SESSION` superglobal array
+
+#### Function: isCurrentUserAdmin()
+**Returns:** Boolean - `true` if user is logged in AND has admin rights
+
+```php
+function isCurrentUserAdmin() {
+    return isUserLoggedIn() && isset($_SESSION['is_admin']) && $_SESSION['is_admin'] == 1;
+}
+```
+- Checks both login status and admin privileges
+- Used to conditionally show admin links in navigation
+- Safe to call even when user is not logged in
 
 #### Function: isUserLoggedIn()
 **Returns:** Boolean - `true` if user logged in, `false` otherwise
@@ -269,14 +346,14 @@ if (empty($username) || empty($password)) {
 ```php
 $username = mysqli_real_escape_string($conn, $username);
 
-$sql = "SELECT id, username, email, password FROM users WHERE username = '$username'";
+$sql = "SELECT id, username, email, password, is_admin FROM users WHERE username = '$username'";
 $result = mysqli_query($conn, $sql);
 
 if (mysqli_num_rows($result) === 0) {
     return 'Invalid username or password';
 }
 ```
-- Retrieves user record
+- Retrieves user record including `is_admin` field
 - Generic error message prevents username enumeration
 
 3. **Password Verification:**
@@ -287,14 +364,15 @@ if (password_verify($password, $user['password'])) {
     $_SESSION['user_id'] = $user['id'];
     $_SESSION['username'] = $user['username'];
     $_SESSION['user_email'] = $user['email'];
+    $_SESSION['is_admin'] = $user['is_admin'];  // Store admin status in session
     return ''; // Success
 } else {
     return 'Invalid username or password';
 }
 ```
 - `password_verify()` compares plain password with hash
+- Sets `is_admin` in session for role-based access control
 - Secure comparison using timing-safe algorithm
-- Sets session variables on success
 
 #### Function: logoutUser()
 **Purpose:** Ends user session and redirects to homepage
@@ -330,48 +408,37 @@ function requireUser() {
 ---
 
 ### admin_config.php
-**File Reference:** [`admin_config.php`](c:\wamp64\www\lostfound\admin_config.php)
+**File Reference:** [`admin_config.php`](admin_config.php)
 
-**Purpose:** Manages admin authentication (separate from regular users)
+**Purpose:** Manages admin authentication and access control using role-based system
 
-**Admin Credentials:**
+**Session Initialization:**
 ```php
-define('ADMIN_USERNAME', 'admin');
-define('ADMIN_PASSWORD', 'isaacK@12345');
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
 ```
-- Hard-coded credentials for simplicity
-- `define()` creates global constants
-- **Security Note:** Should use database with hashed passwords in production
 
 #### Function: isAdminLoggedIn()
-**Returns:** Boolean
+**Returns:** Boolean - `true` if user is logged in AND has admin rights
 
 ```php
 function isAdminLoggedIn() {
-    if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] == true) {
+    if (isset($_SESSION['user_id']) && isset($_SESSION['is_admin']) && $_SESSION['is_admin'] == 1) {
         return true;
     }
     return false;
 }
 ```
-- Checks separate admin session variable
-- Independent from user authentication
+- Checks both user login status and admin privileges
+- Relies on `is_admin` field from database
+- Independent admin session management
 
-#### Function: authenticateAdmin($username, $password)
-**Returns:** Boolean - `true` if credentials valid
-
-```php
-function authenticateAdmin($username, $password) {
-    if ($username == ADMIN_USERNAME && $password == ADMIN_PASSWORD) {
-        $_SESSION['admin_logged_in'] = true;
-        return true;
-    }
-    return false;
-}
-```
-- Direct comparison with constants
-- Sets session on successful authentication
-- Simple but functional for single admin
+**Key Difference from Old System:**
+- No hardcoded credentials
+- Uses database-stored admin status
+- Multiple admin accounts supported
+- Admins are regular users with elevated privileges
 
 #### Function: logoutAdmin()
 ```php
@@ -396,14 +463,14 @@ function requireAdmin() {
 - Protects admin-only pages
 - Place at top of admin pages
 
-**Referenced By:** [`admin_login.php`](c:\wamp64\www\lostfound\admin_login.php), [`admin_dashboard.php`](c:\wamp64\www\lostfound\admin_dashboard.php)
+**Referenced By:** [`admin_login.php`](admin_login.php), [`admin_dashboard.php`](admin_dashboard.php), [`grant_admin.php`](grant_admin.php)
 
 ---
 
 ## Core Pages
 
 ### index.php
-**File Reference:** [`index.php`](c:\wamp64\www\lostfound\index.php)
+**File Reference:** [`index.php`](index.php)
 
 **Purpose:** Homepage - displays portal overview, statistics, and recent items
 
@@ -448,6 +515,9 @@ $stats = mysqli_fetch_assoc($result);
 ```php
 <?php if (isUserLoggedIn()): ?>
     <li><a href="user_dashboard.php">My Dashboard</a></li>
+    <?php if (isCurrentUserAdmin()): ?>
+        <li><a href="admin_dashboard.php">Admin Panel</a></li>
+    <?php endif; ?>
     <li><a href="user_dashboard.php?logout=1">Logout</a></li>
 <?php else: ?>
     <li><a href="user_login.php">Login</a></li>
@@ -455,6 +525,7 @@ $stats = mysqli_fetch_assoc($result);
 <?php endif; ?>
 ```
 - Conditional navigation based on login status
+- Shows "Admin Panel" link only for admins
 - Alternative PHP syntax (`:` and `endif`)
 
 **Statistics Display:**
@@ -506,7 +577,7 @@ $stats = mysqli_fetch_assoc($result);
 ---
 
 ### items.php
-**File Reference:** [`items.php`](c:\wamp64\www\lostfound\items.php)
+**File Reference:** [`items.php`](items.php)
 
 **Purpose:** Displays all items with search and filter functionality
 
@@ -648,7 +719,7 @@ document.addEventListener('keydown', function(event) {
 ## Item Management
 
 ### report_lost.php
-**File Reference:** [`report_lost.php`](c:\wamp64\www\lostfound\report_lost.php)
+**File Reference:** [`report_lost.php`](report_lost.php)
 
 **Purpose:** Form for users to report lost items
 
@@ -782,12 +853,12 @@ $recentLostItems = mysqli_fetch_all($result, MYSQLI_ASSOC);
 - Shows 3 most recent lost items
 - Helps users see if item already reported
 
-**References:** [`db.php`](c:\wamp64\www\lostfound\db.php), [`user_config.php`](c:\wamp64\www\lostfound\user_config.php), [`script.js`](c:\wamp64\www\lostfound\script.js)
+**References:** [`db.php`](db.php), [`user_config.php`](user_config.php), [`script.js`](script.js)
 
 ---
 
 ### report_found.php
-**File Reference:** [`report_found.php`](c:\wamp64\www\lostfound\report_found.php)
+**File Reference:** [`report_found.php`](report_found.php)
 
 **Purpose:** Form for users to report found items
 
@@ -836,12 +907,12 @@ $sql = "SELECT * FROM items WHERE type = 'found' ORDER BY created_at DESC LIMIT 
 ```
 - Shows found items instead of lost
 
-**References:** [`db.php`](c:\wamp64\www\lostfound\db.php), [`user_config.php`](c:\wamp64\www\lostfound\user_config.php), [`script.js`](c:\wamp64\www\lostfound\script.js)
+**References:** [`db.php`](db.php), [`user_config.php`](user_config.php), [`script.js`](script.js)
 
 ---
 
 ### edit_item.php
-**File Reference:** [`edit_item.php`](c:\wamp64\www\lostfound\edit_item.php)
+**File Reference:** [`edit_item.php`](edit_item.php)
 
 **Purpose:** Allows users to edit their posted items
 
@@ -964,18 +1035,18 @@ if (mysqli_query($conn, $sql)) {
 - User can see what they're replacing
 - Optional new upload below
 
-**References:** [`db.php`](c:\wamp64\www\lostfound\db.php), [`user_config.php`](c:\wamp64\www\lostfound\user_config.php)
+**References:** [`db.php`](db.php), [`user_config.php`](user_config.php)
 
-**Called From:** [`user_dashboard.php`](c:\wamp64\www\lostfound\user_dashboard.php) edit links
+**Called From:** [`user_dashboard.php`](user_dashboard.php) edit links
 
 ---
 
 ## Admin System
 
 ### admin_login.php
-**File Reference:** [`admin_login.php`](c:\wamp64\www\lostfound\admin_login.php)
+**File Reference:** [`admin_login.php`](admin_login.php)
 
-**Purpose:** Login page for administrators
+**Purpose:** Login page for administrators using role-based authentication
 
 **Redirect if Already Logged In:**
 ```php
@@ -993,41 +1064,53 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $username = $_POST['username'];
     $password = $_POST['password'];
     
-    if (authenticateAdmin($username, $password)) {
-        header('Location: admin_dashboard.php');
-        exit();
+    // Try to authenticate using the user login function
+    $loginError = loginUser($conn, $username, $password);
+    
+    if (empty($loginError)) {
+        // Check if the logged-in user has admin rights
+        if (isAdminLoggedIn()) {
+            // Redirect to admin dashboard
+            header('Location: admin_dashboard.php');
+            exit();
+        } else {
+            // User logged in but doesn't have admin rights
+            session_destroy();
+            $error = 'Access denied. You do not have administrator privileges.';
+        }
     } else {
-        $error = 'Invalid username or password';
+        // Login failed
+        $error = $loginError;
     }
 }
 ```
-- Calls [`authenticateAdmin()`](#function-authenticateadminusername-password) from [`admin_config.php`](c:\wamp64\www\lostfound\admin_config.php)
-- Redirects to dashboard on success
-- Shows error message on failure
+- Uses [`loginUser()`](#function-loginuserconn-username-password) from [`user_config.php`](user_config.php)
+- Checks `is_admin` field from database after login
+- Destroys session if user lacks admin privileges
+- Shows specific error for access denial
 
 **UI Elements:**
 
 1. **Security Warning:**
 ```html
-<div class="security-notice">
+<div style="background: #fff3cd; border: 1px solid #ffc107;">
     <strong>⚠️ Authorized Personnel Only</strong><br>
-    This area is restricted to administrators only. All access attempts are logged.
+    All access attempts are logged and monitored.
 </div>
 ```
 - Visual deterrent
 - Professional appearance
 
-2. **Default Credentials Display:**
+2. **Admin Access Information:**
 ```html
 <div>
-    <h3>🔑 Default Credentials</h3>
-    <p><strong>Username:</strong> admin</p>
-    <p><strong>Password:</strong> isaacK@12345</p>
-    <p>⚠️ Change these credentials in admin_config.php for production use</p>
+    <h3>🔑 Admin Access Information</h3>
+    <p>Only users with admin privileges can access this panel.</p>
+    <p>⚠️ Login with your regular user account if you have admin rights assigned.</p>
 </div>
 ```
-- Development convenience
-- **Remove in production environment**
+- Clarifies role-based system
+- Informs users to use regular credentials
 - Security risk if left visible
 
 3. **Auto-focus:**
@@ -1038,27 +1121,104 @@ document.getElementById('username').focus();
 - Better user experience
 - Runs on page load
 
-**Custom Styling:**
-```css
-.login-form {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(20px);
-    padding: 3rem 2rem;
-    border-radius: 24px;
+**References:** [`admin_config.php`](admin_config.php), [`user_config.php`](user_config.php)
+
+**Links To:** [`admin_dashboard.php`](admin_dashboard.php)
+
+---
+
+### grant_admin.php
+**File Reference:** [`grant_admin.php`](grant_admin.php)
+
+**Purpose:** Utility script to grant admin rights to users
+
+**Access Control:**
+```php
+requireAdmin();
+```
+- Only admins can access this page
+- Prevents unauthorized admin creation
+- First-time setup requires manual database edit
+
+**Form Processing:**
+```php
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $username = mysqli_real_escape_string($conn, $_POST['username']);
+    
+    // Check if user exists
+    $sql = "SELECT id, username, is_admin FROM users WHERE username = '$username'";
+    $result = mysqli_query($conn, $sql);
+    
+    if (mysqli_num_rows($result) > 0) {
+        $user = mysqli_fetch_assoc($result);
+        
+        if ($user['is_admin'] == 1) {
+            $message = "User '{$username}' already has admin rights!";
+            $messageType = 'info';
+        } else {
+            // Grant admin rights
+            $sql = "UPDATE users SET is_admin = 1 WHERE username = '$username'";
+            if (mysqli_query($conn, $sql)) {
+                $message = "Admin rights successfully granted to user '{$username}'!";
+                $messageType = 'success';
+            }
+        }
+    } else {
+        $message = "User '{$username}' not found!";
+        $messageType = 'error';
+    }
 }
 ```
-- Glassmorphism effect
-- Red theme for admin area
-- Visually distinct from user pages
+- Validates user exists before granting rights
+- Checks if user already has admin rights
+- Updates `is_admin` field in database
+- Provides clear feedback messages
 
-**References:** [`admin_config.php`](c:\wamp64\www\lostfound\admin_config.php)
+**Display All Users:**
+```php
+$sql = "SELECT id, username, email, is_admin FROM users ORDER BY username";
+$result = mysqli_query($conn, $sql);
+$users = mysqli_fetch_all($result, MYSQLI_ASSOC);
+```
+- Shows all registered users
+- Displays current admin status
+- Helps identify who to promote
 
-**Links To:** [`admin_dashboard.php`](c:\wamp64\www\lostfound\admin_dashboard.php)
+**Security Warning:**
+```html
+<div style="background: #ff6b6b; color: white;">
+    <strong>⚠️ SECURITY WARNING</strong><br>
+    Delete this file after granting admin rights to prevent unauthorized access!
+</div>
+```
+- Prominent warning at top of page
+- File should be removed in production
+- Can be restricted via .htaccess instead
+
+**User List Display:**
+```php
+<?php foreach ($users as $user): ?>
+    <div class="user-item">
+        <strong><?php echo htmlspecialchars($user['username']); ?></strong>
+        <small><?php echo htmlspecialchars($user['email']); ?></small>
+        <?php if ($user['is_admin'] == 1): ?>
+            <span style="background: #10b981;">⭐ ADMIN</span>
+        <?php else: ?>
+            <span style="background: #6b7280;">USER</span>
+        <?php endif; ?>
+    </div>
+<?php endforeach; ?>
+```
+- Visual badges show admin status
+- Green for admin, gray for regular user
+- Makes it easy to see who has privileges
+
+**References:** [`db.php`](db.php), [`user_config.php`](user_config.php), [`admin_config.php`](admin_config.php)
 
 ---
 
 ### admin_dashboard.php
-**File Reference:** [`admin_dashboard.php`](c:\wamp64\www\lostfound\admin_dashboard.php)
+**File Reference:** [`admin_dashboard.php`](admin_dashboard.php)
 
 **Purpose:** Main admin control panel for managing the portal
 
@@ -1164,7 +1324,25 @@ if (isset($_POST['delete_user'])) {
 ```
 - Deletes user account
 - CASCADE foreign key deletes user's items automatically
-- CASCADE deletes user's deletion requests
+- Permanent action with confirmation
+
+**Toggle Admin Rights:**
+```php
+if (isset($_POST['toggle_admin'])) {
+    $userId = mysqli_real_escape_string($conn, $_POST['user_id']);
+    $currentStatus = mysqli_real_escape_string($conn, $_POST['current_status']);
+    $newStatus = $currentStatus == 1 ? 0 : 1;
+    
+    $sql = "UPDATE users SET is_admin = '$newStatus' WHERE id = '$userId'";
+    if (mysqli_query($conn, $sql)) {
+        $success = $newStatus == 1 ? "Admin rights granted successfully" : "Admin rights removed successfully";
+    }
+}
+```
+- Toggles `is_admin` field between 0 and 1
+- Grants admin rights: 0 → 1
+- Revokes admin rights: 1 → 0
+- Immediate effect on user's access
 
 **Get Pending Deletion Requests:**
 ```php
@@ -1196,6 +1374,7 @@ $allUsers = mysqli_fetch_all($result, MYSQLI_ASSOC);
 - `COUNT(items.id)` counts items per user
 - `GROUP BY users.id` groups results by user
 - Shows how many items each user posted
+- Includes `is_admin` field for role display
 
 **Portal Statistics:**
 ```php
@@ -1219,16 +1398,41 @@ $recentItems = mysqli_fetch_all($result, MYSQLI_ASSOC);
 - Last 10 items posted
 - Admin overview of activity
 
-**Delete Confirmation:**
+**User Management Display:**
 ```php
-<form method="POST" onsubmit="return confirm('Are you sure you want to delete this item? This action cannot be undone.')">
-    <input type="hidden" name="item_id" value="<?php echo $item['id']; ?>">
-    <button type="submit" name="delete_item">🗑️ Delete</button>
-</form>
+<?php foreach ($allUsers as $user): ?>
+<div class="user-row">
+    <div class="item-info">
+        <h4>
+            <?php echo htmlspecialchars($user['username']); ?>
+            <?php if ($user['is_admin'] == 1): ?>
+                <span style="background: #10b981; color: white;">⭐ ADMIN</span>
+            <?php endif; ?>
+        </h4>
+        <p><strong>Email:</strong> <?php echo htmlspecialchars($user['email']); ?></p>
+        <p><strong>Items Posted:</strong> <?php echo $user['item_count']; ?></p>
+    </div>
+    
+    <div class="user-actions">
+        <form method="POST">
+            <input type="hidden" name="user_id" value="<?php echo $user['id']; ?>">
+            <input type="hidden" name="current_status" value="<?php echo $user['is_admin']; ?>">
+            <button type="submit" name="toggle_admin">
+                <?php echo $user['is_admin'] == 1 ? '❌ Remove Admin' : '⭐ Make Admin'; ?>
+            </button>
+        </form>
+        
+        <form method="POST" onsubmit="return confirm('Delete this user?')">
+            <input type="hidden" name="user_id" value="<?php echo $user['id']; ?>">
+            <button type="submit" name="delete_user">🗑️ Delete User</button>
+        </form>
+    </div>
+</div>
+<?php endforeach; ?>
 ```
-- JavaScript `confirm()` shows dialog box
-- Returns `false` if user clicks "Cancel"
-- Prevents accidental deletions
+- Shows admin badge for admin users
+- Toggle button changes based on current status
+- Confirmation dialog prevents accidents
 
 **Custom Admin Styling:**
 ```css
@@ -1246,187 +1450,7 @@ $recentItems = mysqli_fetch_all($result, MYSQLI_ASSOC);
 - Interactive hover effects
 - Professional appearance
 
-**References:** [`db.php`](c:\wamp64\www\lostfound\db.php), [`admin_config.php`](c:\wamp64\www\lostfound\admin_config.php)
-
----
-
-## Setup System
-
-### setup.php
-**File Reference:** [`setup.php`](c:\wamp64\www\lostfound\setup.php)
-
-**Purpose:** Database initialization and setup script
-
-**Run Once:** Access via `http://localhost/lostfound/setup.php`
-
-**What It Does:**
-1. Creates database if doesn't exist
-2. Creates users table
-3. Creates items table
-4. Creates deletion_requests table
-5. Optionally inserts sample data
-6. Creates uploads directory
-
-**Database Connection (Without Database Selected):**
-```php
-$conn = mysqli_connect($host, $username, $password);
-```
-- Connects to MySQL server only
-- Database doesn't exist yet
-- Different from [`db.php`](c:\wamp64\www\lostfound\db.php) which selects database
-
-**Create Database:**
-```php
-$sql = "CREATE DATABASE IF NOT EXISTS $database";
-
-if (mysqli_query($conn, $sql)) {
-    $messages[] = "✅ Database '$database' created successfully!";
-}
-```
-- `IF NOT EXISTS` prevents errors if already exists
-- Safe to run multiple times
-
-**Select Database:**
-```php
-mysqli_select_db($conn, $database);
-```
-- Switches to newly created database
-- All subsequent queries use this database
-
-**Create Users Table:**
-```php
-$sql = "CREATE TABLE IF NOT EXISTS users (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(50) NOT NULL UNIQUE,
-    email VARCHAR(100) NOT NULL UNIQUE,
-    password VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-)";
-```
-- `AUTO_INCREMENT` generates IDs automatically
-- `PRIMARY KEY` uniquely identifies each row
-- `UNIQUE` prevents duplicate usernames/emails
-- `VARCHAR(255)` accommodates bcrypt hashes
-- `TIMESTAMP` auto-sets creation time
-
-**Create Items Table:**
-```php
-$sql = "CREATE TABLE IF NOT EXISTS items (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT DEFAULT NULL,
-    title VARCHAR(100) NOT NULL,
-    description TEXT NOT NULL,
-    type ENUM('lost', 'found') NOT NULL,
-    location VARCHAR(100) NOT NULL,
-    contact VARCHAR(100) NOT NULL,
-    image VARCHAR(255) DEFAULT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-)";
-```
-- `user_id` can be NULL for guest posts
-- `ENUM('lost', 'found')` restricts to two values
-- `TEXT` allows long descriptions
-- `FOREIGN KEY` links to users table
-- `ON DELETE CASCADE` auto-deletes items when user deleted
-
-**Create Deletion Requests Table:**
-```php
-$sql = "CREATE TABLE IF NOT EXISTS deletion_requests (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    item_id INT NOT NULL,
-    user_id INT NOT NULL,
-    status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-)";
-```
-- Tracks user deletion requests
-- `status` defaults to 'pending'
-- CASCADE deletes when item or user deleted
-
-**Sample Data Insertion:**
-```php
-if (isset($_POST['sample_data'])) {
-    $sampleItems = [
-        [
-            'title' => 'Black iPhone 13',
-            'description' => 'Black iPhone 13 with clear case...',
-            'type' => 'lost',
-            'location' => 'Main Library, 2nd Floor',
-            'contact' => 'student1@university.edu'
-        ],
-        // ... more items
-    ];
-    
-    foreach ($sampleItems as $item) {
-        $title = mysqli_real_escape_string($conn, $item['title']);
-        $description = mysqli_real_escape_string($conn, $item['description']);
-        // ... escape all fields
-        
-        $sql = "INSERT INTO items (title, description, type, location, contact) 
-                VALUES ('$title', '$description', '$type', '$location', '$contact')";
-        
-        mysqli_query($conn, $sql);
-    }
-}
-```
-- Array of predefined items
-- Loops and inserts each
-- Good for testing/demonstration
-- Optional checkbox in form
-
-**Create Uploads Directory:**
-```php
-$uploadsDir = 'uploads';
-if (!is_dir($uploadsDir)) {
-    if (mkdir($uploadsDir, 0755, true)) {
-        $messages[] = "✅ Uploads directory created successfully!";
-    }
-}
-```
-- `mkdir()` creates directory
-- `0755` sets permissions (owner: rwx, others: r-x)
-- `true` creates parent directories if needed
-
-**Check if Database Exists:**
-```php
-$testConn = @mysqli_connect($host, $username, $password);
-
-if ($testConn) {
-    $result = mysqli_query($testConn, "SHOW DATABASES LIKE '$database'");
-    
-    if ($result && mysqli_num_rows($result) > 0) {
-        mysqli_select_db($testConn, $database);
-        $result = mysqli_query($testConn, "SHOW TABLES LIKE 'items'");
-        
-        if ($result && mysqli_num_rows($result) > 0) {
-            $databaseExists = true;
-        }
-    }
-    
-    mysqli_close($testConn);
-}
-```
-- `@` suppresses errors
-- `SHOW DATABASES LIKE` checks database existence
-- `SHOW TABLES LIKE` checks table existence
-- Used to display appropriate message
-
-**System Information Display:**
-```php
-<div>PHP Version: <?php echo PHP_VERSION; ?></div>
-<div>Server: <?php echo $_SERVER['SERVER_SOFTWARE']; ?></div>
-<div>Upload Max Size: <?php echo ini_get('upload_max_filesize'); ?></div>
-<div>Post Max Size: <?php echo ini_get('post_max_size'); ?></div>
-```
-- `PHP_VERSION` constant
-- `$_SERVER['SERVER_SOFTWARE']` shows Apache/nginx version
-- `ini_get()` retrieves PHP configuration values
-- Helpful for troubleshooting
-
-**References:** Self-contained, creates foundation for entire system
+**References:** [`db.php`](db.php), [`admin_config.php`](admin_config.php), [`user_config.php`](user_config.php)
 
 ---
 
@@ -2100,7 +2124,7 @@ if (contact.value.indexOf('@') == -1) {
 ### Database: lostfound_db
 
 #### Table: users
-**Purpose:** Stores registered user accounts
+**Purpose:** Stores registered user accounts with role-based admin support
 
 ```sql
 CREATE TABLE users (
@@ -2108,6 +2132,7 @@ CREATE TABLE users (
     username VARCHAR(50) NOT NULL UNIQUE,
     email VARCHAR(100) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
+    is_admin TINYINT(1) DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 ```
@@ -2117,6 +2142,7 @@ CREATE TABLE users (
 - `username` - Unique username, max 50 characters
 - `email` - Unique email, max 100 characters
 - `password` - Bcrypt hash (60 chars, but 255 for future algorithms)
+- `is_admin` - Admin status: 0 = regular user, 1 = administrator (added for role-based access)
 - `created_at` - Registration timestamp
 
 **Indexes:**
@@ -2124,12 +2150,12 @@ CREATE TABLE users (
 - UNIQUE on `username`
 - UNIQUE on `email`
 
-**Used By:** [`user_config.php`](c:\wamp64\www\lostfound\user_config.php) functions
+**Used By:** [`user_config.php`](user_config.php) functions, [`admin_config.php`](admin_config.php)
 
 ---
 
 #### Table: items
-**Purpose:** Stores all lost and found items
+**Purpose:** Stores all lost and found items (image required)
 
 ```sql
 CREATE TABLE items (
@@ -2140,7 +2166,7 @@ CREATE TABLE items (
     type ENUM('lost', 'found') NOT NULL,
     location VARCHAR(100) NOT NULL,
     contact VARCHAR(100) NOT NULL,
-    image VARCHAR(255) DEFAULT NULL,
+    image VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
@@ -2154,7 +2180,7 @@ CREATE TABLE items (
 - `type` - Either 'lost' or 'found' (ENUM restricts values)
 - `location` - Where lost/found, max 100 characters
 - `contact` - Email address, max 100 characters
-- `image` - Filename only (not full path), max 255 characters
+- `image` - Filename only (not full path), max 255 characters, **REQUIRED (NOT NULL)**
 - `created_at` - When posted
 
 **Relationships:**
@@ -2167,41 +2193,7 @@ CREATE TABLE items (
 
 **Used By:** All pages that display or create items
 
----
-
-#### Table: deletion_requests
-**Purpose:** Tracks user requests to delete items (requires admin approval)
-
-```sql
-CREATE TABLE deletion_requests (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    item_id INT NOT NULL,
-    user_id INT NOT NULL,
-    status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
-```
-
-**Columns:**
-- `id` - Unique identifier
-- `item_id` - Item to be deleted
-- `user_id` - User requesting deletion
-- `status` - Current status (pending/approved/rejected)
-- `created_at` - When requested
-
-**Relationships:**
-- Links to both items and users tables
-- CASCADE delete when item or user deleted
-
-**Workflow:**
-1. User requests deletion (inserts row with 'pending' status)
-2. Admin reviews in dashboard
-3. Admin approves → deletes item (CASCADE removes request)
-4. Admin rejects → updates status to 'rejected'
-
-**Used By:** [`user_dashboard.php`](c:\wamp64\www\lostfound\user_dashboard.php), [`admin_dashboard.php`](c:\wamp64\www\lostfound\admin_dashboard.php)
+**Important:** Image field is required (NOT NULL) - all items must have an image
 
 ---
 
@@ -2209,24 +2201,26 @@ CREATE TABLE deletion_requests (
 
 ```
 lostfound/
-├── db.php                  # Database connection
+├── db.php                  # Database connection & auto-setup
 ├── user_config.php         # User authentication functions
-├── admin_config.php        # Admin authentication functions
-├── index.php               # Homepage
-├── items.php               # Browse all items
+├── admin_config.php        # Admin authentication functions (role-based)
+├── index.php               # Homepage with statistics
+├── items.php               # Browse all items with search/filter
 ├── report_lost.php         # Report lost item form
 ├── report_found.php        # Report found item form
 ├── user_login.php          # User login page
 ├── user_register.php       # User registration page
 ├── user_dashboard.php      # User personal dashboard
 ├── edit_item.php           # Edit item form
-├── admin_login.php         # Admin login page
+├── admin_login.php         # Admin login page (role-based)
 ├── admin_dashboard.php     # Admin control panel
-├── setup.php               # Database setup script
-├── style.css               # Stylesheet
-├── script.js               # JavaScript validation
+├── grant_admin.php         # Utility to grant admin rights
+├── migration.sql           # SQL migration script for is_admin field
+├── style.css               # Stylesheet (professional, responsive)
+├── script.js               # JavaScript validation & interactivity
 ├── README.md               # Project documentation
-└── uploads/                # Image upload directory (created by setup)
+├── CODE_DOCUMENTATION.md   # This file
+└── uploads/                # Image upload directory (auto-created)
 ```
 
 ---
@@ -2479,16 +2473,18 @@ This Lost and Found Portal demonstrates a complete, functional web application u
 - **User roles** (guest/user/admin) provide appropriate access levels
 
 **For Production Deployment:**
-1. Change admin credentials
+1. Restrict access to grant_admin.php (delete or use .htaccess)
 2. Use environment variables for database config
 3. Implement HTTPS
 4. Add CSRF protection
-5. Use prepared statements
+5. Use prepared statements instead of mysqli_real_escape_string
 6. Add logging and monitoring
 7. Implement rate limiting
 8. Regular backups
 9. Error logging to files (not display)
 10. Input validation library
+11. Configure proper file upload limits
+12. Set secure session configuration
 
 ---
 
