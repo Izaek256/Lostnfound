@@ -14,6 +14,15 @@
 session_start();
 
 /**
+ * Check if current user is an admin
+ * 
+ * Returns true if user is logged in and has admin rights
+ */
+function isCurrentUserAdmin() {
+    return isUserLoggedIn() && isset($_SESSION['is_admin']) && $_SESSION['is_admin'] == 1;
+}
+
+/**
  * Check if user is logged in
  * 
  * Returns true if user is logged in, false otherwise
@@ -121,7 +130,7 @@ function loginUser($conn, $username, $password) {
     $username = mysqli_real_escape_string($conn, $username);
     
     // Get user from database
-    $sql = "SELECT id, username, email, password FROM users WHERE username = '$username'";
+    $sql = "SELECT id, username, email, password, is_admin FROM users WHERE username = '$username'";
     $result = mysqli_query($conn, $sql);
     
     if (mysqli_num_rows($result) === 0) {
@@ -136,6 +145,7 @@ function loginUser($conn, $username, $password) {
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['username'] = $user['username'];
         $_SESSION['user_email'] = $user['email'];
+        $_SESSION['is_admin'] = $user['is_admin'];
         return ''; // Success
     } else {
         return 'Invalid username or password';

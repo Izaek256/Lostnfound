@@ -32,9 +32,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $error = loginUser($conn, $username, $password);
     
     if (empty($error)) {
-        // Login successful, redirect to dashboard
-        header('Location: user_dashboard.php');
-        exit();
+        // Login successful, check if user is admin
+        if (isset($_SESSION['is_admin']) && $_SESSION['is_admin'] == 1) {
+            // Redirect admin users to admin dashboard
+            header('Location: admin_dashboard.php');
+            exit();
+        } else {
+            // Redirect regular users to user dashboard
+            header('Location: user_dashboard.php');
+            exit();
+        }
     } else {
         $message = $error;
         $messageType = 'error';

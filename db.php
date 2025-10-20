@@ -29,9 +29,14 @@ $sql = "CREATE TABLE IF NOT EXISTS users (
     username VARCHAR(50) NOT NULL UNIQUE,
     email VARCHAR(100) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
+    is_admin TINYINT(1) DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )";
 mysqli_query($conn, $sql);
+
+// Add is_admin column if it doesn't exist (for existing databases)
+$sql = "ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin TINYINT(1) DEFAULT 0";
+@mysqli_query($conn, $sql);
 
 // Create items table
 $sql = "CREATE TABLE IF NOT EXISTS items (

@@ -4,54 +4,30 @@
  * 
  * This file handles all admin authentication functions.
  * It manages:
- * - Admin login credentials
+ * - Admin role checking (based on user account role)
  * - Session management
  * - Login/logout functionality
  * - Access control for admin pages
  * 
- * Security Note: Change the default credentials before deploying to production!
+ * Note: Admin rights are now assigned via the is_admin field in the users table
  */
 
 // Start a session to track if admin is logged in
 // Sessions store data across multiple pages for the same user
-session_start();
-
-// Define admin login credentials
-// In production, these should be stored in a database with hashed passwords
-define('ADMIN_USERNAME', 'admin');           // Admin username
-define('ADMIN_PASSWORD', 'isaacK@12345');   // Admin password
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
 
 /**
  * Check if admin is logged in
  * 
- * Returns true if admin is logged in, false otherwise
- * Uses $_SESSION to check login status
+ * Returns true if user is logged in and has admin rights
+ * Uses $_SESSION to check login status and admin role
  */
 function isAdminLoggedIn()
 {
-    // Check if the session variable exists and is true
-    if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] == true) {
-        return true;
-    }
-    return false;
-}
-
-/**
- * Authenticate admin credentials
- * 
- * Checks if provided username and password match the admin credentials
- * If valid, sets session variable to mark admin as logged in
- * 
- * @param string $username - Username entered by user
- * @param string $password - Password entered by user
- * @return bool - True if credentials are valid, false otherwise
- */
-function authenticateAdmin($username, $password)
-{
-    // Compare provided credentials with defined constants
-    if ($username == ADMIN_USERNAME && $password == ADMIN_PASSWORD) {
-        // Set session variable to mark user as logged in
-        $_SESSION['admin_logged_in'] = true;
+    // Check if user is logged in and has admin rights
+    if (isset($_SESSION['user_id']) && isset($_SESSION['is_admin']) && $_SESSION['is_admin'] == 1) {
         return true;
     }
     return false;

@@ -1,5 +1,27 @@
 # 🎓 University Lost and Found Portal - System Architecture & Analysis
 
+## 🔄 RECENT UPDATE: Role-Based Admin System
+
+**Important Change:** The system now uses **role-based authentication** instead of separate admin credentials!
+
+### What's New:
+- ✅ **Single User System**: Admins are regular users with elevated privileges
+- ✅ **`is_admin` Field**: Database field determines admin rights (0 = user, 1 = admin)
+- ✅ **Easy Management**: Grant/revoke admin rights through admin dashboard
+- ✅ **Multiple Admins**: Support unlimited admin accounts
+- ✅ **No Hardcoded Credentials**: Admin credentials removed from code
+
+### Quick Setup:
+1. Register a user account at `user_register.php`
+2. Visit `grant_admin.php` to make your account admin
+3. **DELETE** `grant_admin.php` after use!
+4. Login at `admin_login.php` with your user credentials
+
+📖 **See `ADMIN_SETUP_GUIDE.md` for detailed instructions**
+📋 **See `ADMIN_QUICK_REFERENCE.md` for quick reference**
+
+---
+
 ## 📊 Executive Summary
 
 A full-stack web application built with PHP and MySQL that facilitates the reporting and recovery of lost items within a university campus. The system supports both guest and registered user interactions, with an administrative backend for moderation and user management.

@@ -8,10 +8,14 @@
  * - Processing login attempts
  * - Redirecting logged-in admins to dashboard
  * - Showing error messages for failed logins
+ * 
+ * Note: Users with admin rights can login here with their regular credentials
  */
 
-// Include admin configuration and functions
+// Include admin configuration and database
 require_once 'admin_config.php';
+require_once 'db.php';
+require_once 'user_config.php';
 
 // If admin is already logged in, redirect to dashboard
 // No need to show login form if already authenticated
@@ -29,15 +33,23 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $username = $_POST['username'];
     $password = $_POST['password'];
     
-    // Try to authenticate with provided credentials
-    // authenticateAdmin() function is defined in admin_config.php
-    if (authenticateAdmin($username, $password)) {
-        // If successful, redirect to admin dashboard
-        header('Location: admin_dashboard.php');
-        exit();
+    // Try to authenticate using the user login function
+    $loginError = loginUser($conn, $username, $password);
+    
+    if (empty($loginError)) {
+        // Check if the logged-in user has admin rights
+        if (isAdminLoggedIn()) {
+            // Redirect to admin dashboard
+            header('Location: admin_dashboard.php');
+            exit();
+        } else {
+            // User logged in but doesn't have admin rights
+            session_destroy();
+            $error = 'Access denied. You do not have administrator privileges.';
+        }
     } else {
-        // If failed, show error message
-        $error = 'Invalid username or password';
+        // Login failed
+        $error = $loginError;
     }
 }
 ?>
@@ -132,10 +144,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <!-- Default Credentials Info (Remove in production) -->
         <div class="form-container" style="max-width: 500px; margin: 0 auto; background: #e7f3ff; border: 1px solid #2563eb;">
             <div style="text-align: center;">
-                <h3 style="color: var(--text-primary); margin-bottom: 1rem;">🔑 Default Credentials</h3>
-                <p style="color: var(--text-primary); margin-bottom: 0.5rem;"><strong>Username:</strong> admin</p>
-                <p style="color: var(--text-primary); margin-bottom: 1rem;"><strong>Password:</strong> lostfound2024</p>
-                <p style="color: var(--text-secondary); font-size: 0.9rem;">⚠️ Change these credentials in admin_config.php for production use</p>
+                <h3 style="color: var(--text-primary); margin-bottom: 1rem;">🔑 Admin Access Information</h3>
+                <p style="color: var(--text-primary); margin-bottom: 0.5rem;">Only users with admin privileges can access this panel.</p>
+                <p style="color: var(--text-secondary); font-size: 0.9rem;">⚠️ Login with your regular user account if you have admin rights assigned.</p>
             </div>
         </div>
     </main>

@@ -111,6 +111,13 @@ $stats = mysqli_fetch_assoc($result);
             </div>
         <?php endif; ?>
 
+        <?php if (isset($_SESSION['is_admin']) && $_SESSION['is_admin'] == 1): ?>
+            <div class="alert" style="background: #10b981; color: white; border-color: #059669;">
+                <strong>⭐ Admin Access:</strong> You have administrator privileges. 
+                <a href="admin_dashboard.php" style="color: white; text-decoration: underline; font-weight: bold;">Go to Admin Dashboard →</a>
+            </div>
+        <?php endif; ?>
+
         <div class="form-container">
             <h2>👤 Welcome, <?php echo htmlspecialchars($username); ?>!</h2>
             <p style="text-align: center; color: var(--text-secondary); margin-bottom: 2rem;">

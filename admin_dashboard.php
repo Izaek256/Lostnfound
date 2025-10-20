@@ -51,6 +51,20 @@ if (isset($_POST['delete_user'])) {
     }
 }
 
+// Handle toggle admin rights
+if (isset($_POST['toggle_admin'])) {
+    $userId = mysqli_real_escape_string($conn, $_POST['user_id']);
+    $currentStatus = mysqli_real_escape_string($conn, $_POST['current_status']);
+    $newStatus = $currentStatus == 1 ? 0 : 1;
+    
+    $sql = "UPDATE users SET is_admin = '$newStatus' WHERE id = '$userId'";
+    if (mysqli_query($conn, $sql)) {
+        $success = $newStatus == 1 ? "Admin rights granted successfully" : "Admin rights removed successfully";
+    } else {
+        $error = "Error updating user: " . mysqli_error($conn);
+    }
+}
+
 // Get all users
 $sql = "SELECT users.*, COUNT(items.id) as item_count 
         FROM users 
@@ -281,7 +295,7 @@ $recentItems = mysqli_fetch_all($result, MYSQLI_ASSOC);
                 🛡️ Admin Dashboard
             </div>
             <div class="admin-actions">
-                <span>Welcome, Admin</span>
+                <span>Welcome, <?php echo isset($_SESSION['username']) ? htmlspecialchars($_SESSION['username']) : 'Admin'; ?></span>
                 <a href="index.php" class="btn btn-secondary">View Portal</a>
                 <a href="?logout=1" class="btn btn-danger" onclick="return confirm('Are you sure you want to logout?')">Logout</a>
             </div>
@@ -369,9 +383,14 @@ $recentItems = mysqli_fetch_all($result, MYSQLI_ASSOC);
             <div class="table-content" style="max-height: 400px;">
                 <?php if (count($allUsers) > 0): ?>
                     <?php foreach ($allUsers as $user): ?>
-                    <div class="item-row" style="grid-template-columns: 1fr auto auto auto;">
+                    <div class="item-row" style="grid-template-columns: 1fr auto auto auto auto;">
                         <div class="item-info">
-                            <h4><?php echo htmlspecialchars($user['username']); ?></h4>
+                            <h4>
+                                <?php echo htmlspecialchars($user['username']); ?>
+                                <?php if ($user['is_admin'] == 1): ?>
+                                    <span style="background: #10b981; color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.7rem; margin-left: 0.5rem;">ADMIN</span>
+                                <?php endif; ?>
+                            </h4>
                             <p><strong>Email:</strong> <?php echo htmlspecialchars($user['email']); ?></p>
                             <p><strong>Items Posted:</strong> <?php echo $user['item_count']; ?> | <strong>Joined:</strong> <?php echo date('M j, Y', strtotime($user['created_at'])); ?></p>
                         </div>
@@ -379,6 +398,14 @@ $recentItems = mysqli_fetch_all($result, MYSQLI_ASSOC);
                         <div>
                             <a href="items.php" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">View Items</a>
                         </div>
+                        
+                        <form method="POST" style="display: inline;">
+                            <input type="hidden" name="user_id" value="<?php echo $user['id']; ?>">
+                            <input type="hidden" name="current_status" value="<?php echo $user['is_admin']; ?>">
+                            <button type="submit" name="toggle_admin" class="btn <?php echo $user['is_admin'] == 1 ? 'btn-secondary' : 'btn-success'; ?>" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">
+                                <?php echo $user['is_admin'] == 1 ? '❌ Remove Admin' : '⭐ Make Admin'; ?>
+                            </button>
+                        </form>
                         
                         <form method="POST" style="display: inline;" onsubmit="return confirm('Delete this user? This will also delete all their items.')">
                             <input type="hidden" name="user_id" value="<?php echo $user['id']; ?>">
