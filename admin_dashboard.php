@@ -433,6 +433,13 @@ $recentItems = mysqli_fetch_all($result, MYSQLI_ASSOC);
                 </div>
                 
                 <div style="text-align: center;">
+                    <div style="font-size: 2.5rem; margin-bottom: 1rem;">👑</div>
+                    <h4 style="color: white; margin-bottom: 1rem;">Grant Admin Rights</h4>
+                    <p style="color: rgba(255, 255, 255, 0.8); margin-bottom: 1.5rem;">Give admin privileges to users</p>
+                    <a href="grant_admin.php" class="btn btn-secondary">Manage Admins</a>
+                </div>
+                
+                <div style="text-align: center;">
                     <div style="font-size: 2.5rem; margin-bottom: 1rem;">🏠</div>
                     <h4 style="color: white; margin-bottom: 1rem;">Portal Home</h4>
                     <p style="color: rgba(255, 255, 255, 0.8); margin-bottom: 1.5rem;">Return to the main portal interface</p>

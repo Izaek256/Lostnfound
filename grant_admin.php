@@ -5,10 +5,15 @@
  * This is a utility script to grant admin rights to a user.
  * Run this file in your browser to make a user an administrator.
  * 
- * SECURITY WARNING: Delete or restrict access to this file after using it!
+ * SECURITY WARNING: Only admins can access this file!
  */
 
 require_once 'db.php';
+require_once 'user_config.php';
+require_once 'admin_config.php';
+
+// Require admin authentication
+requireAdmin();
 
 $message = '';
 $messageType = '';
@@ -65,6 +70,20 @@ $users = mysqli_fetch_all($result, MYSQLI_ASSOC);
                 <img src="./assets/logo.webp" alt="Lost & Found Logo">
                 <h1>University Lost & Found</h1>
             </div>
+            <button class="menu-toggle" aria-label="Toggle menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <nav>
+                <ul>
+                    <li><a href="index.php">Home</a></li>
+                    <li><a href="admin_dashboard.php">Admin Dashboard</a></li>
+                    <li><a href="grant_admin.php" class="active">Grant Admin</a></li>
+                    <li><a href="user_dashboard.php">My Dashboard</a></li>
+                    <li><a href="user_dashboard.php?logout=1">Logout</a></li>
+                </ul>
+            </nav>
         </div>
     </header>
 

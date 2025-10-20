@@ -11,7 +11,9 @@
  */
 
 // Start session for user tracking
-session_start();
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
 
 /**
  * Check if current user is an admin

@@ -86,6 +86,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <li><a href="items.php">View Items</a></li>
                     <?php if (isUserLoggedIn()): ?>
                         <li><a href="user_dashboard.php">My Dashboard</a></li>
+                        <?php if (isCurrentUserAdmin()): ?>
+                            <li><a href="admin_dashboard.php">Admin Panel</a></li>
+                        <?php endif; ?>
                         <li><a href="user_dashboard.php?logout=1">Logout</a></li>
                     <?php else: ?>
                         <li><a href="user_login.php">Login</a></li>

@@ -117,6 +117,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <li><a href="report_found.php">Report Found</a></li>
                     <li><a href="items.php">View Items</a></li>
                     <li><a href="user_dashboard.php">My Dashboard</a></li>
+                    <?php if (isCurrentUserAdmin()): ?>
+                        <li><a href="admin_dashboard.php">Admin Panel</a></li>
+                    <?php endif; ?>
                     <li><a href="?logout=1" onclick="return confirm('Are you sure you want to logout?')">Logout</a></li>
                 </ul>
             </nav>
