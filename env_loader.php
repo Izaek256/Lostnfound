@@ -9,7 +9,9 @@
 // Load .env file if it exists
 function loadEnv($path = __DIR__ . '/.env') {
     if (!file_exists($path)) {
-        die("Error: .env file not found at $path. Please copy .env.example to .env and configure it.");
+        // Log warning but don't crash the application
+        error_log("Warning: .env file not found at $path. Using default configuration.");
+        return false;
     }
 
     $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
@@ -34,6 +36,8 @@ function loadEnv($path = __DIR__ . '/.env') {
             putenv("$key=$value");
         }
     }
+    
+    return true;
 }
 
 // Helper function to get environment variable

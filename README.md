@@ -855,6 +855,23 @@ lostfound/
 
 **IMPORTANT:** Before running the application, you must configure the `.env` file with your database credentials.
 
+**For Local Development:**
+
+**Option A: Automated Setup (Recommended)**
+
+Run the setup script that will guide you through creating the `.env` file:
+
+```bash
+# Windows
+setup-env.bat
+
+# Linux/Mac
+chmod +x setup-env.sh
+./setup-env.sh
+```
+
+**Option B: Manual Setup**
+
 1. **Copy the example environment file:**
    ```bash
    # Navigate to project directory
@@ -888,11 +905,43 @@ lostfound/
    APP_TIMEZONE=UTC
    ```
 
+**For Production/Hosting Platforms:**
+
+1. **After deploying your code, create the `.env` file manually** on your hosting platform:
+   - Access your hosting control panel (cPanel, Plesk, etc.)
+   - Use File Manager or SSH/FTP to create a new file named `.env`
+   - Copy content from `.env.example` and update with your production credentials
+
+2. **Update with production values:**
+   ```env
+   # Database Configuration (from your hosting provider)
+   DB_HOST=your_host_here              # e.g., localhost or mysql.example.com
+   DB_USERNAME=your_database_user
+   DB_PASSWORD=your_strong_password
+   DB_DATABASE=your_database_name
+   
+   # Application Configuration
+   APP_NAME="Lost and Found System"
+   APP_ENV=production                  # IMPORTANT: Set to production
+   
+   # Security Configuration
+   SESSION_NAME=lostnfound_session
+   SESSION_LIFETIME=7200
+   
+   # Upload Configuration
+   UPLOAD_DIR=uploads
+   MAX_UPLOAD_SIZE=5242880
+   
+   # Timezone
+   APP_TIMEZONE=UTC
+   ```
+
 3. **Security Notes:**
    - NEVER commit `.env` file to version control (already in `.gitignore`)
    - Use strong database passwords in production
-   - Keep `.env` file readable only by web server user
+   - Keep `.env` file readable only by web server user (chmod 600)
    - For production: Set `APP_ENV=production`
+   - The `.env` file will NOT be deployed automatically - you must create it manually on your hosting platform
 
 #### **Step 2: Install XAMPP/WAMP**
 
@@ -1072,6 +1121,186 @@ Restart Apache after changes.
 3. **Clear Browser Data:**
    - Clear cookies for localhost
    - Clear cache
+
+---
+
+## 🚀 Deployment to Production/Hosting Platforms
+
+### Prerequisites
+- A web hosting account with PHP 7.4+ and MySQL support
+- FTP/SSH access or hosting control panel (cPanel, Plesk, etc.)
+- Database access credentials from your hosting provider
+
+### Deployment Steps
+
+#### **Step 1: Deploy Your Code**
+
+**Option A: Using Git (Recommended)**
+```bash
+# Push to your repository
+git add .
+git commit -m "Deploy Lost and Found System"
+git push origin main
+
+# On your hosting platform, pull the code
+git clone your-repository-url /path/to/public_html
+```
+
+**Option B: Using FTP/File Manager**
+1. Connect to your hosting via FTP (FileZilla, WinSCP) or use hosting File Manager
+2. Upload all project files to your `public_html` or web root directory
+3. Ensure all files are uploaded correctly
+
+#### **Step 2: Create the .env File on Your Hosting Platform**
+
+**CRITICAL:** The `.env` file is NOT included in version control (it's in `.gitignore`). You MUST create it manually on your hosting platform.
+
+**Using File Manager (cPanel/Plesk):**
+1. Log into your hosting control panel
+2. Navigate to File Manager
+3. Go to your application directory
+4. Click "New File" and name it `.env`
+5. Edit the file and paste the following content:
+
+```env
+# Database Configuration - GET THESE FROM YOUR HOSTING PROVIDER
+DB_HOST=localhost                    # Usually 'localhost' or specific hostname
+DB_USERNAME=your_database_username   # From hosting control panel
+DB_PASSWORD=your_database_password   # From hosting control panel  
+DB_DATABASE=your_database_name       # Database you created
+
+# Application Configuration
+APP_NAME="Lost and Found System"
+APP_ENV=production                   # IMPORTANT: Set to 'production'
+
+# Security Configuration
+SESSION_NAME=lostnfound_session
+SESSION_LIFETIME=7200
+
+# Upload Configuration
+UPPLOADIR=uploads
+MAX_UPLOAD_SIZE=5242880
+
+# Timezone
+APP_TIMEZONE=UTC
+```
+
+**Using SSH:**
+```bash
+# Navigate to your application directory
+cd /path/to/your/app
+
+# Create .env file from template
+cp .env.example .env
+
+# Edit with your preferred editor
+nano .env
+# or
+vi .env
+
+# Set secure permissions
+chmod 600 .env
+```
+
+6. Save the file
+
+#### **Step 3: Get Database Credentials**
+
+Your hosting provider should provide:
+- **DB_HOST:** Usually `localhost`, but could be a specific hostname
+- **DB_USERNAME:** Your database username
+- **DB_PASSWORD:** Your database password
+- **DB_DATABASE:** The database name you created
+
+**Finding credentials in cPanel:**
+1. Go to cPanel → MySQL Databases
+2. Create a new database if needed
+3. Create a new MySQL user
+4. Grant all privileges to the user for your database
+5. Note down: database name, username, and password
+
+#### **Step 4: Set File Permissions**
+
+```bash
+# Set correct permissions for uploads directory
+chmod 755 uploads/
+
+# Secure .env file (read/write for owner only)
+chmod 600 .env
+
+# Ensure PHP files are executable
+chmod 644 *.php
+```
+
+#### **Step 5: Test Your Deployment**
+
+1. **Visit your website:** `https://yourdomain.com`
+2. **Database auto-initialization:** The database and tables will be created automatically on first access
+3. **Register a test account** to verify user registration works
+4. **Create your first admin:**
+   - Register a user account
+   - Access your database via phpMyAdmin
+   - Run: `UPDATE users SET is_admin = 1 WHERE username = 'your_username';`
+5. **Test file uploads** by reporting a lost/found item
+
+### Common Deployment Issues
+
+#### **Issue 1: "Error: .env file not found"**
+
+**Cause:** The `.env` file wasn't created on the hosting platform.
+
+**Solution:**
+1. The application will now use default values and log a warning instead of crashing
+2. Create the `.env` file manually following Step 2 above
+3. Ensure the file is in the root directory of your application
+
+#### **Issue 2: Database Connection Failed**
+
+**Cause:** Incorrect database credentials in `.env`
+
+**Solution:**
+1. Verify credentials from your hosting control panel
+2. Check if database host is `localhost` or a specific hostname
+3. Ensure database user has permissions for the database
+4. Test connection via phpMyAdmin
+
+#### **Issue 3: File Upload Errors**
+
+**Cause:** Incorrect permissions on `uploads/` directory
+
+**Solution:**
+```bash
+chmod 755 uploads/
+chown www-data:www-data uploads/  # Linux
+```
+
+#### **Issue 4: Session Errors**
+
+**Cause:** PHP session directory not writable
+
+**Solution:**
+- Contact hosting provider to check session directory permissions
+- Or set custom session path in PHP configuration
+
+### Security Checklist for Production
+
+- [ ] `.env` file created with production credentials
+- [ ] `APP_ENV=production` in `.env`
+- [ ] `.env` file permissions set to 600 (not readable by others)
+- [ ] Strong database password used
+- [ ] HTTPS enabled (SSL certificate installed)
+- [ ] `uploads/` directory has no execute permissions
+- [ ] PHP error display disabled (errors logged instead)
+- [ ] Database backups configured
+- [ ] `grant_admin.php` access restricted (rename or delete after initial setup)
+
+### Post-Deployment
+
+1. **Enable HTTPS:** Most hosting providers offer free SSL certificates via Let's Encrypt
+2. **Set up backups:** Configure automatic database and file backups
+3. **Monitor logs:** Check error logs regularly in `logs/` directory
+4. **Update admin credentials:** Use strong, unique passwords for admin accounts
+5. **Regular updates:** Keep your application and server software up to date
 
 ---
 

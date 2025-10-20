@@ -2,9 +2,11 @@
 /vendor/
 /node_modules/
 
-# Environment file with secrets
+# Environment file with secrets (DO NOT commit .env)
 .env
-.env.example
+
+# BUT keep .env.example in version control (it's a template)
+# .env.example should NOT be ignored
 
 # Uploads directory (contains user-uploaded files)
 uploads/*
