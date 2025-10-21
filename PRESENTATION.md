@@ -23,33 +23,38 @@
 
 ## 📋 Member Assignment & Responsibilities
 
-### **Member 1: Database Architecture & Environment Configuration**
+### **Member 1: Database Architecture & Auto-Setup System**
 **Time:** 2 minutes | **Slides:** 2
 
-**Functionality:** Database Layer & Auto-Setup System
+**Functionality:** Database Layer & Automatic Initialization
 
 #### **Backend Implementation:**
 
 **Files Responsible:**
-- `db.php` (lines 1-81) - Database connection and auto-setup
-- `env_loader.php` (lines 1-50) - Environment configuration loader
-- `.env` - Environment variables storage
+- `db.php` (lines 1-67) - Database connection and auto-setup
 
 **Code Line References:**
-- Lines 11-28: Environment-based configuration loading
-- Lines 30-36: Automatic database creation
-- Lines 38-48: Users table auto-creation
-- Lines 50-56: Admin column migration
-- Lines 58-69: Items table with foreign key
-- Lines 71-74: Uploads directory creation
-- Lines 77-78: UTF-8 character encoding
+- Lines 9-13: Database configuration (localhost, root, no password)
+- Lines 15-20: MySQL server connection
+- Lines 22-24: Automatic database creation
+- Lines 26-34: Users table auto-creation
+- Lines 36-41: Admin column migration for existing databases
+- Lines 43-56: Items table with foreign key
+- Lines 58-61: Uploads directory creation
+- Lines 63-64: UTF-8 character encoding
 
 **What It Does:**
 
-1. **Environment-Based Configuration:**
-   - Loads database credentials from `.env` file (not hardcoded)
-   - Supports development and production environments
-   - Secure credential management (`.env` never committed to git)
+1. **Simple Local Configuration:**
+   - Database credentials configured directly in `db.php`
+   - Default XAMPP/WAMP settings (localhost, root, empty password)
+   - Easy to modify for different environments
+   ```php
+   $host = 'localhost';
+   $username = 'root';
+   $password = '';
+   $database = 'lostfound_db';
+   ```
 
 2. **Automatic Database Setup:**
    ```php
@@ -80,10 +85,11 @@ items: id, user_id(FK), title, description, type, location, contact, image, crea
 ```
 
 **Why This Approach:**
-- Zero configuration - works immediately
-- Environment variables keep credentials secure
+- Zero manual setup - database auto-creates on first access
+- Works immediately with XAMPP/WAMP defaults
 - Foreign key cascade deletes user's items automatically
 - UTF-8 encoding supports international characters
+- Simple and beginner-friendly configuration
 
 ---
 
@@ -593,7 +599,7 @@ menuToggle.addEventListener('click', function() {
 ## 🎤 Speaking Notes for Each Member
 
 ### Member 1 (Database)
-"I handled the database architecture. Our system automatically creates the database and tables on first run using `db.php`. We use environment variables from `.env` file for security - credentials never hardcoded. The schema has two main tables: users with hashed passwords and admin status, and items with foreign key cascade deletion. This means when a user is deleted, all their items are automatically removed."
+"I handled the database architecture. Our system automatically creates the database and tables on first run using `db.php`. The configuration uses default XAMPP/WAMP settings for easy local development. The schema has two main tables: users with hashed passwords and admin status, and items with foreign key cascade deletion. This means when a user is deleted, all their items are automatically removed. The setup is zero-configuration - just access the site and everything initializes automatically."
 
 ### Member 2 (Authentication)
 "I implemented user authentication. The registration form validates email format and password length, then hashes passwords using bcrypt - we never store plain text. Login uses `password_verify()` for timing-safe comparison. Sessions track logged-in users across pages. The frontend has real-time JavaScript validation, and the backend double-checks everything for security."
@@ -630,12 +636,17 @@ menuToggle.addEventListener('click', function() {
 ## 🚀 Installation & Setup (Brief)
 
 1. Copy project to `htdocs/` or `www/`
-2. Create `.env` file with database credentials
+2. Start Apache and MySQL via XAMPP/WAMP
 3. Access via `http://localhost/lostfound/`
 4. Database auto-creates on first visit
 5. Register account and use portal
 
-**No manual setup required!**
+**No manual database setup required!**
+
+**Optional:** Edit `db.php` if your MySQL has a password:
+```php
+$password = 'your_mysql_password';
+```
 
 ---
 
