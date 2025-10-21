@@ -6,25 +6,11 @@
  * It automatically creates the database and tables if they don't exist.
  */
 
-// Load environment variables
-require_once __DIR__ . '/env_loader.php';
-
-// Determine environment (development or production)
-$environment = env('APP_ENV', 'development');
-
-// Database configuration based on environment
-if ($environment === 'production') {
-    $host = env('PROD_DB_HOST', 'localhost');
-    $username = env('PROD_DB_USERNAME', 'root');
-    $password = env('PROD_DB_PASSWORD', '');
-    $database = env('PROD_DB_DATABASE', 'lostfound_db');
-} else {
-    // Default to development
-    $host = env('DEV_DB_HOST', 'localhost');
-    $username = env('DEV_DB_USERNAME', 'root');
-    $password = env('DEV_DB_PASSWORD', '');
-    $database = env('DEV_DB_DATABASE', 'lostfound_db');
-}
+// Database configuration
+$host = 'localhost';
+$username = 'root';
+$password = '';
+$database = 'lostfound_db';
 
 // Connect to MySQL server first
 $conn = mysqli_connect($host, $username, $password);

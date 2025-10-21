@@ -2,12 +2,6 @@
 /vendor/
 /node_modules/
 
-# Environment file with secrets (DO NOT commit .env)
-.env
-
-# BUT keep .env.example in version control (it's a template)
-# .env.example should NOT be ignored
-
 # Uploads directory (contains user-uploaded files)
 uploads/*
 !uploads/.htaccess
@@ -17,7 +11,7 @@ uploads/*
 .idea/
 *.sublime-project
 *.sublime-workspace
-
+.env
 # OS generated files
 .DS_Store
 Thumbs.db
@@ -38,42 +32,3 @@ error_log
 
 # Local development
 *.local
-
-# Composer
-composer.lock
-composer.phar
-
-# XAMPP specific
-/xampp/
-/xampp_*
-
-# Testing
-/phpunit.xml
-
-# Local development environment
-/.env.local
-
-# Laravel specific
-bootstrap/cache/
-public/storage
-public/hot
-
-# Laravel 4 specific
-bootstrap/compiled.php
-app/storage/
-
-# Laravel 5 & Lumen specific with changed public path
-public_html/storage
-public_html/public/storage
-
-# Laravel 5 & Lumen specific with no public directory
-/public/storage
-/public/hot
-
-# Laravel 5 & Lumen specific with changed public path
-/public_html/storage
-/public_html/public/storage
-
-# Laravel 5 & Lumen specific with no public directory
-/public/storage
-/public/hot
