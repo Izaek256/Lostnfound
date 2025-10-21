@@ -9,11 +9,22 @@
 // Load environment variables
 require_once __DIR__ . '/env_loader.php';
 
-// Database configuration from .env file
-$host = env('DB_HOST', 'localhost');
-$username = env('DB_USERNAME', 'root');
-$password = env('DB_PASSWORD', '');
-$database = env('DB_DATABASE', 'lostfound_db');
+// Determine environment (development or production)
+$environment = env('APP_ENV', 'development');
+
+// Database configuration based on environment
+if ($environment === 'production') {
+    $host = env('PROD_DB_HOST', 'localhost');
+    $username = env('PROD_DB_USERNAME', 'root');
+    $password = env('PROD_DB_PASSWORD', '');
+    $database = env('PROD_DB_DATABASE', 'lostfound_db');
+} else {
+    // Default to development
+    $host = env('DEV_DB_HOST', 'localhost');
+    $username = env('DEV_DB_USERNAME', 'root');
+    $password = env('DEV_DB_PASSWORD', '');
+    $database = env('DEV_DB_DATABASE', 'lostfound_db');
+}
 
 // Connect to MySQL server first
 $conn = mysqli_connect($host, $username, $password);
