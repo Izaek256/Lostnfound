@@ -6,48 +6,58 @@
 ---
 title: University Lost & Found Portal - Complete Site Navigation Map
 ---
-graph TB
-    Home["🏠 HOME PAGE<br/>━━━━━━━━━━━━━━━<br/>index.php<br/>━━━━━━━━━━━━━━━<br/>• Portal statistics display<br/>• 6 most recent items<br/>• Quick action buttons<br/>• How it works guide<br/>• No login required"]
+graph LR
+    Home["🏠 HOME PAGE<br/>━━━━━━━━━<br/>index.php<br/>━━━━━━━━━<br/>Portal stats<br/>Recent items<br/>Quick actions<br/>Public access"]
     
-    Home --> ViewItems["📋 VIEW ALL ITEMS<br/>━━━━━━━━━━━━━━━<br/>items.php<br/>━━━━━━━━━━━━━━━<br/>• Browse all lost/found items<br/>• Search by keyword<br/>• Filter by type lost/found/all<br/>• Image modal view<br/>• Email contact links<br/>• Public access"]
+    ViewItems["📋 VIEW ITEMS<br/>━━━━━━━━━<br/>items.php<br/>━━━━━━━━━<br/>Browse all<br/>Search/Filter<br/>Image modal<br/>Public access"]
     
-    Home --> UserLogin["🔐 USER LOGIN<br/>━━━━━━━━━━━━━━━<br/>user_login.php<br/>━━━━━━━━━━━━━━━<br/>• Username/password auth<br/>• Session creation<br/>• Auto-redirect to dashboard<br/>• Link to registration<br/>• Public access"]
+    UserReg["👤 REGISTER<br/>━━━━━━━━━<br/>user_register.php<br/>━━━━━━━━━<br/>Create account<br/>Password hash<br/>Auto-redirect<br/>Public access"]
     
-    Home --> UserRegister["👤 NEW REGISTRATION<br/>━━━━━━━━━━━━━━━<br/>user_register.php<br/>━━━━━━━━━━━━━━━<br/>• Create new account<br/>• Username, email, password<br/>• Password hashing<br/>• Duplicate prevention<br/>• Auto-redirect to login<br/>• Public access"]
+    UserLogin["🔐 USER LOGIN<br/>━━━━━━━━━<br/>user_login.php<br/>━━━━━━━━━<br/>Username/Pass<br/>Session create<br/>Auto-redirect<br/>Public access"]
     
-    Home --> AdminLogin["🛡️ ADMIN LOGIN<br/>━━━━━━━━━━━━━━━<br/>admin_login.php<br/>━━━━━━━━━━━━━━━<br/>• Admin authentication<br/>• Privilege verification<br/>• Security warnings<br/>• Access logging<br/>• Public access"]
+    AdminLogin["🛡️ ADMIN LOGIN<br/>━━━━━━━━━<br/>admin_login.php<br/>━━━━━━━━━<br/>Admin auth<br/>Privilege check<br/>Security warn<br/>Public access"]
     
-    UserRegister -."Registration<br/>Success".-> UserLogin
+    UserDash["📊 USER DASHBOARD<br/>━━━━━━━━━<br/>user_dashboard.php<br/>━━━━━━━━━<br/>My statistics<br/>View my items<br/>Edit/Delete<br/>🔒 Login Required"]
     
-    UserLogin --> UserDashboard["📊 USER DASHBOARD<br/>━━━━━━━━━━━━━━━<br/>user_dashboard.php<br/>━━━━━━━━━━━━━━━<br/>• Personal statistics<br/>• View all my items<br/>• Edit/delete items<br/>• Admin panel link if admin<br/>• Logout option<br/>🔒 Login Required"]
+    ReportLost["📢 REPORT LOST<br/>━━━━━━━━━<br/>report_lost.php<br/>━━━━━━━━━<br/>Submit details<br/>Image required<br/>Guidelines<br/>🔒 Login Required"]
     
-    UserDashboard --> ReportLost["📢 REPORT LOST ITEM<br/>━━━━━━━━━━━━━━━<br/>report_lost.php<br/>━━━━━━━━━━━━━━━<br/>• Submit lost item details<br/>• Title, description, location<br/>• Image upload required<br/>• Contact information<br/>• Tips & guidelines<br/>🔒 Login Required"]
+    ReportFound["🔍 REPORT FOUND<br/>━━━━━━━━━<br/>report_found.php<br/>━━━━━━━━━<br/>Submit details<br/>Privacy tips<br/>Image required<br/>🔒 Login Required"]
     
-    UserDashboard --> ReportFound["🔍 REPORT FOUND ITEM<br/>━━━━━━━━━━━━━━━<br/>report_found.php<br/>━━━━━━━━━━━━━━━<br/>• Submit found item details<br/>• Privacy protection tips<br/>• Image upload required<br/>• Finder contact info<br/>• Guidelines provided<br/>🔒 Login Required"]
+    EditItem["✏️ EDIT ITEM<br/>━━━━━━━━━<br/>edit_item.php<br/>━━━━━━━━━<br/>Modify details<br/>Update image<br/>Pre-filled form<br/>🔒 Login Required"]
     
-    UserDashboard --> EditItem["✏️ EDIT MY ITEM<br/>━━━━━━━━━━━━━━━<br/>edit_item.php?id=X<br/>━━━━━━━━━━━━━━━<br/>• Modify item details<br/>• Update/replace image<br/>• Pre-filled form data<br/>• Ownership verification<br/>• Save or cancel changes<br/>🔒 Login Required"]
+    AdminDash["⚙️ ADMIN PANEL<br/>━━━━━━━━━<br/>admin_dashboard.php<br/>━━━━━━━━━<br/>System stats<br/>Manage all<br/>User control<br/>🔒 Admin Only"]
     
-    EditItem -."Save Changes".-> UserDashboard
+    GrantAdmin["🔑 GRANT ADMIN<br/>━━━━━━━━━<br/>grant_admin.php<br/>━━━━━━━━━<br/>View users<br/>Grant rights<br/>Admin status<br/>🔒 Admin Only"]
     
-    AdminLogin --> AdminDashboard["⚙️ ADMIN DASHBOARD<br/>━━━━━━━━━━━━━━━<br/>admin_dashboard.php<br/>━━━━━━━━━━━━━━━<br/>• System-wide statistics<br/>• View/delete any item<br/>• User management<br/>• Grant/revoke admin rights<br/>• Delete user accounts<br/>• View last 10 items<br/>🔒 Admin Only"]
+    Home --> ViewItems
+    Home --> UserReg
+    Home --> UserLogin
+    Home --> AdminLogin
     
-    AdminDashboard --> GrantAdmin["🔑 GRANT ADMIN RIGHTS<br/>━━━━━━━━━━━━━━━<br/>grant_admin.php<br/>━━━━━━━━━━━━━━━<br/>• View all users list<br/>• Grant admin by username<br/>• Check current admin status<br/>• Security warnings<br/>• Success feedback<br/>🔒 Admin Only"]
+    UserReg -."Success".-> UserLogin
+    UserLogin --> UserDash
     
-    AdminDashboard --> ViewAllItems["👁️ MANAGE ALL ITEMS<br/>━━━━━━━━━━━━━━━<br/>items.php via admin<br/>━━━━━━━━━━━━━━━<br/>• View portal as user<br/>• Browse all items<br/>• Return to admin panel<br/>🔒 Admin Only"]
+    UserDash --> ReportLost
+    UserDash --> ReportFound
+    UserDash --> EditItem
     
-    GrantAdmin -."Return".-> AdminDashboard
+    EditItem -."Save".-> UserDash
     
-    ViewAllItems -."Return".-> AdminDashboard
+    AdminLogin --> AdminDash
+    AdminDash --> GrantAdmin
+    AdminDash --> ViewItems
     
-    classDef publicPage fill:#e3f2fd,stroke:#2563eb,stroke-width:2px
-    classDef authPage fill:#fff3e0,stroke:#f59e0b,stroke-width:2px
-    classDef userPage fill:#f0fdf4,stroke:#10b981,stroke-width:2px
-    classDef adminPage fill:#fce7f3,stroke:#ec4899,stroke-width:2px
+    GrantAdmin -."Return".-> AdminDash
+    
+    classDef publicPage fill:#e3f2fd,stroke:#2563eb,stroke-width:3px,color:#000
+    classDef authPage fill:#fff3e0,stroke:#f59e0b,stroke-width:3px,color:#000
+    classDef userPage fill:#f0fdf4,stroke:#10b981,stroke-width:3px,color:#000
+    classDef adminPage fill:#fce7f3,stroke:#ec4899,stroke-width:3px,color:#000
     
     class Home,ViewItems publicPage
-    class UserLogin,UserRegister,AdminLogin authPage
-    class UserDashboard,ReportLost,ReportFound,EditItem userPage
-    class AdminDashboard,GrantAdmin,ViewAllItems adminPage
+    class UserReg,UserLogin,AdminLogin authPage
+    class UserDash,ReportLost,ReportFound,EditItem userPage
+    class AdminDash,GrantAdmin adminPage
 ```
 
 ## Detailed Page Documentation
