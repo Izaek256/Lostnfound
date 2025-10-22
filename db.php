@@ -9,7 +9,7 @@
 // Database configuration
 $host = 'localhost';
 $username = 'root';
-$password = '';
+$password = 'isaacK@12345';
 $database = 'lostfound_db';
 
 // Connect to MySQL server first
