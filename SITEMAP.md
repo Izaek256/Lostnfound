@@ -3,30 +3,51 @@
 ## Visual Sitemap
 
 ```mermaid
+---
+title: University Lost & Found Portal - Complete Site Navigation Map
+---
 graph TB
-    Home["🏠 HOME<br/>index.php<br/>Landing page with stats & recent items"]
+    Home["🏠 HOME PAGE<br/>━━━━━━━━━━━━━━━<br/>index.php<br/>━━━━━━━━━━━━━━━<br/>• Portal statistics display<br/>• 6 most recent items<br/>• Quick action buttons<br/>• How it works guide<br/>• No login required"]
     
-    Home --> ViewItems["📋 VIEW ITEMS<br/>items.php<br/>Browse, search & filter all items"]
-    Home --> UserLogin["🔐 USER LOGIN<br/>user_login.php<br/>Authentication for users"]
-    Home --> UserRegister["👤 REGISTER<br/>user_register.php<br/>Create new account"]
-    Home --> AdminLogin["🛡️ ADMIN LOGIN<br/>admin_login.php<br/>Admin authentication"]
+    Home --> ViewItems["📋 VIEW ALL ITEMS<br/>━━━━━━━━━━━━━━━<br/>items.php<br/>━━━━━━━━━━━━━━━<br/>• Browse all lost/found items<br/>• Search by keyword<br/>• Filter by type lost/found/all<br/>• Image modal view<br/>• Email contact links<br/>• Public access"]
     
-    UserRegister --> UserLogin
+    Home --> UserLogin["🔐 USER LOGIN<br/>━━━━━━━━━━━━━━━<br/>user_login.php<br/>━━━━━━━━━━━━━━━<br/>• Username/password auth<br/>• Session creation<br/>• Auto-redirect to dashboard<br/>• Link to registration<br/>• Public access"]
     
-    UserLogin --> UserDashboard["📊 USER DASHBOARD<br/>user_dashboard.php<br/>Manage personal items"]
+    Home --> UserRegister["👤 NEW REGISTRATION<br/>━━━━━━━━━━━━━━━<br/>user_register.php<br/>━━━━━━━━━━━━━━━<br/>• Create new account<br/>• Username, email, password<br/>• Password hashing<br/>• Duplicate prevention<br/>• Auto-redirect to login<br/>• Public access"]
     
-    UserDashboard --> ReportLost["📢 REPORT LOST<br/>report_lost.php<br/>Submit lost item report"]
-    UserDashboard --> ReportFound["🔍 REPORT FOUND<br/>report_found.php<br/>Submit found item report"]
-    UserDashboard --> EditItem["✏️ EDIT ITEM<br/>edit_item.php<br/>Modify posted items"]
+    Home --> AdminLogin["🛡️ ADMIN LOGIN<br/>━━━━━━━━━━━━━━━<br/>admin_login.php<br/>━━━━━━━━━━━━━━━<br/>• Admin authentication<br/>• Privilege verification<br/>• Security warnings<br/>• Access logging<br/>• Public access"]
     
-    EditItem --> UserDashboard
+    UserRegister -."Registration<br/>Success".-> UserLogin
     
-    AdminLogin --> AdminDashboard["⚙️ ADMIN PANEL<br/>admin_dashboard.php<br/>System management"]
+    UserLogin --> UserDashboard["📊 USER DASHBOARD<br/>━━━━━━━━━━━━━━━<br/>user_dashboard.php<br/>━━━━━━━━━━━━━━━<br/>• Personal statistics<br/>• View all my items<br/>• Edit/delete items<br/>• Admin panel link if admin<br/>• Logout option<br/>🔒 Login Required"]
     
-    AdminDashboard --> GrantAdmin["🔑 GRANT ADMIN<br/>grant_admin.php<br/>Assign admin rights"]
-    AdminDashboard --> ViewAllItems["👁️ VIEW ALL ITEMS<br/>Manage all items"]
+    UserDashboard --> ReportLost["📢 REPORT LOST ITEM<br/>━━━━━━━━━━━━━━━<br/>report_lost.php<br/>━━━━━━━━━━━━━━━<br/>• Submit lost item details<br/>• Title, description, location<br/>• Image upload required<br/>• Contact information<br/>• Tips & guidelines<br/>🔒 Login Required"]
     
-    GrantAdmin --> AdminDashboard
+    UserDashboard --> ReportFound["🔍 REPORT FOUND ITEM<br/>━━━━━━━━━━━━━━━<br/>report_found.php<br/>━━━━━━━━━━━━━━━<br/>• Submit found item details<br/>• Privacy protection tips<br/>• Image upload required<br/>• Finder contact info<br/>• Guidelines provided<br/>🔒 Login Required"]
+    
+    UserDashboard --> EditItem["✏️ EDIT MY ITEM<br/>━━━━━━━━━━━━━━━<br/>edit_item.php?id=X<br/>━━━━━━━━━━━━━━━<br/>• Modify item details<br/>• Update/replace image<br/>• Pre-filled form data<br/>• Ownership verification<br/>• Save or cancel changes<br/>🔒 Login Required"]
+    
+    EditItem -."Save Changes".-> UserDashboard
+    
+    AdminLogin --> AdminDashboard["⚙️ ADMIN DASHBOARD<br/>━━━━━━━━━━━━━━━<br/>admin_dashboard.php<br/>━━━━━━━━━━━━━━━<br/>• System-wide statistics<br/>• View/delete any item<br/>• User management<br/>• Grant/revoke admin rights<br/>• Delete user accounts<br/>• View last 10 items<br/>🔒 Admin Only"]
+    
+    AdminDashboard --> GrantAdmin["🔑 GRANT ADMIN RIGHTS<br/>━━━━━━━━━━━━━━━<br/>grant_admin.php<br/>━━━━━━━━━━━━━━━<br/>• View all users list<br/>• Grant admin by username<br/>• Check current admin status<br/>• Security warnings<br/>• Success feedback<br/>🔒 Admin Only"]
+    
+    AdminDashboard --> ViewAllItems["👁️ MANAGE ALL ITEMS<br/>━━━━━━━━━━━━━━━<br/>items.php via admin<br/>━━━━━━━━━━━━━━━<br/>• View portal as user<br/>• Browse all items<br/>• Return to admin panel<br/>🔒 Admin Only"]
+    
+    GrantAdmin -."Return".-> AdminDashboard
+    
+    ViewAllItems -."Return".-> AdminDashboard
+    
+    classDef publicPage fill:#e3f2fd,stroke:#2563eb,stroke-width:2px
+    classDef authPage fill:#fff3e0,stroke:#f59e0b,stroke-width:2px
+    classDef userPage fill:#f0fdf4,stroke:#10b981,stroke-width:2px
+    classDef adminPage fill:#fce7f3,stroke:#ec4899,stroke-width:2px
+    
+    class Home,ViewItems publicPage
+    class UserLogin,UserRegister,AdminLogin authPage
+    class UserDashboard,ReportLost,ReportFound,EditItem userPage
+    class AdminDashboard,GrantAdmin,ViewAllItems adminPage
 ```
 
 ## Detailed Page Documentation
