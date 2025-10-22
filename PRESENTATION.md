@@ -46,7 +46,7 @@ This document provides each team member with:
 
 ## 📋 Member Assignment & Responsibilities
 
-### **Member 1: Database Architecture & Auto-Setup System**
+# **MEMBER 1: DATABASE ARCHITECTURE & AUTO-SETUP SYSTEM**
 **Time:** 2 minutes | **Slides:** 2
 
 **Functionality:** Database Layer & Automatic Initialization
@@ -221,7 +221,7 @@ mysqli_set_charset($conn, "utf8mb4");
 
 ---
 
-### **Member 2: User Authentication System**
+# **MEMBER 2: USER AUTHENTICATION SYSTEM**
 **Time:** 2 minutes | **Slides:** 2
 
 **Functionality:** User Registration, Login, Session Management
@@ -486,7 +486,7 @@ function validateForm() {
 
 ---
 
-### **Member 3: Item Submission & File Upload System**
+# **MEMBER 3: ITEM SUBMISSION & FILE UPLOAD SYSTEM**
 **Time:** 2 minutes | **Slides:** 2
 
 **Functionality:** Report Lost/Found Items with Image Upload
@@ -716,7 +716,7 @@ if (count($recentLostItems) > 0) {
 
 ---
 
-### **Member 4: Search, Filter & Browse System**
+# **MEMBER 4: SEARCH, FILTER & BROWSE SYSTEM**
 **Time:** 2 minutes | **Slides:** 2
 
 **Functionality:** Dynamic Item Display with Search & Filtering
@@ -962,7 +962,7 @@ if ($search != '') {
 
 ---
 
-### **Member 5: User Dashboard & Item Management**
+# **MEMBER 5: USER DASHBOARD & ITEM MANAGEMENT**
 **Time:** 2 minutes | **Slides:** 2
 
 **Functionality:** Personal Dashboard, Edit/Delete Items
@@ -1322,7 +1322,7 @@ $sql = "DELETE FROM items WHERE id='$id' AND user_id='$userId'";
 
 ---
 
-### **Member 6: Admin Panel & Role-Based Access**
+# **MEMBER 6: ADMIN PANEL & ROLE-BASED ACCESS**
 **Time:** 2 minutes | **Slides:** 2
 
 **Functionality:** Admin Dashboard, User Management
