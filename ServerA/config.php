@@ -32,7 +32,10 @@ function enableCORS() {
     
     $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
     
-    if (in_array($origin, $allowed_origins)) {
+    // Always allow localhost for development
+    if (empty($origin) || strpos($origin, 'localhost') !== false || strpos($origin, '127.0.0.1') !== false) {
+        header("Access-Control-Allow-Origin: *");
+    } elseif (in_array($origin, $allowed_origins)) {
         header("Access-Control-Allow-Origin: $origin");
     }
     

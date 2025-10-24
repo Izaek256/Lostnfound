@@ -59,11 +59,14 @@ function makeAPICall($endpoint, $data = null, $method = 'GET') {
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+    // TEMPORARILY REMOVED PROBLEMATIC OPTIONS FOR DEBUGGING
+    // curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+    // curl_setopt($ch, CURLOPT_MAXREDIRS, 3);
+    // curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    // curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+    // curl_setopt($ch, CURLOPT_VERBOSE, false);
     
     if ($method === 'POST') {
         curl_setopt($ch, CURLOPT_POST, true);
@@ -81,26 +84,35 @@ function makeAPICall($endpoint, $data = null, $method = 'GET') {
     }
     
     // Include session cookie for authentication
-    if (isset($_COOKIE['PHPSESSID'])) {
-        curl_setopt($ch, CURLOPT_COOKIE, 'PHPSESSID=' . $_COOKIE['PHPSESSID']);
-    }
+    // TEMPORARILY DISABLED FOR DEBUGGING
+    // if (isset($_COOKIE['PHPSESSID'])) {
+    //     curl_setopt($ch, CURLOPT_COOKIE, 'PHPSESSID=' . $_COOKIE['PHPSESSID']);
+    // }
     
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $curlError = curl_error($ch);
+    $curlInfo = curl_getinfo($ch);
     curl_close($ch);
     
+    // Debug logging
+    error_log("makeAPICall Debug - URL: $url, HTTP Code: $httpCode, CURL Error: $curlError");
+    
     if ($response === false) {
-        return ['error' => 'API call failed: ' . $curlError];
+        return ['error' => 'API call failed: ' . $curlError, 'debug_info' => $curlInfo];
     }
     
     if ($httpCode === 0) {
-        return ['error' => 'Cannot connect to server: ' . $curlError];
+        return ['error' => 'Cannot connect to server: ' . $curlError, 'debug_info' => $curlInfo];
+    }
+    
+    if ($httpCode >= 400) {
+        return ['error' => 'HTTP Error ' . $httpCode . ': ' . $response, 'debug_info' => $curlInfo];
     }
     
     $decoded = json_decode($response, true);
-    if ($decoded === null) {
-        return ['error' => 'Invalid API response: ' . $response];
+    if ($decoded === null && json_last_error() !== JSON_ERROR_NONE) {
+        return ['error' => 'Invalid JSON response: ' . json_last_error_msg() . ' - Raw response: ' . substr($response, 0, 200)];
     }
     
     // Remove caching for debugging
