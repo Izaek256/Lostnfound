@@ -1,44 +1,5 @@
 <?php
 /**
- * Server A - Admin Login API Endpoint
- * 
- * This endpoint handles admin authentication for Server A
- */
-
-require_once 'config.php';
-
-// Log that the endpoint was accessed
-error_log("Server A: admin_login.php accessed via " . $_SERVER['REQUEST_METHOD'] . " method");
-
-// Return simple JSON response indicating the endpoint is working
-header('Content-Type: application/json');
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // For POST requests, indicate that authentication logic would be processed
-    echo json_encode([
-        'server' => 'Server A',
-        'endpoint' => 'admin_login',
-        'status' => 'Processing authentication request',
-        'method' => 'POST',
-        'message' => 'Authentication request received. Processing would happen here.',
-        'received_data' => array_keys($_POST),
-        'timestamp' => date('Y-m-d H:i:s')
-    ]);
-} else {
-    // For GET requests or others, just indicate the endpoint is accessible
-    echo json_encode([
-        'server' => 'Server A',
-        'endpoint' => 'admin_login',
-        'status' => 'Ready to receive authentication requests',
-        'method' => $_SERVER['REQUEST_METHOD'],
-        'message' => 'This is an API endpoint. Send POST requests with username and password.',
-        'timestamp' => date('Y-m-d H:i:s')
-    ]);
-}
-
-exit();
-?>
-/**
  * Server A - Admin Login Page
  * 
  * This page handles admin authentication for Server A
@@ -106,6 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Login - Server A</title>
+    <link rel="icon" href="../ServerC/assets/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="../ServerC/style.css">
 </head>
 <body>
@@ -115,6 +77,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <div class="logo">
                 <h1>🛡️ Server A - Admin Login</h1>
             </div>
+            <button class="menu-toggle" aria-label="Toggle menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <nav>
+                <ul>
+                    <li><a href="../ServerC/index.php">Home</a></li>
+                    <li><a href="../ServerC/report_lost.php">Report Lost</a></li>
+                    <li><a href="../ServerC/report_found.php">Report Found</a></li>
+                    <li><a href="../ServerC/items.php">View Items</a></li>
+                    <li><a href="../ServerC/user_login.php">User Login</a></li>
+                    <li><a href="admin_login.php" class="active">Admin Login</a></li>
+                </ul>
+            </nav>
         </div>
     </header>
 
@@ -155,6 +132,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         </div>
     </main>
 
+    <script src="../ServerC/script.js"></script>
     <script>
         document.getElementById('username').focus();
     </script>

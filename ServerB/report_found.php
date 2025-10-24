@@ -141,11 +141,16 @@ if (isset($recentItemsData['success']) && $recentItemsData['success']) {
                     <li><a href="report_lost.php">Report Lost</a></li>
                     <li><a href="report_found.php" class="active">Report Found</a></li>
                     <li><a href="items.php">View Items</a></li>
-                    <li><a href="user_dashboard.php">My Dashboard</a></li>
-                    <?php if (isCurrentUserAdmin()): ?>
-                        <li><a href="../ServerA/admin_dashboard.php">Admin Panel</a></li>
+                    <?php if (isUserLoggedIn()): ?>
+                        <li><a href="user_dashboard.php">My Dashboard</a></li>
+                        <?php if (isCurrentUserAdmin()): ?>
+                            <li><a href="../ServerA/admin_dashboard.php">Admin Panel</a></li>
+                        <?php endif; ?>
+                        <li><a href="user_dashboard.php?logout=1">Logout</a></li>
+                    <?php else: ?>
+                        <li><a href="user_login.php">Login</a></li>
+                        <li><a href="user_register.php">Register</a></li>
                     <?php endif; ?>
-                    <li><a href="user_dashboard.php?logout=1">Logout</a></li>
                 </ul>
             </nav>
         </div>

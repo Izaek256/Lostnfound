@@ -51,25 +51,45 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Report Found Item - Lost & Found</title>
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <header>
+    <!-- Header -->
+    <header>
+        <div class="header-content">
             <div class="logo">
                 <img src="assets/logo.webp" alt="Lost & Found Logo">
                 <h1>Lost & Found Portal</h1>
             </div>
+            <button class="menu-toggle" aria-label="Toggle menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
             <nav>
-                <a href="index.php">Home</a>
-                <a href="items.php">Browse Items</a>
-                <a href="report_lost.php">Report Lost</a>
-                <a href="user_dashboard.php">Dashboard</a>
-                <a href="?logout=1">Logout</a>
+                <ul>
+                    <li><a href="index.php">Home</a></li>
+                    <li><a href="report_lost.php">Report Lost</a></li>
+                    <li><a href="report_found.php" class="active">Report Found</a></li>
+                    <li><a href="items.php">View Items</a></li>
+                    <?php if (isUserLoggedIn()): ?>
+                        <li><a href="user_dashboard.php">My Dashboard</a></li>
+                        <?php if (isCurrentUserAdmin()): ?>
+                            <li><a href="../ServerA/admin_dashboard.php">Admin Panel</a></li>
+                        <?php endif; ?>
+                        <li><a href="user_dashboard.php?logout=1">Logout</a></li>
+                    <?php else: ?>
+                        <li><a href="user_login.php">Login</a></li>
+                        <li><a href="user_register.php">Register</a></li>
+                    <?php endif; ?>
+                </ul>
             </nav>
-        </header>
-        
-        <main>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main>
             <div class="form-container">
                 <h2>Report Found Item</h2>
                 
@@ -112,5 +132,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             </div>
         </main>
     </div>
+    <script src="script.js"></script>
 </body>
 </html>
