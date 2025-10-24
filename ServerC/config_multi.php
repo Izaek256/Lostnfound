@@ -1,26 +1,37 @@
 <?php
 /**
- * Server C - Single Server Configuration
+ * Server C - Frontend Server Configuration
  * 
- * This configuration works when all servers run on the same WAMP installation
+ * This server handles the client frontend interface
  */
 
-// Single server configuration (WAMP default)
-$base_url = "http://localhost/Lostnfound";
+// Server A configuration (User Management Server)
+$server_a_ip = "localhost";
+$server_a_port = "8080";
+$server_a_url = "http://localhost:8080";
 
-// API endpoints for single server setup
+// Server B configuration (Item Management Server)
+$server_b_ip = "localhost";
+$server_b_port = "8081";
+$server_b_url = "http://localhost:8081";
+
+// Server C configuration (Frontend Server)
+$server_c_ip = "localhost";
+$server_c_port = "8082";
+
+// API endpoints
 $api_endpoints = [
-    // User Management APIs (ServerA)
-    'verify_user' => "$base_url/ServerA/api/verify_user.php",
-    'register_user' => "$base_url/ServerA/api/register_user.php",
-    'admin_login' => "$base_url/ServerA/admin_login.php",
-    'session_status' => "$base_url/ServerA/api/session_status.php",
+    // User Management APIs (Server A)
+    'verify_user' => "$server_a_url/api/verify_user.php",
+    'register_user' => "$server_a_url/api/register_user.php",
+    'admin_login' => "$server_a_url/admin_login.php",
+    'session_status' => "$server_a_url/api/session_status.php",
     
-    // Item Management APIs (ServerB)
-    'get_items' => "$base_url/ServerB/api/get_items.php",
-    'add_item' => "$base_url/ServerB/api/add_item.php",
-    'update_item' => "$base_url/ServerB/api/update_item.php",
-    'delete_item' => "$base_url/ServerB/api/delete_item.php"
+    // Item Management APIs (Server B)
+    'get_items' => "$server_b_url/api/get_items.php",
+    'add_item' => "$server_b_url/api/add_item.php",
+    'update_item' => "$server_b_url/api/update_item.php",
+    'delete_item' => "$server_b_url/api/delete_item.php"
 ];
 
 // Start session
@@ -28,7 +39,7 @@ if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
-// API call helper function for single server
+// API call helper function
 function makeAPICall($endpoint, $data = null, $method = 'GET') {
     global $api_endpoints;
     
@@ -45,12 +56,17 @@ function makeAPICall($endpoint, $data = null, $method = 'GET') {
     }
     
     $url = $api_endpoints[$endpointBase] . $queryParams;
+    static $cache = [];
+    $cacheKey = md5($endpoint . '|' . $method . '|' . (is_array($data) || is_object($data) ? json_encode($data) : strval($data)));
+    if (isset($cache[$cacheKey])) {
+        return $cache[$cacheKey];
+    }
     
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 2);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 6);
     curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
     
     if ($method === 'POST') {
@@ -88,9 +104,10 @@ function makeAPICall($endpoint, $data = null, $method = 'GET') {
     
     $decoded = json_decode($response, true);
     if ($decoded === null) {
-        return ['error' => 'Invalid API response: ' . $response];
+        return ['error' => 'Invalid API response'];
     }
     
+    $cache[$cacheKey] = $decoded;
     return $decoded;
 }
 
@@ -148,7 +165,7 @@ $db_name = "lostfound_db";
 $db_user = "root";
 $db_pass = "kpet"; // Update if your MySQL password differs
 
-// Database connection function
+// Database connection function (mirrors Server B)
 function getDBConnection() {
     global $db_host, $db_name, $db_user, $db_pass;
 

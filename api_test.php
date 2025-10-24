@@ -4,16 +4,25 @@ require_once 'ServerC/config.php';
 
 echo "<h1>API Testing Dashboard</h1>";
 
+// Show API endpoints configuration
+echo "<h2>0. API Endpoints Configuration</h2>";
+global $api_endpoints;
+echo "<pre>";
+print_r($api_endpoints);
+echo "</pre>";
+
 // Test 1: Session Status API
 echo "<h2>1. Testing Session Status API</h2>";
+echo "<p><strong>Calling:</strong> session_status via makeAPICall()</p>";
 $sessionResult = makeAPICall('session_status', null, 'GET');
+echo "<p><strong>Result:</strong></p>";
 echo "<pre>";
 print_r($sessionResult);
 echo "</pre>";
 
-// Test 2: Direct CURL test to ServerA session status
+// Test 2: Direct CURL test to ServerA session status  
 echo "<h2>2. Direct CURL test to ServerA Session Status</h2>";
-$url = "http://localhost:8080/api/session_status.php";
+$url = "http://localhost/Lostnfound/ServerA/api/session_status.php";
 $ch = curl_init();
 curl_setopt($ch, CURLOPT_URL, $url);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -48,7 +57,7 @@ echo "</pre>";
 
 // Test 4: Direct CURL test to ServerA registration
 echo "<h2>4. Direct CURL test to ServerA Registration</h2>";
-$url = "http://localhost:8080/api/register_user.php";
+$url = "http://localhost/Lostnfound/ServerA/api/register_user.php";
 $ch = curl_init();
 curl_setopt($ch, CURLOPT_URL, $url);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -102,9 +111,9 @@ try {
 echo "<h2>6. Server Connectivity Tests</h2>";
 
 $servers = [
-    'ServerA (User Management)' => 'http://localhost:8080',
-    'ServerB (Item Management)' => 'http://localhost:8081', 
-    'ServerC (Frontend)' => 'http://localhost:8082'
+    'ServerA (User Management)' => 'http://localhost/Lostnfound/ServerA',
+    'ServerB (Item Management)' => 'http://localhost/Lostnfound/ServerB', 
+    'ServerC (Frontend)' => 'http://localhost/Lostnfound/ServerC'
 ];
 
 foreach ($servers as $name => $url) {
