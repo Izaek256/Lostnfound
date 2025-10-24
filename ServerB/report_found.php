@@ -1,5 +1,45 @@
 <?php
 /**
+ * Server B - Report Found Item API Endpoint
+ * 
+ * This endpoint handles found item reporting requests for Server B
+ */
+
+require_once 'config.php';
+
+// Log that the endpoint was accessed
+error_log("Server B: report_found.php accessed via " . $_SERVER['REQUEST_METHOD'] . " method");
+
+// Return simple JSON response indicating the endpoint is working
+header('Content-Type: application/json');
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // For POST requests, indicate that found item reporting would be processed
+    echo json_encode([
+        'server' => 'Server B',
+        'endpoint' => 'report_found',
+        'status' => 'Processing found item report',
+        'method' => 'POST',
+        'message' => 'Found item report received. Processing would happen here.',
+        'received_data' => array_keys($_POST),
+        'timestamp' => date('Y-m-d H:i:s')
+    ]);
+} else {
+    // For GET requests or others, just indicate the endpoint is accessible
+    echo json_encode([
+        'server' => 'Server B',
+        'endpoint' => 'report_found',
+        'status' => 'Ready to receive found item reports',
+        'method' => $_SERVER['REQUEST_METHOD'],
+        'message' => 'This is an API endpoint for reporting found items.',
+        'timestamp' => date('Y-m-d H:i:s')
+    ]);
+}
+
+exit();
+?>
+<?php
+/**
  * Server B - Report Found Item Page
  * 
  * This page allows users to report found items and sends data to Server A

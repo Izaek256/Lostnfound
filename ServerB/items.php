@@ -1,5 +1,38 @@
 <?php
 /**
+ * Server B - View Items API Endpoint
+ * 
+ * This endpoint handles item browsing requests for Server B
+ */
+
+require_once 'config.php';
+
+// Log that the endpoint was accessed
+error_log("Server B: items.php accessed via " . $_SERVER['REQUEST_METHOD'] . " method");
+
+// Return simple JSON response indicating the endpoint is working
+header('Content-Type: application/json');
+
+// Get filter and search parameters
+$filter = $_GET['filter'] ?? 'all';
+$search = $_GET['search'] ?? '';
+
+echo json_encode([
+    'server' => 'Server B',
+    'endpoint' => 'items',
+    'status' => 'Ready to serve item requests',
+    'method' => $_SERVER['REQUEST_METHOD'],
+    'message' => 'This is an API endpoint for browsing items.',
+    'parameters' => [
+        'filter' => $filter,
+        'search' => $search
+    ],
+    'timestamp' => date('Y-m-d H:i:s')
+]);
+
+exit();
+?>
+/**
  * Server B - View Items Page
  * 
  * This page displays all items and fetches data from Server A

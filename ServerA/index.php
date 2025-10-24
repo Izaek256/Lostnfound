@@ -7,7 +7,13 @@
 
 require_once 'config.php';
 
-// Redirect to admin login by default
-header('Location: admin_login.php');
+// Simple response indicating server is running
+header('Content-Type: application/json');
+echo json_encode([
+    'server' => 'Server A',
+    'status' => 'Running',
+    'message' => 'Server A is handling requests. Use API endpoints for functionality.',
+    'timestamp' => date('Y-m-d H:i:s')
+]);
 exit();
 ?>
