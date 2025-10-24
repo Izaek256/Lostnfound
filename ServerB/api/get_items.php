@@ -77,10 +77,23 @@ while ($row = $result->fetch_assoc()) {
     $items[] = $row;
 }
 
+// Get statistics for the homepage
+$stats_sql = "SELECT 
+    COUNT(*) as total,
+    SUM(CASE WHEN type = 'lost' THEN 1 ELSE 0 END) as lost_count,
+    SUM(CASE WHEN type = 'found' THEN 1 ELSE 0 END) as found_count
+    FROM items";
+$stats_result = $conn->query($stats_sql);
+$stats = ['total' => 0, 'lost_count' => 0, 'found_count' => 0];
+if ($stats_result) {
+    $stats = $stats_result->fetch_assoc();
+}
+
 echo json_encode([
     'success' => true,
     'items' => $items,
-    'count' => count($items)
+    'count' => count($items),
+    'stats' => $stats
 ]);
 
 $stmt->close();

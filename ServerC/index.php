@@ -13,8 +13,8 @@ $recentItems = [];
 $stats = ['total' => 0, 'lost_count' => 0, 'found_count' => 0];
 
 if (isset($itemsData['success']) && $itemsData['success']) {
-    $recentItems = $itemsData['items'];
-    $stats = $itemsData['stats'];
+    $recentItems = isset($itemsData['items']) ? $itemsData['items'] : [];
+    $stats = isset($itemsData['stats']) ? $itemsData['stats'] : $stats;
 } else {
     // Fallback: try direct database connection
     $conn = getDBConnection();
