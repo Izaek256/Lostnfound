@@ -19,6 +19,11 @@
 
 require_once '../config.php';
 
+// Ensure session is started
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     sendJSONResponse(['error' => 'Method not allowed'], 405);
 }
