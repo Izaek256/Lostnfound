@@ -1,43 +1,36 @@
 <?php
 /**
- * Server B - Secondary Server Configuration
+ * Server B - Item Management Server Configuration
  * 
- * This file contains configuration for Server B
- * which connects to Server A's database and APIs
+ * This server handles all item-related operations
  */
 
-// Server A configuration (Main Backend Server)
-$server_a_ip = "192.168.1.10"; // Change this to your Server A IP
-$server_a_port = "80";
-$server_a_url = "http://$server_a_ip:$server_a_port";
-
-// Database configuration (points to Server A's database)
-$db_host = $server_a_ip; // Connect to Server A's database
+// Database configuration
+$db_host = "localhost";
 $db_name = "lostfound_db";
 $db_user = "root";
-$db_pass = "kpet"; // Change this to match Server A's password
+$db_pass = "kpet"; // Change this to your MySQL password
 
 // Server B configuration
-$server_b_ip = "192.168.1.11"; // Change this to your Server B IP
-$server_b_port = "80";
+$server_b_ip = "localhost";
+$server_b_port = "8081";
 
-// API endpoints on Server A
-$api_endpoints = [
-    'verify_user' => "$server_a_url/api/verify_user.php",
-    'register_user' => "$server_a_url/api/register_user.php",
-    'get_items' => "$server_a_url/api/get_items.php",
-    'add_item' => "$server_a_url/api/add_item.php",
-    'update_item' => "$server_a_url/api/update_item.php",
-    'delete_item' => "$server_a_url/api/delete_item.php",
-    'get_user_items' => "$server_a_url/api/get_user_items.php"
-];
+// Server A configuration (User Management Server)
+$server_a_ip = "localhost";
+$server_a_port = "8080";
+$server_a_url = "http://localhost:8080";
+
+// Server C configuration (Frontend Server)
+$server_c_ip = "localhost";
+$server_c_port = "8082";
+$server_c_url = "http://localhost:8082";
 
 // Start session
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
-// Database connection function (connects to Server A)
+// Database connection function
 function getDBConnection() {
     global $db_host, $db_name, $db_user, $db_pass;
     
@@ -51,20 +44,15 @@ function getDBConnection() {
         $conn->set_charset("utf8mb4");
         return $conn;
     } catch (Exception $e) {
-        // If direct DB connection fails, we'll use API calls instead
         return null;
     }
 }
 
-// API call helper function
-function makeAPICall($endpoint, $data = null, $method = 'GET') {
-    global $api_endpoints;
+// API call helper function to Server A (User Management)
+function makeUserAPICall($endpoint, $data = null, $method = 'GET') {
+    global $server_a_url;
     
-    if (!isset($api_endpoints[$endpoint])) {
-        return ['error' => 'Invalid API endpoint'];
-    }
-    
-    $url = $api_endpoints[$endpoint];
+    $url = "$server_a_url/api/$endpoint";
     
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
@@ -75,15 +63,10 @@ function makeAPICall($endpoint, $data = null, $method = 'GET') {
     if ($method === 'POST') {
         curl_setopt($ch, CURLOPT_POST, true);
         if ($data) {
-            if (is_array($data) && isset($data['image'])) {
-                // Handle file upload
-                curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
-            } else {
-                curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-                curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                    'Content-Type: application/json'
-                ]);
-            }
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'Content-Type: application/json'
+            ]);
         }
     }
     
@@ -108,46 +91,45 @@ function makeAPICall($endpoint, $data = null, $method = 'GET') {
     return $decoded;
 }
 
-// Helper functions for user authentication
+// Helper functions for user authentication (calls Server A)
 function isUserLoggedIn() {
-    return isset($_SESSION['user_id']) && $_SESSION['user_id'] > 0;
+    $result = makeUserAPICall('verify_user.php');
+    return isset($result['success']) && $result['success'] === true;
 }
 
 function getCurrentUserId() {
-    if (isUserLoggedIn()) {
-        return $_SESSION['user_id'];
+    $result = makeUserAPICall('verify_user.php');
+    if (isset($result['user_id'])) {
+        return $result['user_id'];
     }
     return null;
 }
 
 function getCurrentUsername() {
-    if (isset($_SESSION['username'])) {
-        return $_SESSION['username'];
-    }
-    return null;
-}
-
-function getCurrentUserEmail() {
-    if (isset($_SESSION['user_email'])) {
-        return $_SESSION['user_email'];
+    $result = makeUserAPICall('verify_user.php');
+    if (isset($result['username'])) {
+        return $result['username'];
     }
     return null;
 }
 
 function isCurrentUserAdmin() {
-    return isUserLoggedIn() && isset($_SESSION['is_admin']) && $_SESSION['is_admin'] == 1;
+    $result = makeUserAPICall('verify_user.php');
+    return isset($result['is_admin']) && $result['is_admin'] == 1;
 }
 
 function requireUser() {
     if (!isUserLoggedIn()) {
-        header('Location: user_login.php');
+        header('Location: ' . $GLOBALS['server_c_url'] . '/user_login.php');
         exit();
     }
 }
 
-function logoutUser() {
-    session_destroy();
-    header('Location: index.php');
+// JSON response helper
+function sendJSONResponse($data, $status_code = 200) {
+    http_response_code($status_code);
+    header('Content-Type: application/json');
+    echo json_encode($data);
     exit();
 }
 ?>

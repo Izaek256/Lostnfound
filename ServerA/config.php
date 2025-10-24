@@ -13,14 +13,17 @@ $db_user = "root";
 $db_pass = "kpet"; // Change this to your MySQL password
 
 // Server A configuration
-$server_a_ip = "192.168.1.10"; // Change this to your Server A IP
-$server_a_port = "80";
+$server_a_ip = "localhost"; // Changed for single PC testing
+$server_a_port = "8080";
 
-// CORS configuration - Allow requests from Server B and clients
+// CORS configuration - Allow requests from Server B, C and clients
 $allowed_origins = [
-    "http://192.168.1.11", // Server B IP
-    "http://localhost",
-    "http://127.0.0.1"
+    "http://localhost:8081", // Server B (Item Management)
+    "http://localhost:8082", // Server C (Frontend)
+    "http://localhost", // Local access
+    "http://127.0.0.1",
+    "http://127.0.0.1:8081",
+    "http://127.0.0.1:8082"
 ];
 
 // Enable CORS for cross-origin requests

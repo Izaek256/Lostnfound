@@ -1,49 +1,62 @@
 <?php
 /**
- * Server B - User Dashboard
+ * Server B - View Items Page
  * 
- * This page displays user's personal dashboard and fetches data from Server A
+ * This page displays all items and fetches data from Server A
  */
 
 require_once 'config.php';
 
-// Check if user is logged in
-requireUser();
+// Get filter and search parameters
+$filter = $_GET['filter'] ?? 'all';
+$search = $_GET['search'] ?? '';
 
-// Handle logout
-if (isset($_GET['logout'])) {
-    logoutUser();
+// Try to get data from Server A via API
+$apiParams = [];
+if ($filter !== 'all') {
+    $apiParams['filter'] = $filter;
+}
+if (!empty($search)) {
+    $apiParams['search'] = $search;
 }
 
-$userId = getCurrentUserId();
-$username = getCurrentUsername();
-$userEmail = getCurrentUserEmail();
-
-// Try to get user's items from Server A via API
-$userItemsData = makeAPICall('get_user_items', [], 'GET');
-$userItems = [];
+$itemsData = makeAPICall('get_items', $apiParams, 'GET');
+$items = [];
 $stats = ['total' => 0, 'lost_count' => 0, 'found_count' => 0];
 
-if (isset($userItemsData['success']) && $userItemsData['success']) {
-    $userItems = $userItemsData['items'];
-    $stats = $userItemsData['stats'];
+if (isset($itemsData['success']) && $itemsData['success']) {
+    $items = $itemsData['items'];
+    $stats = $itemsData['stats'];
 } else {
     // Fallback: try direct database connection
     $conn = getDBConnection();
     if ($conn) {
-        // Get user's items
-        $sql = "SELECT * FROM items WHERE user_id = '$userId' ORDER BY created_at DESC";
-        $result = $conn->query($sql);
-        if ($result) {
-            $userItems = $result->fetch_all(MYSQLI_ASSOC);
+        // Build query
+        $sql = "SELECT * FROM items WHERE 1=1";
+        
+        if ($filter !== 'all') {
+            $filter = $conn->real_escape_string($filter);
+            $sql .= " AND type = '$filter'";
         }
         
-        // Get user statistics
+        if (!empty($search)) {
+            $search = $conn->real_escape_string($search);
+            $sql .= " AND (title LIKE '%$search%' OR description LIKE '%$search%' OR location LIKE '%$search%')";
+        }
+        
+        $sql .= " ORDER BY created_at DESC";
+        
+        $result = $conn->query($sql);
+        if ($result) {
+            $items = $result->fetch_all(MYSQLI_ASSOC);
+        }
+        
+        // Get statistics
         $sql = "SELECT 
             COUNT(*) as total,
             SUM(CASE WHEN type = 'lost' THEN 1 ELSE 0 END) as lost_count,
             SUM(CASE WHEN type = 'found' THEN 1 ELSE 0 END) as found_count
-            FROM items WHERE user_id = '$userId'";
+            FROM items";
         $result = $conn->query($sql);
         if ($result) {
             $stats = $result->fetch_assoc();
@@ -59,7 +72,7 @@ if (isset($userItemsData['success']) && $userItemsData['success']) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Dashboard - Server B</title>
+    <title>Browse Items - Server B</title>
     <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg">
     <link rel="stylesheet" href="style.css">
     <style>
@@ -90,12 +103,17 @@ if (isset($userItemsData['success']) && $userItemsData['success']) {
                     <li><a href="index.php">Home</a></li>
                     <li><a href="report_lost.php">Report Lost</a></li>
                     <li><a href="report_found.php">Report Found</a></li>
-                    <li><a href="items.php">View Items</a></li>
-                    <li><a href="user_dashboard.php" class="active">My Dashboard</a></li>
-                    <?php if (isCurrentUserAdmin()): ?>
-                        <li><a href="../ServerA/admin_dashboard.php">Admin Panel</a></li>
+                    <li><a href="items.php" class="active">View Items</a></li>
+                    <?php if (isUserLoggedIn()): ?>
+                        <li><a href="user_dashboard.php">My Dashboard</a></li>
+                        <?php if (isCurrentUserAdmin()): ?>
+                            <li><a href="../ServerA/admin_dashboard.php">Admin Panel</a></li>
+                        <?php endif; ?>
+                        <li><a href="user_dashboard.php?logout=1">Logout</a></li>
+                    <?php else: ?>
+                        <li><a href="user_login.php">Login</a></li>
+                        <li><a href="user_register.php">Register</a></li>
                     <?php endif; ?>
-                    <li><a href="user_dashboard.php?logout=1">Logout</a></li>
                 </ul>
             </nav>
         </div>
@@ -104,29 +122,44 @@ if (isset($userItemsData['success']) && $userItemsData['success']) {
     <!-- Main Content -->
     <main>
         <div class="server-info">
-            <h3>🖥️ Server B - User Dashboard</h3>
+            <h3>🖥️ Server B - Browse Items</h3>
             <p>Data synchronized from Server A (Main Backend)</p>
         </div>
 
-        <!-- Welcome Section -->
+        <!-- Search and Filter Section -->
         <section class="form-container">
-            <h2>👤 Welcome, <?php echo htmlspecialchars($username); ?>!</h2>
-            <p><strong>Email:</strong> <?php echo htmlspecialchars($userEmail); ?></p>
+            <h2>🔍 Search & Filter Items</h2>
             
-            <div style="margin-top: 2rem; display: flex; gap: 1rem; flex-wrap: wrap;">
-                <a href="report_lost.php" class="btn">📢 Report Lost Item</a>
-                <a href="report_found.php" class="btn btn-success">🔍 Report Found Item</a>
-                <a href="items.php" class="btn btn-secondary">👀 Browse All Items</a>
-            </div>
+            <form method="GET" style="display: flex; gap: 1rem; align-items: end; flex-wrap: wrap;">
+                <div class="form-group" style="flex: 1; min-width: 200px;">
+                    <label for="search">Search Items</label>
+                    <input type="text" 
+                           id="search" 
+                           name="search" 
+                           value="<?php echo htmlspecialchars($search); ?>" 
+                           placeholder="🔍 Search by title, description, or location...">
+                </div>
+                
+                <div class="form-group" style="min-width: 150px;">
+                    <label for="filter">Filter by Type</label>
+                    <select id="filter" name="filter">
+                        <option value="all" <?php if($filter == 'all') echo 'selected'; ?>>All Items</option>
+                        <option value="lost" <?php if($filter == 'lost') echo 'selected'; ?>>Lost Items</option>
+                        <option value="found" <?php if($filter == 'found') echo 'selected'; ?>>Found Items</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn">Apply Filters</button>
+            </form>
         </section>
 
-        <!-- Personal Statistics -->
+        <!-- Statistics -->
         <section class="form-container">
-            <h2>📊 My Statistics</h2>
+            <h2>📊 Current Statistics</h2>
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem; text-align: center;">
                 <div style="padding: 1.5rem; background: #f8f9fa; border-radius: 10px;">
                     <h3 style="font-size: 2rem; color: #667eea;"><?php echo $stats['total']; ?></h3>
-                    <p>My Total Items</p>
+                    <p>Total Items</p>
                 </div>
                 <div style="padding: 1.5rem; background: #f8f9fa; border-radius: 10px;">
                     <h3 style="font-size: 2rem; color: #dc3545;"><?php echo $stats['lost_count']; ?></h3>
@@ -139,15 +172,16 @@ if (isset($userItemsData['success']) && $userItemsData['success']) {
             </div>
         </section>
 
-        <!-- My Items -->
+        <!-- Items Display -->
         <section class="items-container">
             <div class="items-header">
-                <h2>📋 My Items</h2>
+                <h2>📋 All Items</h2>
+                <div>Showing <?php echo count($items); ?> of <?php echo $stats['total']; ?> items</div>
             </div>
             
-            <?php if (count($userItems) > 0): ?>
+            <?php if (count($items) > 0): ?>
                 <div class="items-grid">
-                    <?php foreach ($userItems as $item): ?>
+                    <?php foreach ($items as $item): ?>
                         <div class="item-card">
                             <div class="item-card-header">
                                 <span class="item-type <?php echo $item['type']; ?>">
@@ -157,7 +191,8 @@ if (isset($userItemsData['success']) && $userItemsData['success']) {
                                 <?php if ($item['image'] && file_exists('../ServerA/uploads/' . $item['image'])): ?>
                                     <img src="../ServerA/uploads/<?php echo htmlspecialchars($item['image']); ?>" 
                                          alt="<?php echo htmlspecialchars($item['title']); ?>" 
-                                         class="item-image">
+                                         class="item-image"
+                                         onclick="openImageModal('../ServerA/uploads/<?php echo htmlspecialchars($item['image']); ?>', '<?php echo htmlspecialchars($item['title']); ?>')">
                                 <?php else: ?>
                                     <div class="no-image-placeholder">
                                         <span>📷</span>
@@ -195,7 +230,7 @@ if (isset($userItemsData['success']) && $userItemsData['success']) {
                                             <polyline points="22,6 12,13 2,6"></polyline>
                                         </svg>
                                         <div class="item-detail-content">
-                                            <strong>Contact:</strong> <?php echo htmlspecialchars($item['contact']); ?>
+                                            <strong>Contact:</strong> <a href="mailto:<?php echo htmlspecialchars($item['contact']); ?>" style="color: var(--primary);"><?php echo htmlspecialchars($item['contact']); ?></a>
                                         </div>
                                     </div>
                                 </div>
@@ -209,28 +244,29 @@ if (isset($userItemsData['success']) && $userItemsData['success']) {
                                         <?php echo date('M j, Y g:i A', strtotime($item['created_at'])); ?>
                                     </p>
                                 </div>
-                                
-                                <!-- Item Actions -->
-                                <div style="margin-top: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                                    <a href="edit_item.php?id=<?php echo $item['id']; ?>" class="btn" style="background: #6f42c1; font-size: 0.9rem;">✏️ Edit</a>
-                                    <button onclick="deleteItem(<?php echo $item['id']; ?>)" class="btn" style="background: #dc3545; font-size: 0.9rem;">🗑️ Delete</button>
-                                </div>
                             </div>
                         </div>
                     <?php endforeach; ?>
                 </div>
             <?php else: ?>
                 <div style="text-align: center; padding: 3rem;">
-                    <h3>No items posted yet</h3>
-                    <p>Start by reporting a lost or found item!</p>
-                    <div style="margin-top: 2rem;">
-                        <a href="report_lost.php" class="btn">📢 Report Lost Item</a>
-                        <a href="report_found.php" class="btn btn-success">🔍 Report Found Item</a>
-                    </div>
+                    <h3>No items found</h3>
+                    <?php if ($search != '' || $filter != 'all'): ?>
+                        <p>Try adjusting your search criteria or <a href="items.php">view all items</a></p>
+                    <?php else: ?>
+                        <p>Be the first to <a href="report_lost.php">report a lost item</a> or <a href="report_found.php">report a found item</a></p>
+                    <?php endif; ?>
                 </div>
             <?php endif; ?>
         </section>
     </main>
+
+    <!-- Image Modal -->
+    <div id="imageModal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.9); cursor: pointer;" onclick="closeImageModal()">
+        <img id="modalImage" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); max-width: 90%; max-height: 90%; object-fit: contain;">
+        <p id="modalCaption" style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); color: white; text-align: center; font-size: 1.2rem;"></p>
+        <span style="position: absolute; top: 20px; right: 35px; color: white; font-size: 40px; font-weight: bold; cursor: pointer;" onclick="closeImageModal()">&times;</span>
+    </div>
 
     <!-- Footer -->
     <footer>
@@ -239,31 +275,24 @@ if (isset($userItemsData['success']) && $userItemsData['success']) {
 
     <script src="script.js"></script>
     <script>
-        function deleteItem(itemId) {
-            if (confirm('Are you sure you want to delete this item?')) {
-                // Make API call to Server A to delete item
-                fetch('../ServerA/api/delete_item.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: 'item_id=' + itemId
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert('Item deleted successfully!');
-                        location.reload();
-                    } else {
-                        alert('Error: ' + (data.error || 'Failed to delete item'));
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Error deleting item. Please try again.');
-                });
-            }
+        function openImageModal(imageSrc, title) {
+            document.getElementById('imageModal').style.display = 'block';
+            document.getElementById('modalImage').src = imageSrc;
+            document.getElementById('modalCaption').textContent = title;
+            document.body.style.overflow = 'hidden';
         }
+
+        function closeImageModal() {
+            document.getElementById('imageModal').style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeImageModal();
+            }
+        });
     </script>
 </body>
 </html>
