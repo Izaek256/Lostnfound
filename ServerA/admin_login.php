@@ -67,29 +67,27 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Login - Server A</title>
-    <link rel="stylesheet" href="../ServerB/style.css">
-    <style>
-        .admin-header {
-            background: #dc3545;
-            color: white;
-            padding: 1rem;
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-        .form-container {
-            max-width: 400px;
-            margin: 2rem auto;
-        }
-    </style>
+    <link rel="stylesheet" href="../ServerC/style.css">
 </head>
 <body>
-    <div class="admin-header">
-        <h1>🛡️ Server A - Admin Login</h1>
-        <p>Main Backend Server</p>
-    </div>
+    <!-- Header -->
+    <header>
+        <div class="header-content">
+            <div class="logo">
+                <h1>🛡️ Server A - Admin Login</h1>
+            </div>
+        </div>
+    </header>
 
-    <div class="form-container">
-        <h2>Admin Authentication</h2>
+    <!-- Main Content -->
+    <main>
+        <div class="hero" style="background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%);">
+            <h2>Admin Authentication</h2>
+            <p>Main Backend Server - Database Host</p>
+        </div>
+
+        <div class="form-container">
+        <h2>🔑 Admin Access</h2>
         
         <?php if ($error): ?>
             <div class="alert alert-error"><?php echo htmlspecialchars($error); ?></div>
@@ -109,12 +107,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <button type="submit" class="btn">Login</button>
         </form>
         
-        <div style="margin-top: 2rem; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
-            <h3>🔑 Admin Access Information</h3>
+        </div>
+        
+        <div class="form-container">
+            <h2>ℹ️ Access Information</h2>
             <p>Only users with admin privileges can access this panel.</p>
             <p><strong>Server A</strong> hosts the main database and APIs.</p>
         </div>
-    </div>
+    </main>
 
     <script>
         document.getElementById('username').focus();

@@ -67,7 +67,7 @@ if (isset($recentItemsData['success']) && $recentItemsData['success']) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Report Lost Item - Server B</title>
     <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../ServerC/style.css">
     <style>
         .server-info {
             background: #e8f5e8;

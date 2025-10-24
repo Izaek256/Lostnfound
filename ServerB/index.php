@@ -42,7 +42,7 @@ if ($conn) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>University Lost and Found Portal</title>
     <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../ServerC/style.css">
     <style>
         .server-info {
             background: #e8f5e8;
