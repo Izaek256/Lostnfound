@@ -404,16 +404,16 @@ main {
     letter-spacing: 0.5px;
     z-index: 10;
     box-shadow: var(--shadow-md);
-    backdrop-filter: blur(8px);
+    /* Removed backdrop-filter for better browser compatibility */
 }
 
 .item-type.lost {
-    background: rgba(239, 68, 68, 0.95);
+    background: #ef4444; /* Solid color for better compatibility */
     color: white;
 }
 
 .item-type.found {
-    background: rgba(16, 185, 129, 0.95);
+    background: #10b981; /* Solid color for better compatibility */
     color: white;
 }
 

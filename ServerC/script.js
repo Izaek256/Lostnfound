@@ -49,7 +49,10 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Close menu when clicking outside
         document.addEventListener('click', function(e) {
-            if (!nav.contains(e.target) && !menuToggle.contains(e.target)) {
+            // Check if click is outside the menu and menu toggle
+            if (nav && nav.classList.contains('active') && 
+                !nav.contains(e.target) && 
+                menuToggle && !menuToggle.contains(e.target)) {
                 nav.classList.remove('active');
                 menuToggle.classList.remove('active');
             }
@@ -81,15 +84,19 @@ function initializeReadMore() {
             desc.classList.add('truncated');
             desc.setAttribute('data-full-text', fullText);
             
-            // Create read more button
-            var readMoreBtn = document.createElement('span');
-            readMoreBtn.className = 'read-more-btn';
-            readMoreBtn.textContent = 'Read more...';
-            readMoreBtn.onclick = function() {
-                toggleDescription(desc, readMoreBtn);
-            };
-            
-            desc.parentNode.insertBefore(readMoreBtn, desc.nextSibling);
+            // Check if read more button already exists
+            var existingBtn = desc.parentNode.querySelector('.read-more-btn');
+            if (!existingBtn) {
+                // Create read more button
+                var readMoreBtn = document.createElement('span');
+                readMoreBtn.className = 'read-more-btn';
+                readMoreBtn.textContent = 'Read more...';
+                readMoreBtn.onclick = function() {
+                    toggleDescription(desc, readMoreBtn);
+                };
+                
+                desc.parentNode.insertBefore(readMoreBtn, desc.nextSibling);
+            }
         }
     });
 }

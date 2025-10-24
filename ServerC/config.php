@@ -43,11 +43,19 @@ if (session_status() == PHP_SESSION_NONE) {
 function makeAPICall($endpoint, $data = null, $method = 'GET') {
     global $api_endpoints;
     
-    if (!isset($api_endpoints[$endpoint])) {
+    // Handle endpoints with query parameters
+    $endpointBase = $endpoint;
+    $queryParams = '';
+    if (strpos($endpoint, '?') !== false) {
+        list($endpointBase, $queryParams) = explode('?', $endpoint, 2);
+        $queryParams = '?' . $queryParams;
+    }
+    
+    if (!isset($api_endpoints[$endpointBase])) {
         return ['error' => 'Invalid API endpoint'];
     }
     
-    $url = $api_endpoints[$endpoint];
+    $url = $api_endpoints[$endpointBase] . $queryParams;
     static $cache = [];
     $cacheKey = md5($endpoint . '|' . $method . '|' . (is_array($data) || is_object($data) ? json_encode($data) : strval($data)));
     if (isset($cache[$cacheKey])) {

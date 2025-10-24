@@ -11,22 +11,43 @@ require_once 'config.php';
 $filter = $_GET['filter'] ?? 'all';
 $search = $_GET['search'] ?? '';
 
-// Try to get data from Server A via API
+// Try to get data from Server B via API
 $apiParams = [];
 if ($filter !== 'all') {
-    $apiParams['filter'] = $filter;
+    $apiParams['type'] = $filter;  // ServerB API expects 'type' parameter, not 'filter'
 }
 if (!empty($search)) {
     $apiParams['search'] = $search;
 }
 
-$itemsData = makeAPICall('get_items', $apiParams, 'GET');
+// Build query string for GET request
+$queryString = '';
+if (!empty($apiParams)) {
+    $queryString = '?' . http_build_query($apiParams);
+}
+
+// Update the API endpoint to include query parameters
+$itemsData = makeAPICall('get_items' . $queryString, null, 'GET');
 $items = [];
 $stats = ['total' => 0, 'lost_count' => 0, 'found_count' => 0];
 
 if (isset($itemsData['success']) && $itemsData['success']) {
     $items = $itemsData['items'];
-    $stats = $itemsData['stats'];
+    // ServerB API returns count, not stats, so we need to calculate stats
+    $stats = [
+        'total' => $itemsData['count'],
+        'lost_count' => 0,
+        'found_count' => 0
+    ];
+    
+    // Calculate lost and found counts
+    foreach ($items as $item) {
+        if (isset($item['type']) && $item['type'] === 'lost') {
+            $stats['lost_count']++;
+        } elseif (isset($item['type']) && $item['type'] === 'found') {
+            $stats['found_count']++;
+        }
+    }
 } else {
     // Fallback: try direct database connection
     $conn = getDBConnection();
@@ -60,6 +81,10 @@ if (isset($itemsData['success']) && $itemsData['success']) {
         $result = $conn->query($sql);
         if ($result) {
             $stats = $result->fetch_assoc();
+            // Ensure numeric values
+            $stats['total'] = (int)$stats['total'];
+            $stats['lost_count'] = (int)$stats['lost_count'];
+            $stats['found_count'] = (int)$stats['found_count'];
         }
         
         $conn->close();
