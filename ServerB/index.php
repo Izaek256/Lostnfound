@@ -1,50 +1,45 @@
 <?php
 /**
- * Lost and Found Portal - Homepage
+ * Server B - Homepage
  * 
- * This is the main landing page of the portal.
- * It displays:
- * - Navigation menu
- * - Portal statistics (total items, lost items, found items)
- * - Recent items (last 6 items posted)
- * - Information about how the portal works
- * - Helpful tips for users
+ * This page displays the portal overview and fetches data from Server A
  */
 
-// Include the database connection file
-// require_once ensures the file is included only once
-require_once 'db.php';
+require_once 'config.php';
 
-// Include user functions
-require_once 'user_config.php';
+// Try to get data from Server A via API
+$itemsData = makeAPICall('get_items', ['limit' => 6], 'GET');
+$recentItems = [];
+$stats = ['total' => 0, 'lost_count' => 0, 'found_count' => 0];
 
-// Get the 6 most recent items from the database
-// ORDER BY created_at DESC means newest items first
-// LIMIT 6 means only get 6 items
-$sql = "SELECT * FROM items ORDER BY created_at DESC LIMIT 6";
-
-// Execute the query using mysqli_query()
-$result = mysqli_query($conn, $sql);
-
-// Fetch all results as an associative array
-// mysqli_fetch_all() gets all rows at once
-// MYSQLI_ASSOC means use column names as array keys
-$recentItems = mysqli_fetch_all($result, MYSQLI_ASSOC);
-
-// Get statistics for the dashboard
-// This query counts total items and separates them by type
-$sql = "SELECT 
-    COUNT(*) as total,                                                    -- Total count of all items
-    SUM(CASE WHEN type = 'lost' THEN 1 ELSE 0 END) as lost_count,       -- Count only lost items
-    SUM(CASE WHEN type = 'found' THEN 1 ELSE 0 END) as found_count      -- Count only found items
-    FROM items";
-
-// Execute the statistics query
-$result = mysqli_query($conn, $sql);
-
-// Fetch a single row (the statistics)
-// mysqli_fetch_assoc() returns one row as an associative array
-$stats = mysqli_fetch_assoc($result);
+if (isset($itemsData['success']) && $itemsData['success']) {
+    $recentItems = $itemsData['items'];
+    $stats = $itemsData['stats'];
+} else {
+    // Fallback: try direct database connection
+    $conn = getDBConnection();
+    if ($conn) {
+        // Get recent items
+        $sql = "SELECT * FROM items ORDER BY created_at DESC LIMIT 6";
+        $result = $conn->query($sql);
+        if ($result) {
+            $recentItems = $result->fetch_all(MYSQLI_ASSOC);
+        }
+        
+        // Get statistics
+        $sql = "SELECT 
+            COUNT(*) as total,
+            SUM(CASE WHEN type = 'lost' THEN 1 ELSE 0 END) as lost_count,
+            SUM(CASE WHEN type = 'found' THEN 1 ELSE 0 END) as found_count
+            FROM items";
+        $result = $conn->query($sql);
+        if ($result) {
+            $stats = $result->fetch_assoc();
+        }
+        
+        $conn->close();
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -55,6 +50,15 @@ $stats = mysqli_fetch_assoc($result);
     <title>University Lost and Found Portal</title>
     <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg">
     <link rel="stylesheet" href="style.css">
+    <style>
+        .server-info {
+            background: #e8f5e8;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
     <!-- Header -->
@@ -78,7 +82,7 @@ $stats = mysqli_fetch_assoc($result);
                     <?php if (isUserLoggedIn()): ?>
                         <li><a href="user_dashboard.php">My Dashboard</a></li>
                         <?php if (isCurrentUserAdmin()): ?>
-                            <li><a href="admin_dashboard.php">Admin Panel</a></li>
+                            <li><a href="../ServerA/admin_dashboard.php">Admin Panel</a></li>
                         <?php endif; ?>
                         <li><a href="user_dashboard.php?logout=1">Logout</a></li>
                     <?php else: ?>
@@ -92,6 +96,11 @@ $stats = mysqli_fetch_assoc($result);
 
     <!-- Main Content -->
     <main>
+        <div class="server-info">
+            <h3>🖥️ Server B - Secondary Node</h3>
+            <p>Connected to Server A (Main Backend) | Data synchronized in real-time</p>
+        </div>
+
         <!-- Hero Section -->
         <section class="hero">
             <h2>University Lost and Found Portal</h2>
@@ -140,8 +149,8 @@ $stats = mysqli_fetch_assoc($result);
                             <?php echo $item['type'] === 'lost' ? '🔴 Lost' : '🟢 Found'; ?>
                         </span>
                         
-                        <?php if ($item['image'] && file_exists('uploads/' . $item['image'])): ?>
-                            <img src="uploads/<?php echo htmlspecialchars($item['image']); ?>" 
+                        <?php if ($item['image'] && file_exists('../ServerA/uploads/' . $item['image'])): ?>
+                            <img src="../ServerA/uploads/<?php echo htmlspecialchars($item['image']); ?>" 
                                  alt="<?php echo htmlspecialchars($item['title']); ?>" 
                                  class="item-image">
                         <?php else: ?>

@@ -1,0 +1,123 @@
+<?php
+/**
+ * Server A - Admin Login Page
+ * 
+ * This page handles admin authentication for Server A
+ */
+
+require_once 'config.php';
+
+// Redirect if already logged in as admin
+if (isset($_SESSION['user_id']) && isset($_SESSION['is_admin']) && $_SESSION['is_admin'] == 1) {
+    header('Location: admin_dashboard.php');
+    exit();
+}
+
+$error = '';
+
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $username = $_POST['username'] ?? '';
+    $password = $_POST['password'] ?? '';
+    
+    if (!empty($username) && !empty($password)) {
+        $conn = getDBConnection();
+        
+        // Escape username for security
+        $username = $conn->real_escape_string($username);
+        
+        // Get user from database
+        $sql = "SELECT id, username, email, password, is_admin FROM users WHERE username = '$username'";
+        $result = $conn->query($sql);
+        
+        if ($result->num_rows > 0) {
+            $user = $result->fetch_assoc();
+            
+            // Verify password
+            if (password_verify($password, $user['password'])) {
+                // Check if user has admin rights
+                if ($user['is_admin'] == 1) {
+                    // Set session variables
+                    $_SESSION['user_id'] = $user['id'];
+                    $_SESSION['username'] = $user['username'];
+                    $_SESSION['user_email'] = $user['email'];
+                    $_SESSION['is_admin'] = $user['is_admin'];
+                    
+                    header('Location: admin_dashboard.php');
+                    exit();
+                } else {
+                    $error = 'Access denied. You do not have administrator privileges.';
+                }
+            } else {
+                $error = 'Invalid username or password.';
+            }
+        } else {
+            $error = 'Invalid username or password.';
+        }
+        
+        $conn->close();
+    } else {
+        $error = 'Please enter both username and password.';
+    }
+}
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - Server A</title>
+    <link rel="stylesheet" href="../ServerB/style.css">
+    <style>
+        .admin-header {
+            background: #dc3545;
+            color: white;
+            padding: 1rem;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .form-container {
+            max-width: 400px;
+            margin: 2rem auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-header">
+        <h1>🛡️ Server A - Admin Login</h1>
+        <p>Main Backend Server</p>
+    </div>
+
+    <div class="form-container">
+        <h2>Admin Authentication</h2>
+        
+        <?php if ($error): ?>
+            <div class="alert alert-error"><?php echo htmlspecialchars($error); ?></div>
+        <?php endif; ?>
+        
+        <form method="POST">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            
+            <button type="submit" class="btn">Login</button>
+        </form>
+        
+        <div style="margin-top: 2rem; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+            <h3>🔑 Admin Access Information</h3>
+            <p>Only users with admin privileges can access this panel.</p>
+            <p><strong>Server A</strong> hosts the main database and APIs.</p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('username').focus();
+    </script>
+</body>
+</html>
