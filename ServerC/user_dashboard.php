@@ -55,7 +55,7 @@ $user_items = array_filter($all_items, function($item) use ($user_id) {
                     <?php if (isUserLoggedIn()): ?>
                         <li><a href="user_dashboard.php" class="active">My Dashboard</a></li>
                         <?php if (isCurrentUserAdmin()): ?>
-                            <li><a href="../ServerA/admin_dashboard.php">Admin Panel</a></li>
+                            <li><a href="admin_dashboard.php">Admin Panel</a></li>
                         <?php endif; ?>
                         <li><a href="user_dashboard.php?logout=1">Logout</a></li>
                     <?php else: ?>

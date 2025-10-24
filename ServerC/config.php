@@ -72,8 +72,9 @@ function makeAPICall($endpoint, $data = null, $method = 'GET') {
         curl_setopt($ch, CURLOPT_POST, true);
         if ($data) {
             if (is_array($data) && isset($data['image'])) {
-                // Handle file upload
+                // Handle file upload - send as multipart/form-data
                 curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+                // Don't set Content-Type header for multipart/form-data
             } else {
                 curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
                 curl_setopt($ch, CURLOPT_HTTPHEADER, [
@@ -84,10 +85,9 @@ function makeAPICall($endpoint, $data = null, $method = 'GET') {
     }
     
     // Include session cookie for authentication
-    // TEMPORARILY DISABLED FOR DEBUGGING
-    // if (isset($_COOKIE['PHPSESSID'])) {
-    //     curl_setopt($ch, CURLOPT_COOKIE, 'PHPSESSID=' . $_COOKIE['PHPSESSID']);
-    // }
+    if (isset($_COOKIE['PHPSESSID'])) {
+        curl_setopt($ch, CURLOPT_COOKIE, 'PHPSESSID=' . $_COOKIE['PHPSESSID']);
+    }
     
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -122,37 +122,23 @@ function makeAPICall($endpoint, $data = null, $method = 'GET') {
 
 // Helper functions for user authentication
 function isUserLoggedIn() {
-    $result = makeAPICall('session_status');
-    return isset($result['success']) && $result['success'] === true;
+    return isset($_SESSION['user_id']) && !empty($_SESSION['user_id']);
 }
 
 function getCurrentUserId() {
-    $result = makeAPICall('session_status');
-    if (isset($result['user_id'])) {
-        return $result['user_id'];
-    }
-    return null;
+    return $_SESSION['user_id'] ?? null;
 }
 
 function getCurrentUsername() {
-    $result = makeAPICall('session_status');
-    if (isset($result['username'])) {
-        return $result['username'];
-    }
-    return null;
+    return $_SESSION['username'] ?? null;
 }
 
 function getCurrentUserEmail() {
-    $result = makeAPICall('session_status');
-    if (isset($result['email'])) {
-        return $result['email'];
-    }
-    return null;
+    return $_SESSION['user_email'] ?? null;
 }
 
 function isCurrentUserAdmin() {
-    $result = makeAPICall('session_status');
-    return isset($result['is_admin']) && $result['is_admin'] == 1;
+    return isset($_SESSION['is_admin']) && $_SESSION['is_admin'] == 1;
 }
 
 function requireUser() {
@@ -163,6 +149,19 @@ function requireUser() {
 }
 
 function logoutUser() {
+    // Clear all session variables
+    $_SESSION = array();
+    
+    // Destroy the session cookie
+    if (ini_get("session.use_cookies")) {
+        $params = session_get_cookie_params();
+        setcookie(session_name(), '', time() - 42000,
+            $params["path"], $params["domain"],
+            $params["secure"], $params["httponly"]
+        );
+    }
+    
+    // Destroy the session
     session_destroy();
     header('Location: index.php');
     exit();

@@ -20,7 +20,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (empty($title) || empty($description) || empty($location) || empty($contact)) {
         $error = 'Please fill in all fields';
     } else {
-        $data = [
+        // Make direct API call with form data
+        $api_url = $api_endpoints['add_item'];
+        
+        $postData = [
             'title' => $title,
             'description' => $description,
             'type' => 'found',
@@ -31,10 +34,29 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         
         // Handle file upload
         if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
-            $data['image'] = new CURLFile($_FILES['image']['tmp_name'], $_FILES['image']['type'], $_FILES['image']['name']);
+            $postData['image'] = new CURLFile($_FILES['image']['tmp_name'], $_FILES['image']['type'], $_FILES['image']['name']);
         }
         
-        $result = makeAPICall('add_item', $data, 'POST');
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $api_url);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+        
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        
+        if ($response === false) {
+            $result = ['error' => 'API call failed'];
+        } else {
+            $result = json_decode($response, true);
+            if ($result === null) {
+                $result = ['error' => 'Invalid API response'];
+            }
+        }
         
         if (isset($result['success']) && $result['success']) {
             $success = 'Found item reported successfully!';
@@ -76,7 +98,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     <?php if (isUserLoggedIn()): ?>
                         <li><a href="user_dashboard.php">My Dashboard</a></li>
                         <?php if (isCurrentUserAdmin()): ?>
-                            <li><a href="../ServerA/admin_dashboard.php">Admin Panel</a></li>
+                            <li><a href="admin_dashboard.php">Admin Panel</a></li>
                         <?php endif; ?>
                         <li><a href="user_dashboard.php?logout=1">Logout</a></li>
                     <?php else: ?>

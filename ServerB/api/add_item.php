@@ -24,12 +24,23 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit();
 }
 
-// Get input data
-$input = json_decode(file_get_contents('php://input'), true);
+// Get input data - handle both JSON and form data
+$input = [];
 
-if (!$input) {
+// Check if it's multipart/form-data (file upload)
+if (isset($_FILES['image']) || !empty($_POST)) {
+    $input = $_POST;
+} else {
+    // Try to get JSON data
+    $json_input = json_decode(file_get_contents('php://input'), true);
+    if ($json_input) {
+        $input = $json_input;
+    }
+}
+
+if (empty($input)) {
     http_response_code(400);
-    echo json_encode(['error' => 'Invalid JSON data']);
+    echo json_encode(['error' => 'No data provided']);
     exit();
 }
 

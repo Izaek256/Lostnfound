@@ -34,7 +34,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         ], 'POST');
         
         if (isset($result['success']) && $result['success']) {
-            $success = 'Registration successful! You can now login.';
+            // Redirect to login page after successful registration
+            header('Location: user_login.php?registered=1');
+            exit();
         } else {
             $error = $result['error'] ?? 'Registration failed';
         }
@@ -73,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     <?php if (isUserLoggedIn()): ?>
                         <li><a href="user_dashboard.php">My Dashboard</a></li>
                         <?php if (isCurrentUserAdmin()): ?>
-                            <li><a href="../ServerA/admin_dashboard.php">Admin Panel</a></li>
+                            <li><a href="admin_dashboard.php">Admin Panel</a></li>
                         <?php endif; ?>
                         <li><a href="user_dashboard.php?logout=1">Logout</a></li>
                     <?php else: ?>

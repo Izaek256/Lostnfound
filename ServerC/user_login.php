@@ -12,6 +12,12 @@ if (isUserLoggedIn()) {
 }
 
 $error = '';
+$success = '';
+
+// Check if user was redirected from registration
+if (isset($_GET['registered']) && $_GET['registered'] == '1') {
+    $success = 'Registration successful! Please login with your credentials.';
+}
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $username = $_POST['username'] ?? '';
@@ -24,12 +30,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         ], 'POST');
         
         if (isset($result['success']) && $result['success']) {
+            // Set session variables locally
             $_SESSION['user_id'] = $result['user_id'];
             $_SESSION['username'] = $result['username'];
             $_SESSION['user_email'] = $result['email'];
             $_SESSION['is_admin'] = $result['is_admin'];
             
-            header('Location: index.php');
+            // Redirect to dashboard or home page
+            header('Location: user_dashboard.php');
             exit();
         } else {
             $error = $result['error'] ?? 'Login failed';
@@ -71,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     <?php if (isUserLoggedIn()): ?>
                         <li><a href="user_dashboard.php">My Dashboard</a></li>
                         <?php if (isCurrentUserAdmin()): ?>
-                            <li><a href="../ServerA/admin_dashboard.php">Admin Panel</a></li>
+                            <li><a href="admin_dashboard.php">Admin Panel</a></li>
                         <?php endif; ?>
                         <li><a href="user_dashboard.php?logout=1">Logout</a></li>
                     <?php else: ?>
@@ -95,6 +103,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             
             <?php if ($error): ?>
                 <div class="alert alert-error"><?php echo htmlspecialchars($error); ?></div>
+            <?php endif; ?>
+            
+            <?php if ($success): ?>
+                <div class="alert alert-success"><?php echo htmlspecialchars($success); ?></div>
             <?php endif; ?>
             
             <form method="POST">
