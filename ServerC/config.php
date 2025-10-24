@@ -25,6 +25,7 @@ $api_endpoints = [
     'verify_user' => "$server_a_url/api/verify_user.php",
     'register_user' => "$server_a_url/api/register_user.php",
     'admin_login' => "$server_a_url/admin_login.php",
+    'session_status' => "$server_a_url/api/session_status.php",
     
     // Item Management APIs (Server B)
     'get_items' => "$server_b_url/api/get_items.php",
@@ -47,11 +48,17 @@ function makeAPICall($endpoint, $data = null, $method = 'GET') {
     }
     
     $url = $api_endpoints[$endpoint];
+    static $cache = [];
+    $cacheKey = md5($endpoint . '|' . $method . '|' . (is_array($data) || is_object($data) ? json_encode($data) : strval($data)));
+    if (isset($cache[$cacheKey])) {
+        return $cache[$cacheKey];
+    }
     
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 2);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 6);
     curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
     
     if ($method === 'POST') {
@@ -87,17 +94,18 @@ function makeAPICall($endpoint, $data = null, $method = 'GET') {
         return ['error' => 'Invalid API response'];
     }
     
+    $cache[$cacheKey] = $decoded;
     return $decoded;
 }
 
 // Helper functions for user authentication
 function isUserLoggedIn() {
-    $result = makeAPICall('verify_user');
+    $result = makeAPICall('session_status');
     return isset($result['success']) && $result['success'] === true;
 }
 
 function getCurrentUserId() {
-    $result = makeAPICall('verify_user');
+    $result = makeAPICall('session_status');
     if (isset($result['user_id'])) {
         return $result['user_id'];
     }
@@ -105,7 +113,7 @@ function getCurrentUserId() {
 }
 
 function getCurrentUsername() {
-    $result = makeAPICall('verify_user');
+    $result = makeAPICall('session_status');
     if (isset($result['username'])) {
         return $result['username'];
     }
@@ -113,7 +121,7 @@ function getCurrentUsername() {
 }
 
 function getCurrentUserEmail() {
-    $result = makeAPICall('verify_user');
+    $result = makeAPICall('session_status');
     if (isset($result['email'])) {
         return $result['email'];
     }
@@ -121,7 +129,7 @@ function getCurrentUserEmail() {
 }
 
 function isCurrentUserAdmin() {
-    $result = makeAPICall('verify_user');
+    $result = makeAPICall('session_status');
     return isset($result['is_admin']) && $result['is_admin'] == 1;
 }
 

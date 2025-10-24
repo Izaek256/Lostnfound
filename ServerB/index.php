@@ -7,38 +7,31 @@
 
 require_once 'config.php';
 
-// Try to get data from Server A via API
-$itemsData = makeAPICall('get_items', ['limit' => 6], 'GET');
+// Fetch data directly from the database
 $recentItems = [];
 $stats = ['total' => 0, 'lost_count' => 0, 'found_count' => 0];
 
-if (isset($itemsData['success']) && $itemsData['success']) {
-    $recentItems = $itemsData['items'];
-    $stats = $itemsData['stats'];
-} else {
-    // Fallback: try direct database connection
-    $conn = getDBConnection();
-    if ($conn) {
-        // Get recent items
-        $sql = "SELECT * FROM items ORDER BY created_at DESC LIMIT 6";
-        $result = $conn->query($sql);
-        if ($result) {
-            $recentItems = $result->fetch_all(MYSQLI_ASSOC);
-        }
-        
-        // Get statistics
-        $sql = "SELECT 
-            COUNT(*) as total,
-            SUM(CASE WHEN type = 'lost' THEN 1 ELSE 0 END) as lost_count,
-            SUM(CASE WHEN type = 'found' THEN 1 ELSE 0 END) as found_count
-            FROM items";
-        $result = $conn->query($sql);
-        if ($result) {
-            $stats = $result->fetch_assoc();
-        }
-        
-        $conn->close();
+$conn = getDBConnection();
+if ($conn) {
+    // Get recent items
+    $sql = "SELECT * FROM items ORDER BY created_at DESC LIMIT 6";
+    $result = $conn->query($sql);
+    if ($result) {
+        $recentItems = $result->fetch_all(MYSQLI_ASSOC);
     }
+    
+    // Get statistics
+    $sql = "SELECT 
+        COUNT(*) as total,
+        SUM(CASE WHEN type = 'lost' THEN 1 ELSE 0 END) as lost_count,
+        SUM(CASE WHEN type = 'found' THEN 1 ELSE 0 END) as found_count
+        FROM items";
+    $result = $conn->query($sql);
+    if ($result) {
+        $stats = $result->fetch_assoc();
+    }
+    
+    $conn->close();
 }
 ?>
 

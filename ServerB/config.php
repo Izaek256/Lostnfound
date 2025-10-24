@@ -53,11 +53,17 @@ function makeUserAPICall($endpoint, $data = null, $method = 'GET') {
     global $server_a_url;
     
     $url = "$server_a_url/api/$endpoint";
+    static $cache = [];
+    $cacheKey = md5($endpoint . '|' . $method . '|' . (is_array($data) || is_object($data) ? json_encode($data) : strval($data)));
+    if (isset($cache[$cacheKey])) {
+        return $cache[$cacheKey];
+    }
     
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 2);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 6);
     curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
     
     if ($method === 'POST') {
@@ -88,17 +94,18 @@ function makeUserAPICall($endpoint, $data = null, $method = 'GET') {
         return ['error' => 'Invalid API response'];
     }
     
+    $cache[$cacheKey] = $decoded;
     return $decoded;
 }
 
 // Helper functions for user authentication (calls Server A)
 function isUserLoggedIn() {
-    $result = makeUserAPICall('verify_user.php');
+    $result = makeUserAPICall('session_status.php');
     return isset($result['success']) && $result['success'] === true;
 }
 
 function getCurrentUserId() {
-    $result = makeUserAPICall('verify_user.php');
+    $result = makeUserAPICall('session_status.php');
     if (isset($result['user_id'])) {
         return $result['user_id'];
     }
@@ -106,7 +113,7 @@ function getCurrentUserId() {
 }
 
 function getCurrentUsername() {
-    $result = makeUserAPICall('verify_user.php');
+    $result = makeUserAPICall('session_status.php');
     if (isset($result['username'])) {
         return $result['username'];
     }
@@ -114,7 +121,7 @@ function getCurrentUsername() {
 }
 
 function isCurrentUserAdmin() {
-    $result = makeUserAPICall('verify_user.php');
+    $result = makeUserAPICall('session_status.php');
     return isset($result['is_admin']) && $result['is_admin'] == 1;
 }
 
