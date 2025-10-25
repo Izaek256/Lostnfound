@@ -12,72 +12,43 @@ session_start();
 // ============================================
 // SERVER DEPLOYMENT CONFIGURATION
 // ============================================
-// Change these when deploying to different computers:
+// ServerC connects to ServerB's centralized database
 
-// ServerA Configuration (User Management)
-$server_a_host = "localhost";  // Change to actual IP when on different computer
-$server_a_db = "lostfound_db";
-$server_a_user = "root";
-$server_a_pass = "kpet";
-
-// ServerB Configuration (Item Management)  
-$server_b_host = "localhost";  // Change to actual IP when on different computer
-$server_b_db = "lostfound_db";
-$server_b_user = "root";
-$server_b_pass = "kpet";
-
-// ServerC Configuration (Frontend)
-$server_c_host = "localhost";  // Change to actual IP when on different computer
-$server_c_db = "lostfound_db";
-$server_c_user = "root";
-$server_c_pass = "kpet";
+// Database Configuration (Points to ServerB)
+$db_host = "localhost";  // Change to ServerB IP when on different computer (e.g., 192.168.1.20)
+$db_name = "lostfound_db";
+$db_user = "root";
+$db_pass = "kpet";
 
 // ============================================
 // DATABASE CONNECTION FUNCTIONS
 // ============================================
+// ServerC connects to the centralized database on ServerB
 
-// Connect to ServerA database (Users)
-function connectServerA() {
-    global $server_a_host, $server_a_db, $server_a_user, $server_a_pass;
-    
-    $conn = mysqli_connect($server_a_host, $server_a_user, $server_a_pass, $server_a_db);
-    
-    if (!$conn) {
-        die("ServerA connection failed: " . mysqli_connect_error());
-    }
-    
-    return $conn;
-}
-
-// Connect to ServerB database (Items)
-function connectServerB() {
-    global $server_b_host, $server_b_db, $server_b_user, $server_b_pass;
-    
-    $conn = mysqli_connect($server_b_host, $server_b_user, $server_b_pass, $server_b_db);
-    
-    if (!$conn) {
-        die("ServerB connection failed: " . mysqli_connect_error());
-    }
-    
-    return $conn;
-}
-
-// Connect to ServerC database (Frontend)
-function connectServerC() {
-    global $server_c_host, $server_c_db, $server_c_user, $server_c_pass;
-    
-    $conn = mysqli_connect($server_c_host, $server_c_user, $server_c_pass, $server_c_db);
-    
-    if (!$conn) {
-        die("ServerC connection failed: " . mysqli_connect_error());
-    }
-    
-    return $conn;
-}
-
-// General connection (defaults to ServerC)
+// Main database connection - connects to ServerB's database
 function connectDB() {
-    return connectServerC();
+    global $db_host, $db_name, $db_user, $db_pass;
+    
+    $conn = mysqli_connect($db_host, $db_user, $db_pass, $db_name);
+    
+    if (!$conn) {
+        die("Database connection failed: " . mysqli_connect_error());
+    }
+    
+    return $conn;
+}
+
+// Legacy function names for backward compatibility
+function connectServerA() {
+    return connectDB();
+}
+
+function connectServerB() {
+    return connectDB();
+}
+
+function connectServerC() {
+    return connectDB();
 }
 
 // ============================================
@@ -135,7 +106,10 @@ function makeAPIRequest($url, $data = [], $method = 'POST') {
     return $response;
 }
 
-// API URLs
+// API URLs - Update these when deploying to different computers
+// Example: If ServerA is at 192.168.1.10 and ServerB is at 192.168.1.20:
+// define('SERVERA_URL', 'http://192.168.1.10/Lostnfound/ServerA/api');
+// define('SERVERB_URL', 'http://192.168.1.20/Lostnfound/ServerB/api');
 define('SERVERA_URL', 'http://localhost/Lostnfound/ServerA/api');
 define('SERVERB_URL', 'http://localhost/Lostnfound/ServerB/api');
 
