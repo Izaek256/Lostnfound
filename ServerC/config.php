@@ -86,27 +86,52 @@ function connectDB() {
 
 // Simple function to make API calls to other servers
 function makeAPIRequest($url, $data = [], $method = 'POST') {
-    $ch = curl_init($url);
+    // Initialize cURL
+    $ch = curl_init();
     
     if ($method == 'POST') {
+        curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
-    } elseif ($method == 'GET' && !empty($data)) {
-        $url .= '?' . http_build_query($data);
+    } elseif ($method == 'GET') {
+        if (!empty($data)) {
+            $url .= '?' . http_build_query($data);
+        }
         curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_HTTPGET, true);
+    } elseif ($method == 'DELETE') {
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
+        if (!empty($data)) {
+            curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+        }
     }
     
+    // Set cURL options
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+    curl_setopt($ch, CURLOPT_MAXREDIRS, 3);
     
+    // Execute request
     $response = curl_exec($ch);
+    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $error = curl_error($ch);
     curl_close($ch);
     
+    // Handle errors
     if ($error) {
-        return ['success' => false, 'message' => 'Connection error: ' . $error];
+        error_log("API Request Error to $url: $error");
+        return "error|Connection failed: $error";
     }
     
+    if ($http_code >= 400) {
+        error_log("API Request HTTP Error $http_code to $url");
+        return "error|Server error (HTTP $http_code)";
+    }
+    
+    // Return response
     return $response;
 }
 

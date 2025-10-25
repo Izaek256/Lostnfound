@@ -1,6 +1,9 @@
 <?php
 require_once '../config.php';
 
+// Set CORS headers for API
+setCORSHeaders();
+
 $conn = connectDB();
 
 // Get filter parameters

@@ -1,6 +1,9 @@
 <?php
 require_once '../config.php';
 
+// Set CORS headers for API
+setCORSHeaders();
+
 if ($_POST) {
     $item_id = $_POST['id'] ?? '';
     $user_id = $_POST['user_id'] ?? '';
@@ -28,8 +31,12 @@ if ($_POST) {
         exit;
     }
     
-    // Update item
-    $update_sql = "UPDATE items SET title = '$title', description = '$description', type = '$type', location = '$location', contact = '$contact', image = '$image_filename' WHERE id = '$item_id' AND user_id = '$user_id'";
+    // Update item - only update image if provided
+    if (!empty($image_filename)) {
+        $update_sql = "UPDATE items SET title = '$title', description = '$description', type = '$type', location = '$location', contact = '$contact', image = '$image_filename' WHERE id = '$item_id' AND user_id = '$user_id'";
+    } else {
+        $update_sql = "UPDATE items SET title = '$title', description = '$description', type = '$type', location = '$location', contact = '$contact' WHERE id = '$item_id' AND user_id = '$user_id'";
+    }
     
     if (mysqli_query($conn, $update_sql)) {
         echo "success|Item updated successfully";

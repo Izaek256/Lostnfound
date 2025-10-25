@@ -1,6 +1,9 @@
 <?php
 require_once '../config.php';
 
+// Set CORS headers for API
+setCORSHeaders();
+
 if ($_POST) {
     $user_id = $_POST['user_id'] ?? '';
     $title = $_POST['title'] ?? '';
