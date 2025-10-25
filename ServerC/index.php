@@ -148,8 +148,8 @@ mysqli_close($conn);
                             <?php echo $item['type'] === 'lost' ? '🔴 Lost' : '🟢 Found'; ?>
                         </span>
                         
-                        <?php if ($item['image'] && file_exists('../ServerA/uploads/' . $item['image'])): ?>
-                            <img src="../ServerA/uploads/<?php echo htmlspecialchars($item['image']); ?>" 
+                        <?php if ($item['image'] && file_exists('../ServerB/uploads/' . $item['image'])): ?>
+                            <img src="../ServerB/uploads/<?php echo htmlspecialchars($item['image']); ?>" 
                                  alt="<?php echo htmlspecialchars($item['title']); ?>" 
                                  class="item-image">
                         <?php else: ?>

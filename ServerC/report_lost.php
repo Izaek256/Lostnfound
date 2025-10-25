@@ -248,8 +248,8 @@ $conn = connectDB();
                     <div class="item-card">
                         <span class="item-type lost">📢 Lost</span>
                         
-                        <?php if ($item['image'] && file_exists('uploads/' . $item['image'])): ?>
-                            <img src="uploads/<?php echo htmlspecialchars($item['image']); ?>" 
+                        <?php if ($item['image'] && file_exists('../ServerB/uploads/' . $item['image'])): ?>
+                            <img src="../ServerB/uploads/<?php echo htmlspecialchars($item['image']); ?>" 
                                  alt="<?php echo htmlspecialchars($item['title']); ?>" 
                                  class="item-image">
                         <?php endif; ?>
