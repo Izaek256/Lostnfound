@@ -2,11 +2,15 @@
 /vendor/
 /node_modules/
 
-# Uploads directory (contains user-uploaded files)
-uploads/*
-!uploads/.htaccess
-/uploads/*
-!uploads/.htaccess
+# Uploads directories (contains user-uploaded files)
+# Ignore any folder named `uploads` or `Uploads` anywhere in the repo
+**/uploads/
+**/uploads/**
+**/Uploads/
+**/Uploads/**
+# Keep .htaccess files in those directories (if present)
+!**/uploads/.htaccess
+!**/Uploads/.htaccess
 
 # IDE and editor files
 .vscode/
