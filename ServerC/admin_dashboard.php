@@ -212,46 +212,40 @@ mysqli_close($conn);
                 <a href="report_found.php" class="btn btn-outline">➕ Add Found Item</a>
             </div>
 
-            <!-- Recent Items Management -->
+            <!-- All Items Management -->
             <?php if (!empty($all_items)): ?>
             <div class="admin-section">
-                <h3>📦 Recent Items Management</h3>
-                <div class="items-grid">
-                    <?php 
-                    // Show only the 6 most recent items
-                    $recent_items = array_slice($all_items, 0, 6);
-                    foreach ($recent_items as $item): 
-                    ?>
-                    <div class="item-card admin-item">
-                        <div class="item-image">
-                            <img src="../ServerB/uploads/<?php echo htmlspecialchars($item['image']); ?>" 
-                                 alt="<?php echo htmlspecialchars($item['title']); ?>"
-                                 onerror="this.src='assets/default-item.jpg'">
-                        </div>
-                        <div class="item-details">
-                            <h4><?php echo htmlspecialchars($item['title']); ?></h4>
-                            <p class="item-type <?php echo $item['type']; ?>">
-                                <?php echo ucfirst($item['type']); ?>
-                            </p>
-                            <p class="item-description"><?php echo htmlspecialchars(substr($item['description'], 0, 80)); ?>...</p>
-                            <p class="item-location">📍 <?php echo htmlspecialchars($item['location']); ?></p>
-                            <p class="item-date">📅 <?php echo date('M j, Y', strtotime($item['created_at'])); ?></p>
-                            <p class="item-user">👤 User ID: <?php echo $item['user_id']; ?></p>
-                            
-                            <div class="admin-actions">
+                <h3>📦 All Items (<?php echo count($all_items); ?>)</h3>
+                <div class="admin-table">
+                    <div class="table-header">
+                        <h3>Complete Items List</h3>
+                    </div>
+                    <div class="table-content">
+                        <?php foreach ($all_items as $item): ?>
+                        <div class="item-row">
+                            <div class="item-image-container">
+                                <img src="../ServerB/uploads/<?php echo htmlspecialchars($item['image']); ?>" 
+                                     alt="<?php echo htmlspecialchars($item['title']); ?>"
+                                     onerror="this.src='assets/default-item.jpg'">
+                            </div>
+                            <div class="item-info">
+                                <h4><?php echo htmlspecialchars($item['title']); ?></h4>
+                                <span class="item-type-badge <?php echo $item['type']; ?>">
+                                    <?php echo strtoupper($item['type']); ?>
+                                </span>
+                                <p class="item-user">👤 <?php echo htmlspecialchars($item['username'] ? $item['username'] : 'User ID: ' . $item['user_id']); ?></p>
+                                <p class="item-date">📅 <?php echo date('M j, Y', strtotime($item['created_at'])); ?></p>
+                            </div>
+                            <div class="item-actions">
                                 <form method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this item?');">
                                     <input type="hidden" name="action" value="delete_item">
                                     <input type="hidden" name="item_id" value="<?php echo $item['id']; ?>">
-                                    <button type="submit" class="btn btn-danger btn-sm">🗑️ Delete</button>
+                                    <button type="submit" class="delete-btn">🗑️ Delete</button>
                                 </form>
                             </div>
                         </div>
+                        <?php endforeach; ?>
                     </div>
-                    <?php endforeach; ?>
-                </div>
-                
-                <div class="section-footer">
-                    <a href="items.php" class="btn btn-outline">View All Items →</a>
                 </div>
             </div>
             <?php endif; ?>
