@@ -224,7 +224,7 @@ mysqli_close($conn);
                         <?php foreach ($all_items as $item): ?>
                         <div class="item-row">
                             <div class="item-image-container">
-                                <img src="../ServerB/uploads/<?php echo htmlspecialchars($item['image']); ?>" 
+                                <img src="<?php echo getImageUrl($item['image']); ?>" 
                                      alt="<?php echo htmlspecialchars($item['title']); ?>"
                                      onerror="this.src='assets/default-item.jpg'">
                             </div>

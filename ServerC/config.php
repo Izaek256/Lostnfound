@@ -52,6 +52,36 @@ function connectServerC() {
 }
 
 // ============================================
+// IMAGE PATH HELPER FUNCTIONS
+// ============================================
+
+// Get image URL for browser display (uses local mount if available)
+function getImageUrl($filename) {
+    if (empty($filename)) return '';
+    
+    // Check if local mount exists and is accessible
+    $localPath = UPLOADS_PATH . $filename;
+    if (file_exists($localPath)) {
+        return UPLOADS_URL . $filename;  // Use local/mounted path
+    }
+    
+    // Fallback to HTTP URL if mount not available
+    return UPLOADS_HTTP_URL . $filename;
+}
+
+// Get image path for file_exists checks
+function getImagePath($filename) {
+    if (empty($filename)) return '';
+    return UPLOADS_PATH . $filename;
+}
+
+// Check if image exists (checks local mount)
+function imageExists($filename) {
+    if (empty($filename)) return false;
+    return file_exists(getImagePath($filename));
+}
+
+// ============================================
 // API REQUEST FUNCTIONS
 // ============================================
 
@@ -107,11 +137,14 @@ function makeAPIRequest($url, $data = [], $method = 'POST') {
 }
 
 // API URLs - Update these when deploying to different computers
-// Example: If ServerA is at 192.168.1.10 and ServerB is at 192.168.1.20:
-// define('SERVERA_URL', 'http://192.168.1.10/Lostnfound/ServerA/api');
-// define('SERVERB_URL', 'http://192.168.1.20/Lostnfound/ServerB/api');
-define('SERVERA_URL', 'http://localhost/Lostnfound/ServerA/api');
-define('SERVERB_URL', 'http://localhost/Lostnfound/ServerB/api');
+// Example:// SPLIT SERVER DEPLOYMENT - ServerC on PC2, ServerA+B on PC1 (192.168.5.242)
+define('SERVERA_URL', 'http://192.168.5.242/Lostnfound/ServerA/api');
+define('SERVERB_URL', 'http://192.168.5.242/Lostnfound/ServerB/api');
+
+// Upload paths - supports both network mount and HTTP access
+define('UPLOADS_PATH', '../ServerB/uploads/');  // Local/mounted path for file operations
+define('UPLOADS_URL', '../ServerB/uploads/');   // Browser path (works if mounted locally)
+define('UPLOADS_HTTP_URL', 'http://192.168.5.242/Lostnfound/ServerB/uploads/');  // HTTP fallback
 
 // Simple user check functions
 function isUserLoggedIn() {

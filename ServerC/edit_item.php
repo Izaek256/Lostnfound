@@ -225,9 +225,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 <div class="form-group">
                     <label for="image">Current Image</label>
-                    <?php if ($item['image'] && file_exists('../ServerB/uploads/' . $item['image'])): ?>
+                    <?php if ($item['image']): ?>
                         <div style="margin-bottom: 1rem;">
-                            <img src="../ServerB/uploads/<?php echo htmlspecialchars($item['image']); ?>" 
+                            <img src="<?php echo getImageUrl($item['image']); ?>" 
                                  alt="Current item image" 
                                  style="max-width: 200px; max-height: 200px; border-radius: 8px;">
                         </div>
