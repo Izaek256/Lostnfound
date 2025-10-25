@@ -1,100 +1,73 @@
 <?php
 /**
- * Server B - Report Found Item API Endpoint
- * 
- * This endpoint handles found item reporting requests for Server B
- */
-
-require_once 'config.php';
-
-// Log that the endpoint was accessed
-error_log("Server B: report_found.php accessed via " . $_SERVER['REQUEST_METHOD'] . " method");
-
-// Return simple JSON response indicating the endpoint is working
-header('Content-Type: application/json');
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // For POST requests, indicate that found item reporting would be processed
-    echo json_encode([
-        'server' => 'Server B',
-        'endpoint' => 'report_found',
-        'status' => 'Processing found item report',
-        'method' => 'POST',
-        'message' => 'Found item report received. Processing would happen here.',
-        'received_data' => array_keys($_POST),
-        'timestamp' => date('Y-m-d H:i:s')
-    ]);
-} else {
-    // For GET requests or others, just indicate the endpoint is accessible
-    echo json_encode([
-        'server' => 'Server B',
-        'endpoint' => 'report_found',
-        'status' => 'Ready to receive found item reports',
-        'method' => $_SERVER['REQUEST_METHOD'],
-        'message' => 'This is an API endpoint for reporting found items.',
-        'timestamp' => date('Y-m-d H:i:s')
-    ]);
-}
-
-exit();
-?>
-<?php
-/**
  * Server B - Report Found Item Page
- * 
- * This page allows users to report found items and sends data to Server A
  */
 
 require_once 'config.php';
 
-// Check if user is logged in
+// Require user to be logged in
 requireUser();
 
 $message = '';
-$messageType = '';
+$title = '';
+$description = '';
+$location = '';
+$contact = '';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Prepare form data for API call
-    $formData = [
-        'title' => $_POST['title'] ?? '',
-        'description' => $_POST['description'] ?? '',
-        'type' => 'found',
-        'location' => $_POST['location'] ?? '',
-        'contact' => $_POST['contact'] ?? '',
-        'image' => $_FILES['image'] ?? null
-    ];
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $title = $_POST['title'] ?? '';
+    $description = $_POST['description'] ?? '';
+    $location = $_POST['location'] ?? '';
+    $contact = $_POST['contact'] ?? '';
     
-    // Validate required fields
-    if (empty($formData['title']) || empty($formData['description']) || empty($formData['location']) || empty($formData['contact'])) {
-        $message = 'Please fill in all fields';
-        $messageType = 'error';
+    if (empty($title) || empty($description) || empty($location) || empty($contact)) {
+        $message = 'Please fill in all required fields';
     } elseif (!isset($_FILES['image']) || $_FILES['image']['error'] != 0) {
-        $message = 'Please upload an image';
-        $messageType = 'error';
+        $message = 'Please upload an image of the found item';
     } else {
-        // Make API call to Server A
-        $response = makeAPICall('add_item', $formData, 'POST');
+        $user_id = getCurrentUserId();
+        $image_filename = null;
         
-        if (isset($response['success']) && $response['success']) {
-            $message = $response['message'];
-            $messageType = 'success';
+        // Handle file upload
+        if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
+            $upload_dir = 'uploads/';
             
-            // Clear form data on success
-            $_POST = [];
-        } else {
-            $message = $response['error'] ?? 'Failed to report found item. Please try again.';
-            $messageType = 'error';
+            if (!is_dir($upload_dir)) {
+                mkdir($upload_dir, 0755, true);
+            }
+            
+            $extension = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
+            $image_filename = uniqid() . '.' . $extension;
+            $upload_path = $upload_dir . $image_filename;
+            
+            move_uploaded_file($_FILES['image']['tmp_name'], $upload_path);
         }
+        
+        $conn = connectDB();
+        $sql = "INSERT INTO items (user_id, title, description, type, location, contact, image, created_at) 
+                VALUES ('$user_id', '$title', '$description', 'found', '$location', '$contact', '$image_filename', NOW())";
+        
+        if (mysqli_query($conn, $sql)) {
+            $message = '✅ Found item reported successfully! The item owner will be able to find your listing and contact you directly.';
+            // Clear form data on success
+            $title = $description = $location = $contact = '';
+        } else {
+            $message = 'Failed to report found item';
+        }
+        
+        mysqli_close($conn);
     }
 }
 
-// Get recent found items for display
-$recentItemsData = makeAPICall('get_items', ['filter' => 'found', 'limit' => 3], 'GET');
+// Get recent found items
+$conn = connectDB();
+$sql = "SELECT * FROM items WHERE type = 'found' ORDER BY created_at DESC LIMIT 3";
+$result = mysqli_query($conn, $sql);
 $recentFoundItems = [];
-
-if (isset($recentItemsData['success']) && $recentItemsData['success']) {
-    $recentFoundItems = $recentItemsData['items'];
+while ($row = mysqli_fetch_assoc($result)) {
+    $recentFoundItems[] = $row;
 }
+mysqli_close($conn)
 ?>
 
 <!DOCTYPE html>
@@ -104,8 +77,7 @@ if (isset($recentItemsData['success']) && $recentItemsData['success']) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Report Found Item - Server B</title>
     <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg">
-    <link rel="stylesheet" href="../ServerC/style.css">
-    <style>
+../ServerC/./assets/style.css"    <style>
         .server-info {
             background: #e8f5e8;
             padding: 1rem;
@@ -180,7 +152,7 @@ if (isset($recentItemsData['success']) && $recentItemsData['success']) {
             <p>Help reunite found items with their owners by providing detailed information.</p>
             
             <?php if ($message): ?>
-                <div class="alert alert-<?php echo $messageType; ?>"><?php echo htmlspecialchars($message); ?></div>
+                <div class="alert"><?php echo htmlspecialchars($message); ?></div>
             <?php endif; ?>
             
             <form method="POST" enctype="multipart/form-data" onsubmit="return validateForm();">
@@ -189,7 +161,7 @@ if (isset($recentItemsData['success']) && $recentItemsData['success']) {
                     <input type="text" 
                            id="title" 
                            name="title" 
-                           value="<?php echo isset($_POST['title']) ? htmlspecialchars($_POST['title']) : ''; ?>"
+                           value="<?php echo htmlspecialchars($title); ?>"
                            placeholder="e.g., Black iPhone 13, Blue Backpack" 
                            required>
                 </div>
@@ -200,7 +172,7 @@ if (isset($recentItemsData['success']) && $recentItemsData['success']) {
                               name="description" 
                               rows="4" 
                               placeholder="Provide detailed description including brand, color, size, unique features, etc. Avoid sharing personal information found on the item." 
-                              required><?php echo isset($_POST['description']) ? htmlspecialchars($_POST['description']) : ''; ?></textarea>
+                              required><?php echo htmlspecialchars($description); ?></textarea>
                 </div>
                 
                 <div class="form-group">
@@ -208,7 +180,7 @@ if (isset($recentItemsData['success']) && $recentItemsData['success']) {
                     <input type="text" 
                            id="location" 
                            name="location" 
-                           value="<?php echo isset($_POST['location']) ? htmlspecialchars($_POST['location']) : ''; ?>"
+                           value="<?php echo htmlspecialchars($location); ?>"
                            placeholder="e.g., Library Building, Room 205, Cafeteria" 
                            required>
                 </div>
@@ -218,7 +190,7 @@ if (isset($recentItemsData['success']) && $recentItemsData['success']) {
                     <input type="email" 
                            id="contact" 
                            name="contact" 
-                           value="<?php echo isset($_POST['contact']) ? htmlspecialchars($_POST['contact']) : getCurrentUserEmail(); ?>"
+                           value="<?php echo !empty($contact) ? htmlspecialchars($contact) : getCurrentUserEmail(); ?>"
                            placeholder="your.email@university.edu" 
                            required>
                 </div>
@@ -249,8 +221,8 @@ if (isset($recentItemsData['success']) && $recentItemsData['success']) {
                         <div class="item-card-header">
                             <span class="item-type found">🟢 Found</span>
                             
-                            <?php if ($item['image'] && file_exists('../ServerA/uploads/' . $item['image'])): ?>
-                                <img src="../ServerA/uploads/<?php echo htmlspecialchars($item['image']); ?>" 
+                            <?php if ($item['image'] && file_exists('uploads/' . $item['image'])): ?>
+                                <img src="uploads/<?php echo htmlspecialchars($item['image']); ?>" 
                                      alt="<?php echo htmlspecialchars($item['title']); ?>" 
                                      class="item-image">
                             <?php else: ?>
@@ -279,6 +251,6 @@ if (isset($recentItemsData['success']) && $recentItemsData['success']) {
         <p>&copy; 2024 University Lost and Found Portal. Built to help our campus community stay connected.</p>
     </footer>
 
-    <script src="script.js"></script>
+    <script src="../ServerC/script.js"></script>
 </body>
 </html>

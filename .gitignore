@@ -8,6 +8,11 @@
 **/uploads/**
 **/Uploads/
 **/Uploads/**
+
+# Ignore all .md and .txt files in all folders
+**/*.md
+**/*.txt
+
 # Keep .htaccess files in those directories (if present)
 !**/uploads/.htaccess
 !**/Uploads/.htaccess

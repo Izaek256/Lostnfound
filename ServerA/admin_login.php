@@ -61,8 +61,7 @@ if ($_POST) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Login - Server A</title>
     <link rel="icon" href="../ServerC/assets/favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="../ServerC/style.css">
-</head>
+../ServerC/./assets/style.css"</head>
 <body>
     <!-- Header -->
     <header>

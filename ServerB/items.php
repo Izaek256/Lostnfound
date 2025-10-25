@@ -1,41 +1,6 @@
 <?php
 /**
- * Server B - View Items API Endpoint
- * 
- * This endpoint handles item browsing requests for Server B
- */
-
-require_once 'config.php';
-
-// Log that the endpoint was accessed
-error_log("Server B: items.php accessed via " . $_SERVER['REQUEST_METHOD'] . " method");
-
-// Return simple JSON response indicating the endpoint is working
-header('Content-Type: application/json');
-
-// Get filter and search parameters
-$filter = $_GET['filter'] ?? 'all';
-$search = $_GET['search'] ?? '';
-
-echo json_encode([
-    'server' => 'Server B',
-    'endpoint' => 'items',
-    'status' => 'Ready to serve item requests',
-    'method' => $_SERVER['REQUEST_METHOD'],
-    'message' => 'This is an API endpoint for browsing items.',
-    'parameters' => [
-        'filter' => $filter,
-        'search' => $search
-    ],
-    'timestamp' => date('Y-m-d H:i:s')
-]);
-
-exit();
-?>
-/**
  * Server B - View Items Page
- * 
- * This page displays all items and fetches data from Server A
  */
 
 require_once 'config.php';
@@ -44,60 +9,39 @@ require_once 'config.php';
 $filter = $_GET['filter'] ?? 'all';
 $search = $_GET['search'] ?? '';
 
-// Try to get data from Server A via API
-$apiParams = [];
-if ($filter !== 'all') {
-    $apiParams['filter'] = $filter;
-}
-if (!empty($search)) {
-    $apiParams['search'] = $search;
-}
-
-$itemsData = makeAPICall('get_items', $apiParams, 'GET');
+// Get data from database
+$conn = connectDB();
 $items = [];
 $stats = ['total' => 0, 'lost_count' => 0, 'found_count' => 0];
 
-if (isset($itemsData['success']) && $itemsData['success']) {
-    $items = $itemsData['items'];
-    $stats = $itemsData['stats'];
-} else {
-    // Fallback: try direct database connection
-    $conn = getDBConnection();
-    if ($conn) {
-        // Build query
-        $sql = "SELECT * FROM items WHERE 1=1";
-        
-        if ($filter !== 'all') {
-            $filter = $conn->real_escape_string($filter);
-            $sql .= " AND type = '$filter'";
-        }
-        
-        if (!empty($search)) {
-            $search = $conn->real_escape_string($search);
-            $sql .= " AND (title LIKE '%$search%' OR description LIKE '%$search%' OR location LIKE '%$search%')";
-        }
-        
-        $sql .= " ORDER BY created_at DESC";
-        
-        $result = $conn->query($sql);
-        if ($result) {
-            $items = $result->fetch_all(MYSQLI_ASSOC);
-        }
-        
-        // Get statistics
-        $sql = "SELECT 
-            COUNT(*) as total,
-            SUM(CASE WHEN type = 'lost' THEN 1 ELSE 0 END) as lost_count,
-            SUM(CASE WHEN type = 'found' THEN 1 ELSE 0 END) as found_count
-            FROM items";
-        $result = $conn->query($sql);
-        if ($result) {
-            $stats = $result->fetch_assoc();
-        }
-        
-        $conn->close();
-    }
+// Build query
+$sql = "SELECT * FROM items WHERE 1=1";
+
+if ($filter !== 'all') {
+    $sql .= " AND type = '$filter'";
 }
+
+if (!empty($search)) {
+    $sql .= " AND (title LIKE '%$search%' OR description LIKE '%$search%' OR location LIKE '%$search%')";
+}
+
+$sql .= " ORDER BY created_at DESC";
+
+$result = mysqli_query($conn, $sql);
+while ($row = mysqli_fetch_assoc($result)) {
+    $items[] = $row;
+}
+
+// Get statistics
+$stats_sql = "SELECT 
+    COUNT(*) as total,
+    SUM(CASE WHEN type = 'lost' THEN 1 ELSE 0 END) as lost_count,
+    SUM(CASE WHEN type = 'found' THEN 1 ELSE 0 END) as found_count
+    FROM items";
+$stats_result = mysqli_query($conn, $stats_sql);
+$stats = mysqli_fetch_assoc($stats_result);
+
+mysqli_close($conn)
 ?>
 
 <!DOCTYPE html>
@@ -107,8 +51,7 @@ if (isset($itemsData['success']) && $itemsData['success']) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Browse Items - Server B</title>
     <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg">
-    <link rel="stylesheet" href="../ServerC/style.css">
-    <style>
+../ServerC/./assets/style.css"    <style>
         .server-info {
             background: #e8f5e8;
             padding: 1rem;
@@ -221,11 +164,11 @@ if (isset($itemsData['success']) && $itemsData['success']) {
                                     <?php echo $item['type'] === 'lost' ? '🔴 Lost' : '🟢 Found'; ?>
                                 </span>
                                 
-                                <?php if ($item['image'] && file_exists('../ServerA/uploads/' . $item['image'])): ?>
-                                    <img src="../ServerA/uploads/<?php echo htmlspecialchars($item['image']); ?>" 
+                                <?php if ($item['image'] && file_exists('uploads/' . $item['image'])): ?>
+                                    <img src="uploads/<?php echo htmlspecialchars($item['image']); ?>" 
                                          alt="<?php echo htmlspecialchars($item['title']); ?>" 
                                          class="item-image"
-                                         onclick="openImageModal('../ServerA/uploads/<?php echo htmlspecialchars($item['image']); ?>', '<?php echo htmlspecialchars($item['title']); ?>')">
+                                         onclick="openImageModal('uploads/<?php echo htmlspecialchars($item['image']); ?>', '<?php echo htmlspecialchars($item['title']); ?>')">
                                 <?php else: ?>
                                     <div class="no-image-placeholder">
                                         <span>📷</span>

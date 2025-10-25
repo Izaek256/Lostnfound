@@ -16,7 +16,7 @@ header('Content-Type: application/json');
 echo json_encode([
     'server' => 'Server B',
     'status' => 'Running',
-    'message' => 'Server B is handling requests. Use API endpoints for functionality.',
+    'message' => '<div class="server-info"><h3>🖥️ Server B - Item Management</h3><p>Browse and manage lost & found items | Connected to shared database</p></div><script src="../ServerC/script.js"></script></body></html>',
     'timestamp' => date('Y-m-d H:i:s')
 ]);
 
