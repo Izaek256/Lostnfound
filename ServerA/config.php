@@ -1,23 +1,116 @@
 <?php
-// Simple database configuration
-$db_host = "localhost";
-$db_name = "lostfound_db";
-$db_user = "root";
-$db_pass = "kpet";
+/**
+ * Multi-Server Configuration (Simple for Beginners)
+ * 
+ * This single file contains ALL server configurations.
+ * Easy to deploy on different computers by changing the IPs/hosts below.
+ */
 
 // Start session
 session_start();
 
-// Simple database connection
-function connectDB() {
-    global $db_host, $db_name, $db_user, $db_pass;
+// ============================================
+// SERVER DEPLOYMENT CONFIGURATION
+// ============================================
+// Change these when deploying to different computers:
+
+// ServerA Configuration (User Management)
+$server_a_host = "localhost";  // Change to actual IP when on different computer
+$server_a_db = "lostfound_db";
+$server_a_user = "root";
+$server_a_pass = "kpet";
+
+// ServerB Configuration (Item Management)  
+$server_b_host = "localhost";  // Change to actual IP when on different computer
+$server_b_db = "lostfound_db";
+$server_b_user = "root";
+$server_b_pass = "kpet";
+
+// ServerC Configuration (Frontend)
+$server_c_host = "localhost";  // Change to actual IP when on different computer
+$server_c_db = "lostfound_db";
+$server_c_user = "root";
+$server_c_pass = "kpet";
+
+// ============================================
+// DATABASE CONNECTION FUNCTIONS
+// ============================================
+
+// Connect to ServerA database (Users)
+function connectServerA() {
+    global $server_a_host, $server_a_db, $server_a_user, $server_a_pass;
     
-    $conn = mysqli_connect($db_host, $db_user, $db_pass, $db_name);
+    $conn = mysqli_connect($server_a_host, $server_a_user, $server_a_pass, $server_a_db);
     
     if (!$conn) {
-        die("Connection failed: " . mysqli_connect_error());
+        die("ServerA connection failed: " . mysqli_connect_error());
     }
     
     return $conn;
+}
+
+// Connect to ServerB database (Items)
+function connectServerB() {
+    global $server_b_host, $server_b_db, $server_b_user, $server_b_pass;
+    
+    $conn = mysqli_connect($server_b_host, $server_b_user, $server_b_pass, $server_b_db);
+    
+    if (!$conn) {
+        die("ServerB connection failed: " . mysqli_connect_error());
+    }
+    
+    return $conn;
+}
+
+// Connect to ServerC database (Frontend)
+function connectServerC() {
+    global $server_c_host, $server_c_db, $server_c_user, $server_c_pass;
+    
+    $conn = mysqli_connect($server_c_host, $server_c_user, $server_c_pass, $server_c_db);
+    
+    if (!$conn) {
+        die("ServerC connection failed: " . mysqli_connect_error());
+    }
+    
+    return $conn;
+}
+
+// General connection (defaults to ServerA for this server)
+function connectDB() {
+    return connectServerA();
+}
+
+// Simple user check functions
+function isUserLoggedIn() {
+    return isset($_SESSION['user_id']);
+}
+
+function getCurrentUserId() {
+    return $_SESSION['user_id'] ?? null;
+}
+
+function getCurrentUsername() {
+    return $_SESSION['username'] ?? null;
+}
+
+function getCurrentUserEmail() {
+    return $_SESSION['user_email'] ?? null;
+}
+
+function isCurrentUserAdmin() {
+    return isset($_SESSION['is_admin']) && $_SESSION['is_admin'] == 1;
+}
+
+function requireUser() {
+    if (!isUserLoggedIn()) {
+        header('Location: user_login.php');
+        exit();
+    }
+}
+
+function logoutUser() {
+    session_destroy();
+    header('Location: index.php');
+    exit();
 }
 ?>

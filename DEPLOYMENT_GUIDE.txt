@@ -1,0 +1,95 @@
+====================================================
+LOST & FOUND PROJECT - DEPLOYMENT GUIDE
+====================================================
+
+CURRENT SETUP (Development - Same Computer):
+---------------------------------------------
+All three servers are on localhost with the same database.
+config.php is identical across all servers for easy development.
+
+
+DEPLOYING TO DIFFERENT COMPUTERS:
+----------------------------------
+
+When you want to place each server on a different computer:
+
+1. COPY each server folder to its target computer:
+   - ServerA folder → Computer 1
+   - ServerB folder → Computer 2  
+   - ServerC folder → Computer 3
+
+2. UPDATE config.php on EACH computer:
+
+   Example: If your computers have these IPs:
+   - Computer 1 (ServerA): 192.168.1.10
+   - Computer 2 (ServerB): 192.168.1.20
+   - Computer 3 (ServerC): 192.168.1.30
+
+   On ALL THREE computers, edit config.php:
+
+   // ServerA Configuration
+   $server_a_host = "192.168.1.10";  // IP of Computer 1
+   $server_a_db = "lostfound_db";
+   $server_a_user = "root";
+   $server_a_pass = "your_password";
+
+   // ServerB Configuration  
+   $server_b_host = "192.168.1.20";  // IP of Computer 2
+   $server_b_db = "lostfound_db";
+   $server_b_user = "root";
+   $server_b_pass = "your_password";
+
+   // ServerC Configuration
+   $server_c_host = "192.168.1.30";  // IP of Computer 3
+   $server_c_db = "lostfound_db";
+   $server_c_user = "root";
+   $server_c_pass = "your_password";
+
+3. SETUP MySQL on each computer:
+   - Install MySQL/WAMP/XAMPP
+   - Import lostfound_db.sql on EACH computer
+   - Allow remote connections in MySQL config
+
+4. ALLOW remote MySQL connections:
+   - Edit MySQL config (my.ini or my.cnf)
+   - Set: bind-address = 0.0.0.0
+   - Grant remote access:
+     GRANT ALL ON lostfound_db.* TO 'root'@'%' IDENTIFIED BY 'your_password';
+
+5. TEST connections:
+   - Make sure all computers can ping each other
+   - Check MySQL port 3306 is open on all computers
+
+
+HOW THE SIMPLE MULTI-SERVER WORKS:
+-----------------------------------
+✓ Each server has the SAME config.php file
+✓ Each server can connect to all other servers' databases
+✓ Simple mysqli_connect() - no APIs or cURL
+✓ When ServerC needs users, it calls connectServerA()
+✓ When ServerC needs items, it calls connectServerB()
+✓ Perfect for beginners to understand!
+
+
+EXAMPLE USE IN CODE:
+--------------------
+
+On ServerC (Frontend):
+// Get user info from ServerA database
+$conn = connectServerA();
+$sql = "SELECT * FROM users WHERE id = '$user_id'";
+$result = mysqli_query($conn, $sql);
+
+// Get items from ServerB database  
+$conn = connectServerB();
+$sql = "SELECT * FROM items WHERE type = 'lost'";
+$result = mysqli_query($conn, $sql);
+
+
+NOTES FOR YOUR LECTURER:
+-------------------------
+✓ Shows understanding of multi-server architecture
+✓ Simple procedural PHP - no complex frameworks
+✓ Clear separation of concerns
+✓ Easy to explain and demonstrate
+✓ Beginner-friendly code throughout

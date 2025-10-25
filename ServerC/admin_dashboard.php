@@ -108,15 +108,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // Get all users for management
 $users = [];
-if ($conn = getDBConnection()) {
-    $users_result = $conn->query("SELECT id, username, email, is_admin, created_at FROM users ORDER BY created_at DESC");
-    if ($users_result && $users_result->num_rows > 0) {
-        while ($user = $users_result->fetch_assoc()) {
-            $users[] = $user;
-        }
+$conn = connectDB();
+$users_result = mysqli_query($conn, "SELECT id, username, email, is_admin, created_at FROM users ORDER BY created_at DESC");
+if ($users_result && mysqli_num_rows($users_result) > 0) {
+    while ($user = mysqli_fetch_assoc($users_result)) {
+        $users[] = $user;
     }
-    $conn->close();
 }
+mysqli_close($conn);
 ?>
 
 <!DOCTYPE html>
