@@ -981,7 +981,7 @@ html {
 /* Dashboard Stats */
 .dashboard-stats {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(4, 1fr);
     gap: 1.5rem;
     margin: 2rem 0;
 }
@@ -1024,11 +1024,59 @@ html {
 }
 
 .stat-number {
-    font-size: 3rem !important;
+    font-size: 3rem;
     font-weight: 800;
     color: var(--primary);
     margin: 0.5rem 0;
     line-height: 1;
+}
+
+/* User Welcome Section */
+.user-welcome {
+    margin-bottom: 2rem;
+    text-align: center;
+    padding: 1.5rem;
+    background: var(--bg-primary);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+}
+
+.user-welcome h2 {
+    margin-bottom: 0.5rem;
+}
+
+.user-email {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    margin: 0;
+}
+
+/* Item Actions */
+.item-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+}
+
+.btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    border-radius: 8px;
+    flex: 1;
+}
+
+.btn-danger {
+    background: #ef4444;
+    color: white;
+    border: 1px solid #dc2626;
+}
+
+.btn-danger:hover {
+    background: #dc2626;
+    transform: translateY(-1px);
 }
 
 /* Dashboard Actions */
@@ -1430,6 +1478,13 @@ html {
 }
 
 /* Responsive Design */
+@media (max-width: 1024px) and (min-width: 769px) {
+    .dashboard-stats {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.25rem;
+    }
+}
+
 @media (max-width: 768px) {
     .dashboard {
         padding: 1rem;

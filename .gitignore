@@ -5,6 +5,8 @@
 # Uploads directory (contains user-uploaded files)
 uploads/*
 !uploads/.htaccess
+/uploads/*
+!uploads/.htaccess
 
 # IDE and editor files
 .vscode/

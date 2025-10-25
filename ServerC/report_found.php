@@ -8,8 +8,11 @@ require_once 'config.php';
 // Require user to be logged in
 requireUser();
 
-$error = '';
-$success = '';
+$message = '';
+$title = '';
+$description = '';
+$location = '';
+$contact = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $title = $_POST['title'] ?? '';
@@ -18,7 +21,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $contact = $_POST['contact'] ?? '';
     
     if (empty($title) || empty($description) || empty($location) || empty($contact)) {
-        $error = 'Please fill in all fields';
+        $message = 'Please fill in all required fields';
+    } elseif (!isset($_FILES['image']) || $_FILES['image']['error'] != 0) {
+        $message = 'Please upload an image of the found item';
     } else {
         // Make direct API call with form data
         $api_url = $api_endpoints['add_item'];
@@ -59,12 +64,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
         
         if (isset($result['success']) && $result['success']) {
-            $success = 'Found item reported successfully!';
+            $message = '✅ Found item reported successfully! The item owner will be able to find your listing and contact you directly.';
+            // Clear form data on success
+            $title = $description = $location = $contact = '';
         } else {
-            $error = $result['error'] ?? 'Failed to report found item';
+            $message = $result['error'] ?? 'Failed to report found item';
         }
     }
 }
+
+// Get database connection for recent items display
+$conn = getDBConnection();
 ?>
 
 <!DOCTYPE html>
@@ -81,8 +91,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <header>
         <div class="header-content">
             <div class="logo">
-                <img src="assets/logo.webp" alt="Lost & Found Logo">
-                <h1>Lost & Found Portal</h1>
+                <img src="./assets/logo.webp" alt="Lost & Found Logo">
+                <h1>University Lost & Found</h1>
             </div>
             <button class="menu-toggle" aria-label="Toggle menu">
                 <span></span>
@@ -112,48 +122,227 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     <!-- Main Content -->
     <main>
-            <div class="form-container">
-                <h2>Report Found Item</h2>
-                
-                <?php if ($error): ?>
-                    <div class="error-message"><?php echo htmlspecialchars($error); ?></div>
-                <?php endif; ?>
-                
-                <?php if ($success): ?>
-                    <div class="success-message"><?php echo htmlspecialchars($success); ?></div>
-                <?php endif; ?>
-                
-                <form method="POST" enctype="multipart/form-data">
-                    <div class="form-group">
-                        <label for="title">Item Title:</label>
-                        <input type="text" id="title" name="title" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="description">Description:</label>
-                        <textarea id="description" name="description" rows="4" required></textarea>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="location">Found Location:</label>
-                        <input type="text" id="location" name="location" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="contact">Contact Information:</label>
-                        <input type="text" id="contact" name="contact" value="<?php echo htmlspecialchars(getCurrentUserEmail()); ?>" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="image">Item Image (optional):</label>
-                        <input type="file" id="image" name="image" accept="image/*">
-                    </div>
-                    
-                    <button type="submit" class="btn btn-primary">Report Found Item</button>
-                </form>
+        <!-- Display message if any -->
+        <?php if ($message != ''): ?>
+            <div class="alert">
+                <?php echo $message; ?>
             </div>
-        </main>
-    </div>
+        <?php endif; ?>
+
+        <!-- Report Found Item Form -->
+        <div class="form-container">
+            <h2>🔍 Report a Found Item</h2>
+            <p style="text-align: center; color: var(--color-light); margin-bottom: 2rem;">
+                Found something on campus? Help reunite it with its owner by providing detailed information about the item and where you found it.
+            </p>
+            
+            <form method="POST" enctype="multipart/form-data" onsubmit="return validateForm();">
+                <div class="form-group">
+                    <label for="title">Item Title *</label>
+                    <input type="text" 
+                           id="title" 
+                           name="title" 
+                           placeholder="e.g., Black iPhone 13, Blue Backpack, Silver Watch"
+                           value="<?php echo isset($title) ? htmlspecialchars($title) : ''; ?>"
+                           required>
+                </div>
+
+                <div class="form-group">
+                    <label for="description">Detailed Description *</label>
+                    <textarea id="description" 
+                              name="description" 
+                              placeholder="Provide a detailed description including color, brand, size, unique features, or any identifying marks. Be specific but avoid sharing personal information found on the item..."
+                              required><?php echo isset($description) ? htmlspecialchars($description) : ''; ?></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="location">Where You Found It *</label>
+                    <input type="text" 
+                           id="location" 
+                           name="location" 
+                           placeholder="e.g., Library 2nd Floor Study Area, Student Center Lost & Found Desk, Engineering Building Hallway"
+                           value="<?php echo isset($location) ? htmlspecialchars($location) : ''; ?>"
+                           required>
+                </div>
+
+                <div class="form-group">
+                    <label for="contact">Your Contact Information *</label>
+                    <input type="email" 
+                           id="contact" 
+                           name="contact" 
+                           placeholder="your.email@university.edu"
+                           value="<?php echo isset($contact) ? htmlspecialchars($contact) : htmlspecialchars(getCurrentUserEmail()); ?>"
+                           required>
+                    <small style="color: var(--color-medium-light); font-size: 0.875rem;">
+                        We recommend using your university email address. The item owner will use this to contact you for pickup arrangements.
+                    </small>
+                </div>
+
+                <div class="form-group">
+                    <label for="image">Upload Image *</label>
+                    <input type="file" 
+                           id="image" 
+                           name="image" 
+                           accept="image/*"
+                           required>
+                    <small style="color: var(--color-medium-light); font-size: 0.875rem;">
+                        A photo is required to help owners identify their items. Accepted formats: JPG, JPEG, PNG, GIF
+                    </small>
+                </div>
+
+                <div style="text-align: center; margin-top: 2rem;">
+                    <button type="submit" class="btn btn-success">🔍 Submit Found Item Report</button>
+                    <a href="index.php" class="btn btn-secondary" style="margin-left: 1rem;">Cancel</a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Tips Section -->
+        <div class="form-container">
+            <h2>💡 Tips for Reporting Found Items</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-top: 1.5rem;">
+                <div>
+                    <h4 style="color: var(--accent-success); margin-bottom: 1rem;">🔒 Protect Privacy</h4>
+                    <ul style="padding-left: 1.5rem; color: var(--color-light);">
+                        <li>Don't share personal info found on items</li>
+                        <li>Avoid showing ID cards, phone numbers, or addresses</li>
+                        <li>Describe the item without revealing sensitive details</li>
+                        <li>Let the owner prove ownership through description</li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 style="color: var(--accent-success); margin-bottom: 1rem;">📸 Photo Guidelines</h4>
+                    <ul style="padding-left: 1.5rem; color: var(--color-light);">
+                        <li>Take clear, well-lit photos</li>
+                        <li>Show distinctive features or markings</li>
+                        <li>Cover or blur any personal information</li>
+                        <li>Multiple angles can be helpful</li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 style="color: var(--accent-success); margin-bottom: 1rem;">🤝 Safe Handoff</h4>
+                    <ul style="padding-left: 1.5rem; color: var(--color-light);">
+                        <li>Meet in public, well-lit areas</li>
+                        <li>Consider campus security or lost & found office</li>
+                        <li>Ask the owner to describe the item first</li>
+                        <li>Verify ownership before handing over</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Found Items -->
+        <div class="form-container">
+            <h2>✅ Recently Reported Found Items</h2>
+            <p style="text-align: center; color: var(--color-light); margin-bottom: 1.5rem;">
+                See what others have found recently - maybe someone found your lost item!
+            </p>
+            
+            <?php
+            // Get recent found items from database for display
+            // This helps users see what others have found recently
+            if ($conn) {
+                $sql = "SELECT * FROM items WHERE type = 'found' ORDER BY created_at DESC LIMIT 3";
+                $result = mysqli_query($conn, $sql);
+                $recentFoundItems = $result ? mysqli_fetch_all($result, MYSQLI_ASSOC) : [];
+            } else {
+                $recentFoundItems = [];
+            }
+            ?>
+            
+            <?php if (count($recentFoundItems) > 0): ?>
+                <div class="items-grid">
+                    <?php foreach ($recentFoundItems as $item): ?>
+                    <div class="item-card">
+                        <span class="item-type found">✅ Found</span>
+                        
+                        <?php if ($item['image'] && file_exists('uploads/' . $item['image'])): ?>
+                            <img src="uploads/<?php echo htmlspecialchars($item['image']); ?>" 
+                                 alt="<?php echo htmlspecialchars($item['title']); ?>" 
+                                 class="item-image">
+                        <?php endif; ?>
+                        
+                        <h3><?php echo htmlspecialchars($item['title']); ?></h3>
+                        <p><strong>Description:</strong> <?php echo htmlspecialchars(substr($item['description'], 0, 80) . '...'); ?></p>
+                        <p><strong>📍 Found at:</strong> <?php echo htmlspecialchars($item['location']); ?></p>
+                        
+                        <div class="item-meta">
+                            <p><strong>Posted:</strong> <?php echo date('M j, Y', strtotime($item['created_at'])); ?></p>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+                
+                <div style="text-align: center; margin-top: 2rem;">
+                    <a href="items.php?filter=found" class="btn btn-secondary">View All Found Items</a>
+                </div>
+            <?php else: ?>
+                <p style="text-align: center; color: var(--color-light); font-style: italic;">No found items reported yet.</p>
+            <?php endif; ?>
+        </div>
+
+        <!-- What to Do After Reporting -->
+        <div class="form-container">
+            <h2>📋 What Happens Next?</h2>
+            <div style="background: rgba(0, 77, 64, 0.3); padding: 1.5rem; border-radius: 10px; margin-top: 1.5rem;">
+                <ol style="padding-left: 1.5rem; color: var(--color-light); line-height: 1.8;">
+                    <li><strong>Your report is now live</strong> - Item owners can search and find your listing</li>
+                    <li><strong>Check your email regularly</strong> - Potential owners will contact you directly</li>
+                    <li><strong>Verify ownership</strong> - Ask them to describe the item before meeting</li>
+                    <li><strong>Arrange safe pickup</strong> - Meet in public areas or use campus lost & found</li>
+                    <li><strong>Update the community</strong> - Let us know when the item is successfully returned</li>
+                </ol>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2024 University Lost and Found Portal. Built to help our campus community stay connected.</p>
+    </footer>
     <script src="script.js"></script>
+    <script>
+    function validateForm() {
+        const title = document.getElementById('title').value.trim();
+        const description = document.getElementById('description').value.trim();
+        const location = document.getElementById('location').value.trim();
+        const contact = document.getElementById('contact').value.trim();
+        const image = document.getElementById('image').files[0];
+        
+        if (!title || !description || !location || !contact) {
+            alert('Please fill in all required fields.');
+            return false;
+        }
+        
+        if (!image) {
+            alert('Please upload an image of the found item.');
+            return false;
+        }
+        
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(contact)) {
+            alert('Please enter a valid email address.');
+            return false;
+        }
+        
+        // Validate image file type
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+        if (!allowedTypes.includes(image.type)) {
+            alert('Please upload a valid image file (JPG, JPEG, PNG, or GIF).');
+            return false;
+        }
+        
+        // Validate image file size (max 5MB)
+        if (image.size > 5 * 1024 * 1024) {
+            alert('Image file size must be less than 5MB.');
+            return false;
+        }
+        
+        return true;
+    }
+    </script>
 </body>
 </html>

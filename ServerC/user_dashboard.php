@@ -15,6 +15,7 @@ if (isset($_GET['logout'])) {
 
 $user_id = getCurrentUserId();
 $username = getCurrentUsername();
+$user_email = getCurrentUserEmail();
 
 // Get user's items
 $result = makeAPICall('get_items');
@@ -69,66 +70,91 @@ $user_items = array_filter($all_items, function($item) use ($user_id) {
 
     <!-- Main Content -->
     <main>
-            <div class="dashboard">
-                <h2>Welcome, <?php echo htmlspecialchars($username); ?>!</h2>
-                
-                <div class="dashboard-stats">
-                    <div class="stat-card">
-                        <h3>My Lost Items</h3>
-                        <p class="stat-number"><?php echo count(array_filter($user_items, function($item) { return $item['type'] === 'lost'; })); ?></p>
-                    </div>
-                    
-                    <div class="stat-card">
-                        <h3>My Found Items</h3>
-                        <p class="stat-number"><?php echo count(array_filter($user_items, function($item) { return $item['type'] === 'found'; })); ?></p>
-                    </div>
-                    
-                    <div class="stat-card">
-                        <h3>Total Items</h3>
-                        <p class="stat-number"><?php echo count($user_items); ?></p>
-                    </div>
+        <div class="dashboard">
+            <!-- Welcome Section -->
+            <div class="user-welcome">
+                <h2>👤 Welcome, <?php echo htmlspecialchars($username); ?>!</h2>
+                <?php if ($user_email): ?>
+                <p class="user-email">Email: <?php echo htmlspecialchars($user_email); ?></p>
+                <?php endif; ?>
+            </div>
+            
+            <!-- Statistics Cards -->
+            <div class="dashboard-stats">
+                <div class="stat-card">
+                    <h3>Total Items</h3>
+                    <p class="stat-number"><?php echo count($user_items); ?></p>
                 </div>
                 
-                <div class="dashboard-actions">
-                    <a href="report_lost.php" class="btn btn-primary">Report Lost Item</a>
-                    <a href="report_found.php" class="btn btn-secondary">Report Found Item</a>
-                    <a href="items.php" class="btn btn-outline">Browse All Items</a>
+                <div class="stat-card">
+                    <h3>Lost Items</h3>
+                    <p class="stat-number"><?php echo count(array_filter($user_items, function($item) { return $item['type'] === 'lost'; })); ?></p>
                 </div>
                 
-                <?php if (!empty($user_items)): ?>
-                <div class="user-items">
-                    <h3>My Items</h3>
-                    <div class="items-grid">
-                        <?php foreach ($user_items as $item): ?>
-                        <div class="item-card">
+                <div class="stat-card">
+                    <h3>Found Items</h3>
+                    <p class="stat-number"><?php echo count(array_filter($user_items, function($item) { return $item['type'] === 'found'; })); ?></p>
+                </div>
+            </div>
+                
+            <!-- My Posted Items Section -->
+            <?php if (!empty($user_items)): ?>
+            <div class="user-items">
+                <h3>📋 My Posted Items</h3>
+                <div class="items-grid">
+                    <?php foreach ($user_items as $item): ?>
+                    <div class="item-card">
+                        <div class="item-card-header">
                             <div class="item-image">
                                 <img src="../ServerB/uploads/<?php echo htmlspecialchars($item['image']); ?>" 
                                      alt="<?php echo htmlspecialchars($item['title']); ?>"
                                      onerror="this.src='assets/default-item.jpg'">
                             </div>
-                            <div class="item-details">
-                                <h4><?php echo htmlspecialchars($item['title']); ?></h4>
-                                <p class="item-type <?php echo $item['type']; ?>">
-                                    <?php echo ucfirst($item['type']); ?>
-                                </p>
-                                <p class="item-description"><?php echo htmlspecialchars(substr($item['description'], 0, 100)); ?>...</p>
-                                <p class="item-location">📍 <?php echo htmlspecialchars($item['location']); ?></p>
-                                <p class="item-date">📅 <?php echo date('M j, Y', strtotime($item['created_at'])); ?></p>
+                            <span class="item-type <?php echo $item['type']; ?>">
+                                <?php echo ucfirst($item['type']); ?>
+                            </span>
+                        </div>
+                        <div class="item-card-body">
+                            <h4>📧 <?php echo htmlspecialchars($item['title']); ?></h4>
+                            <div class="item-card-section">
+                                <p class="item-description"><?php echo htmlspecialchars($item['description']); ?></p>
+                            </div>
+                            <div class="item-card-section">
+                                <div class="item-detail">
+                                    <span class="item-detail-icon">📍</span>
+                                    <div class="item-detail-content">
+                                        <strong>Location:</strong> <?php echo htmlspecialchars($item['location']); ?>
+                                    </div>
+                                </div>
+                                <div class="item-detail">
+                                    <span class="item-detail-icon">📞</span>
+                                    <div class="item-detail-content">
+                                        <strong>Contact:</strong> <?php echo htmlspecialchars($item['contact']); ?>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="item-meta">
+                                <p>📅 <?php echo date('M j, Y g:i A', strtotime($item['created_at'])); ?></p>
+                            </div>
+                            <div class="item-actions">
+                                <button class="btn btn-secondary btn-sm">✏️ Edit</button>
+                                <button class="btn btn-danger btn-sm">🗑️ Delete</button>
                             </div>
                         </div>
-                        <?php endforeach; ?>
                     </div>
+                    <?php endforeach; ?>
                 </div>
-                <?php else: ?>
-                <div class="no-items">
-                    <h3>No Items Yet</h3>
-                    <p>You haven't reported any lost or found items yet.</p>
-                    <a href="report_lost.php" class="btn btn-primary">Report Your First Item</a>
-                </div>
-                <?php endif; ?>
             </div>
-        </main>
-    </div>
+            <?php else: ?>
+            <div class="no-items">
+                <h3>📋 My Posted Items</h3>
+                <p>You haven't reported any lost or found items yet.</p>
+                <a href="report_lost.php" class="btn btn-primary">Report Your First Item</a>
+            </div>
+            <?php endif; ?>
+        </div>
+    </main>
+    
     <script src="script.js"></script>
 </body>
 </html>
