@@ -100,7 +100,7 @@ mysqli_close($conn);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Dashboard - Lost & Found</title>
     <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
     <header>
@@ -274,6 +274,6 @@ mysqli_close($conn);
         <p>&copy; 2024 University Lost and Found Portal. Built to help our campus community stay connected.</p>
     </footer>
     
-    <script src="script.js"></script>
+    <script src="assets/script.js"></script>
 </body>
 </html>

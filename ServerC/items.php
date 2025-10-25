@@ -63,7 +63,7 @@ mysqli_close($conn);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Browse Items - Server B</title>
     <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="assets/style.css">
     <style>
         .server-info {
             background: #e8f5e8;
@@ -262,7 +262,7 @@ mysqli_close($conn);
         <p>&copy; 2024 University Lost and Found Portal. Built to help our campus community stay connected.</p>
     </footer>
 
-    <script src="script.js"></script>
+    <script src="assets/script.js"></script>
     <script>
         function openImageModal(imageSrc, title) {
             document.getElementById('imageModal').style.display = 'block';
