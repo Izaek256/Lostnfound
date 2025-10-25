@@ -82,6 +82,14 @@ function makeAPICall($endpoint, $data = null, $method = 'GET') {
                 ]);
             }
         }
+    } elseif ($method === 'DELETE') {
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
+        if ($data) {
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'Content-Type: application/json'
+            ]);
+        }
     }
     
     // Include session cookie for authentication

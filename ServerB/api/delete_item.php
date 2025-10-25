@@ -9,7 +9,7 @@ require_once '../config.php';
 
 // Enable CORS
 header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: DELETE, OPTIONS");
+header("Access-Control-Allow-Methods: DELETE, POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 header("Content-Type: application/json");
 
@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     exit();
 }
 
-if ($_SERVER['REQUEST_METHOD'] !== 'DELETE') {
+if ($_SERVER['REQUEST_METHOD'] !== 'DELETE' && $_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(['error' => 'Method not allowed']);
     exit();
@@ -27,9 +27,14 @@ if ($_SERVER['REQUEST_METHOD'] !== 'DELETE') {
 // Get input data
 $input = json_decode(file_get_contents('php://input'), true);
 
+// If JSON input is empty, try to get from POST data
+if (!$input && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $input = $_POST;
+}
+
 if (!$input) {
     http_response_code(400);
-    echo json_encode(['error' => 'Invalid JSON data']);
+    echo json_encode(['error' => 'No input data provided']);
     exit();
 }
 
