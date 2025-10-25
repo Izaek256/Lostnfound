@@ -27,37 +27,18 @@ if ($item_id <= 0) {
 // Get current user ID
 $current_user_id = getCurrentUserId();
 
-// Get all items and find the specific one
-$result = makeAPICall('get_items');
-$all_items = $result['items'] ?? [];
+// Get item from database
+$conn = connectDB();
+$sql = "SELECT * FROM items WHERE id = '$item_id' AND user_id = '$current_user_id'";
+$result = mysqli_query($conn, $sql);
 
-foreach ($all_items as $i) {
-    if ($i['id'] == $item_id && $i['user_id'] == $current_user_id) {
-        $item = $i;
-        break;
-    }
+if (mysqli_num_rows($result) > 0) {
+    $item = mysqli_fetch_assoc($result);
+} else {
+    $item = null;
 }
 
-// If API failed or item not found, try direct database access
-if (!$item) {
-    $conn = getDBConnection();
-    if ($conn) {
-        $sql = "SELECT * FROM items WHERE id = ? AND user_id = ?";
-        $stmt = $conn->prepare($sql);
-        if ($stmt) {
-            $stmt->bind_param("ii", $item_id, $current_user_id);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            
-            if ($result->num_rows > 0) {
-                $item = $result->fetch_assoc();
-            }
-            
-            $stmt->close();
-        }
-        $conn->close();
-    }
-}
+mysqli_close($conn);
 
 if (!$item && $item_id > 0) {
     $message = 'Item not found or you do not have permission to edit this item.';
@@ -125,45 +106,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         // Update item in database if no errors
         if (!isset($message) || $messageType !== 'error') {
-            $conn = getDBConnection();
-            if ($conn) {
-                $update_sql = "UPDATE items SET title = ?, description = ?, type = ?, location = ?, contact = ?, image = ? WHERE id = ? AND user_id = ?";
-                $update_stmt = $conn->prepare($update_sql);
+            $conn = connectDB();
+            
+            $update_sql = "UPDATE items SET title = '$title', description = '$description', type = '$type', location = '$location', contact = '$contact', image = '$image_filename' WHERE id = '$item_id' AND user_id = '$current_user_id'";
+            
+            if (mysqli_query($conn, $update_sql)) {
+                $message = 'Item updated successfully!';
+                $messageType = 'success';
                 
-                if ($update_stmt) {
-                    $update_stmt->bind_param("ssssssii", $title, $description, $type, $location, $contact, $image_filename, $item_id, $current_user_id);
-                    
-                    if ($update_stmt->execute()) {
-                        $affected_rows = $update_stmt->affected_rows;
-                        if ($affected_rows > 0) {
-                            $message = 'Item updated successfully!';
-                            $messageType = 'success';
-                            
-                            // Refresh item data
-                            $item['title'] = $title;
-                            $item['description'] = $description;
-                            $item['type'] = $type;
-                            $item['location'] = $location;
-                            $item['contact'] = $contact;
-                            $item['image'] = $image_filename;
-                        } else {
-                            $message = 'No changes were made to the item (or item not found).';
-                            $messageType = 'error';
-                        }
-                    } else {
-                        $message = 'Error executing update query: ' . $update_stmt->error;
-                        $messageType = 'error';
-                    }
-                    $update_stmt->close();
-                } else {
-                    $message = 'Error preparing update query: ' . $conn->error;
-                    $messageType = 'error';
-                }
-                $conn->close();
+                // Refresh item data
+                $item['title'] = $title;
+                $item['description'] = $description;
+                $item['type'] = $type;
+                $item['location'] = $location;
+                $item['contact'] = $contact;
+                $item['image'] = $image_filename;
             } else {
-                $message = 'Database connection failed.';
+                $message = 'Error updating item.';
                 $messageType = 'error';
             }
+            
+            mysqli_close($conn);
         }
     }
     }

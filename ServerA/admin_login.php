@@ -15,28 +15,21 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['is_admin']) && $_SESSION['is
 
 $error = '';
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $username = $_POST['username'] ?? '';
-    $password = $_POST['password'] ?? '';
+if ($_POST) {
+    $username = $_POST['username'];
+    $password = $_POST['password'];
     
     if (!empty($username) && !empty($password)) {
-        $conn = getDBConnection();
+        $conn = connectDB();
         
-        // Escape username for security
-        $username = $conn->real_escape_string($username);
+        $sql = "SELECT * FROM users WHERE username = '$username'";
+        $result = mysqli_query($conn, $sql);
         
-        // Get user from database
-        $sql = "SELECT id, username, email, password, is_admin FROM users WHERE username = '$username'";
-        $result = $conn->query($sql);
-        
-        if ($result->num_rows > 0) {
-            $user = $result->fetch_assoc();
+        if (mysqli_num_rows($result) > 0) {
+            $user = mysqli_fetch_assoc($result);
             
-            // Verify password
             if (password_verify($password, $user['password'])) {
-                // Check if user has admin rights
                 if ($user['is_admin'] == 1) {
-                    // Set session variables
                     $_SESSION['user_id'] = $user['id'];
                     $_SESSION['username'] = $user['username'];
                     $_SESSION['user_email'] = $user['email'];
@@ -45,18 +38,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     header('Location: admin_dashboard.php');
                     exit();
                 } else {
-                    $error = 'Access denied. You do not have administrator privileges.';
+                    $error = 'Access denied. You are not an admin.';
                 }
             } else {
-                $error = 'Invalid username or password.';
+                $error = 'Wrong password.';
             }
         } else {
-            $error = 'Invalid username or password.';
+            $error = 'User not found.';
         }
         
-        $conn->close();
+        mysqli_close($conn);
     } else {
-        $error = 'Please enter both username and password.';
+        $error = 'Please fill all fields.';
     }
 }
 ?>

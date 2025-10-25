@@ -19,31 +19,37 @@ if (isset($_GET['registered']) && $_GET['registered'] == '1') {
     $success = 'Registration successful! Please login with your credentials.';
 }
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $username = $_POST['username'] ?? '';
-    $password = $_POST['password'] ?? '';
+if ($_POST) {
+    $username = $_POST['username'];
+    $password = $_POST['password'];
     
     if (!empty($username) && !empty($password)) {
-        $result = makeAPICall('verify_user', [
-            'username' => $username,
-            'password' => $password
-        ], 'POST');
+        $conn = connectDB();
         
-        if (isset($result['success']) && $result['success']) {
-            // Set session variables locally
-            $_SESSION['user_id'] = $result['user_id'];
-            $_SESSION['username'] = $result['username'];
-            $_SESSION['user_email'] = $result['email'];
-            $_SESSION['is_admin'] = $result['is_admin'];
+        $sql = "SELECT * FROM users WHERE username = '$username'";
+        $result = mysqli_query($conn, $sql);
+        
+        if (mysqli_num_rows($result) > 0) {
+            $user = mysqli_fetch_assoc($result);
             
-            // Redirect to dashboard or home page
-            header('Location: user_dashboard.php');
-            exit();
+            if (password_verify($password, $user['password'])) {
+                $_SESSION['user_id'] = $user['id'];
+                $_SESSION['username'] = $user['username'];
+                $_SESSION['user_email'] = $user['email'];
+                $_SESSION['is_admin'] = $user['is_admin'];
+                
+                header('Location: user_dashboard.php');
+                exit();
+            } else {
+                $error = 'Wrong password';
+            }
         } else {
-            $error = $result['error'] ?? 'Login failed';
+            $error = 'User not found';
         }
+        
+        mysqli_close($conn);
     } else {
-        $error = 'Please fill in all fields';
+        $error = 'Please fill all fields';
     }
 }
 ?>

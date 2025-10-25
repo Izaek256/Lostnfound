@@ -1,101 +1,55 @@
 <?php
-/**
- * Server B - Get Items API
- * 
- * This API retrieves all lost and found items
- */
-
 require_once '../config.php';
 
-// Enable CORS
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: GET, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization");
-header("Content-Type: application/json");
-
-if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
-    http_response_code(200);
-    exit();
-}
-
-if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
-    http_response_code(405);
-    echo json_encode(['error' => 'Method not allowed']);
-    exit();
-}
-
-// Connect to database
-$conn = getDBConnection();
-if (!$conn) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Database connection failed']);
-    exit();
-}
+$conn = connectDB();
 
 // Get filter parameters
 $type = $_GET['type'] ?? '';
 $search = $_GET['search'] ?? '';
 
-// Build query
+// Build simple query
 $sql = "SELECT i.*, u.username FROM items i LEFT JOIN users u ON i.user_id = u.id WHERE 1=1";
-$params = [];
-$types = "";
 
 if (!empty($type) && in_array($type, ['lost', 'found'])) {
-    $sql .= " AND i.type = ?";
-    $params[] = $type;
-    $types .= "s";
+    $sql .= " AND i.type = '$type'";
 }
 
 if (!empty($search)) {
-    $sql .= " AND (i.title LIKE ? OR i.description LIKE ? OR i.location LIKE ?)";
-    $search_param = "%$search%";
-    $params[] = $search_param;
-    $params[] = $search_param;
-    $params[] = $search_param;
-    $types .= "sss";
+    $sql .= " AND (i.title LIKE '%$search%' OR i.description LIKE '%$search%' OR i.location LIKE '%$search%')";
 }
 
 $sql .= " ORDER BY i.created_at DESC";
 
-$stmt = $conn->prepare($sql);
-if (!$stmt) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Database prepare failed']);
-    exit();
-}
-
-if (!empty($params)) {
-    $stmt->bind_param($types, ...$params);
-}
-
-$stmt->execute();
-$result = $stmt->get_result();
-
+$result = mysqli_query($conn, $sql);
 $items = [];
-while ($row = $result->fetch_assoc()) {
+
+while ($row = mysqli_fetch_assoc($result)) {
     $items[] = $row;
 }
 
-// Get statistics for the homepage
-$stats_sql = "SELECT 
-    COUNT(*) as total,
-    SUM(CASE WHEN type = 'lost' THEN 1 ELSE 0 END) as lost_count,
-    SUM(CASE WHEN type = 'found' THEN 1 ELSE 0 END) as found_count
-    FROM items";
-$stats_result = $conn->query($stats_sql);
-$stats = ['total' => 0, 'lost_count' => 0, 'found_count' => 0];
-if ($stats_result) {
-    $stats = $stats_result->fetch_assoc();
-}
+// Get simple statistics
+$stats_sql = "SELECT COUNT(*) as total FROM items";
+$stats_result = mysqli_query($conn, $stats_sql);
+$stats = mysqli_fetch_assoc($stats_result);
+
+$lost_sql = "SELECT COUNT(*) as lost_count FROM items WHERE type = 'lost'";
+$lost_result = mysqli_query($conn, $lost_sql);
+$lost_stats = mysqli_fetch_assoc($lost_result);
+
+$found_sql = "SELECT COUNT(*) as found_count FROM items WHERE type = 'found'";
+$found_result = mysqli_query($conn, $found_sql);
+$found_stats = mysqli_fetch_assoc($found_result);
 
 echo json_encode([
     'success' => true,
     'items' => $items,
     'count' => count($items),
-    'stats' => $stats
+    'stats' => [
+        'total' => $stats['total'],
+        'lost_count' => $lost_stats['lost_count'],
+        'found_count' => $found_stats['found_count']
+    ]
 ]);
 
-$stmt->close();
-$conn->close();
+mysqli_close($conn);
 ?>

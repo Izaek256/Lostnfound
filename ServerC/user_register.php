@@ -14,32 +14,39 @@ if (isUserLoggedIn()) {
 $error = '';
 $success = '';
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $username = $_POST['username'] ?? '';
-    $email = $_POST['email'] ?? '';
-    $password = $_POST['password'] ?? '';
-    $confirm_password = $_POST['confirm_password'] ?? '';
+if ($_POST) {
+    $username = $_POST['username'];
+    $email = $_POST['email'];
+    $password = $_POST['password'];
+    $confirm_password = $_POST['confirm_password'];
     
     if (empty($username) || empty($email) || empty($password) || empty($confirm_password)) {
-        $error = 'Please fill in all fields';
-    } elseif ($password !== $confirm_password) {
+        $error = 'Please fill all fields';
+    } elseif ($password != $confirm_password) {
         $error = 'Passwords do not match';
-    } elseif (strlen($password) < 6) {
-        $error = 'Password must be at least 6 characters long';
     } else {
-        $result = makeAPICall('register_user', [
-            'username' => $username,
-            'email' => $email,
-            'password' => $password
-        ], 'POST');
+        $conn = connectDB();
         
-        if (isset($result['success']) && $result['success']) {
-            // Redirect to login page after successful registration
-            header('Location: user_login.php?registered=1');
-            exit();
+        // Check if user already exists
+        $check_sql = "SELECT * FROM users WHERE username = '$username' OR email = '$email'";
+        $check_result = mysqli_query($conn, $check_sql);
+        
+        if (mysqli_num_rows($check_result) > 0) {
+            $error = 'Username or email already exists';
         } else {
-            $error = $result['error'] ?? 'Registration failed';
+            // Hash password and insert user
+            $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+            $sql = "INSERT INTO users (username, email, password, is_admin, created_at) VALUES ('$username', '$email', '$hashed_password', 0, NOW())";
+            
+            if (mysqli_query($conn, $sql)) {
+                header('Location: user_login.php?registered=1');
+                exit();
+            } else {
+                $error = 'Registration failed';
+            }
         }
+        
+        mysqli_close($conn);
     }
 }
 ?>

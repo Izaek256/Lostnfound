@@ -19,112 +19,78 @@ if (isset($_GET['logout'])) {
 
 // Handle item deletion
 if (isset($_POST['delete_item']) && isset($_POST['item_id'])) {
-    $item_id = intval($_POST['item_id']);
+    $item_id = $_POST['item_id'];
     $current_user_id = getCurrentUserId();
     
-    // Try API first, then fallback to direct database
-    $delete_data = [
-        'id' => $item_id,
-        'user_id' => $current_user_id
-    ];
+    $conn = connectDB();
     
-    $delete_result = makeAPICall('delete_item', $delete_data, 'DELETE');
+    // Check if item belongs to user and get image name
+    $check_sql = "SELECT image FROM items WHERE id = '$item_id' AND user_id = '$current_user_id'";
+    $check_result = mysqli_query($conn, $check_sql);
     
-    // If API failed, try direct database deletion
-    if (!isset($delete_result['success']) || !$delete_result['success']) {
-        $conn = getDBConnection();
-        if ($conn) {
-            // First check if item exists and belongs to user
-            $check_sql = "SELECT image FROM items WHERE id = ? AND user_id = ?";
-            $check_stmt = $conn->prepare($check_sql);
-            $check_stmt->bind_param("ii", $item_id, $current_user_id);
-            $check_stmt->execute();
-            $check_result = $check_stmt->get_result();
-            
-            if ($check_result->num_rows > 0) {
-                $item_data = $check_result->fetch_assoc();
-                
-                // Delete the item
-                $delete_sql = "DELETE FROM items WHERE id = ? AND user_id = ?";
-                $delete_stmt = $conn->prepare($delete_sql);
-                $delete_stmt->bind_param("ii", $item_id, $current_user_id);
-                
-                if ($delete_stmt->execute()) {
-                    // Delete associated image file if it exists
-                    if ($item_data['image'] && $item_data['image'] !== 'default_item.jpg') {
-                        $image_path = '../ServerB/uploads/' . $item_data['image'];
-                        if (file_exists($image_path)) {
-                            unlink($image_path);
-                        }
-                    }
-                    
-                    $message = 'Item deleted successfully!';
-                    $messageType = 'success';
-                } else {
-                    $message = 'Error deleting item from database.';
-                    $messageType = 'error';
+    if (mysqli_num_rows($check_result) > 0) {
+        $item_data = mysqli_fetch_assoc($check_result);
+        
+        // Delete the item
+        $delete_sql = "DELETE FROM items WHERE id = '$item_id' AND user_id = '$current_user_id'";
+        
+        if (mysqli_query($conn, $delete_sql)) {
+            // Delete image file if exists
+            if ($item_data['image'] && $item_data['image'] != 'default_item.jpg') {
+                $image_path = '../ServerB/uploads/' . $item_data['image'];
+                if (file_exists($image_path)) {
+                    unlink($image_path);
                 }
-                $delete_stmt->close();
-            } else {
-                $message = 'Item not found or access denied.';
-                $messageType = 'error';
             }
-            $check_stmt->close();
-            $conn->close();
+            
+            $message = 'Item deleted successfully!';
+            $messageType = 'success';
         } else {
-            $message = 'Database connection failed.';
+            $message = 'Error deleting item.';
             $messageType = 'error';
         }
     } else {
-        $message = 'Item deleted successfully!';
-        $messageType = 'success';
+        $message = 'Item not found.';
+        $messageType = 'error';
     }
+    
+    mysqli_close($conn);
 }
 
 $user_id = getCurrentUserId();
 $username = getCurrentUsername();
 $userEmail = getCurrentUserEmail();
 
-// Get user's items with better error handling and fallback
-$result = makeAPICall('get_items');
-$all_items = $result['items'] ?? [];
-$userItems = [];
+// Get user's items from database
+$conn = connectDB();
+$sql = "SELECT i.*, u.username FROM items i LEFT JOIN users u ON i.user_id = u.id WHERE i.user_id = '$user_id' ORDER BY i.created_at DESC";
+$result = mysqli_query($conn, $sql);
 
-// If API call failed, try direct database access
-if (empty($all_items) && isset($result['error'])) {
-    $conn = getDBConnection();
-    if ($conn) {
-        $sql = "SELECT i.*, u.username FROM items i LEFT JOIN users u ON i.user_id = u.id WHERE i.user_id = ? ORDER BY i.created_at DESC";
-        $stmt = $conn->prepare($sql);
-        if ($stmt) {
-            $stmt->bind_param("i", $user_id);
-            $stmt->execute();
-            $db_result = $stmt->get_result();
-            
-            while ($row = $db_result->fetch_assoc()) {
-                $userItems[] = $row;
-            }
-            
-            $stmt->close();
-        }
-        $conn->close();
-    }
-} else {
-    // Use API result
-    if (!empty($all_items)) {
-        $userItems = array_filter($all_items, function($item) use ($user_id) {
-            $item_user_id = $item['user_id'] ?? null;
-            return $item_user_id !== null && (string)$item_user_id === (string)$user_id;
-        });
+$userItems = [];
+while ($row = mysqli_fetch_assoc($result)) {
+    $userItems[] = $row;
+}
+
+// Calculate simple statistics
+$total = count($userItems);
+$lost_count = 0;
+$found_count = 0;
+
+foreach ($userItems as $item) {
+    if ($item['type'] == 'lost') {
+        $lost_count++;
+    } else {
+        $found_count++;
     }
 }
 
-// Calculate statistics
 $stats = [
-    'total' => count($userItems),
-    'lost_count' => count(array_filter($userItems, function($item) { return $item['type'] === 'lost'; })),
-    'found_count' => count(array_filter($userItems, function($item) { return $item['type'] === 'found'; }))
+    'total' => $total,
+    'lost_count' => $lost_count,
+    'found_count' => $found_count
 ];
+
+mysqli_close($conn);
 ?>
 
 <!DOCTYPE html>
