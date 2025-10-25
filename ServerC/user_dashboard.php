@@ -43,16 +43,11 @@ $user_id = getCurrentUserId();
 $username = getCurrentUsername();
 $userEmail = getCurrentUserEmail();
 
-// Get user's items with better error handling
+// Get user's items with better error handling and fallback
 $result = makeAPICall('get_items');
 $all_items = $result['items'] ?? [];
 $userItems = [];
 
-if (!empty($all_items)) {
-    $userItems = array_filter($all_items, function($item) use ($user_id) {
-        return isset($item['user_id']) && $item['user_id'] == $user_id;
-    });
-}
 
 // Calculate statistics
 $stats = [
@@ -133,6 +128,30 @@ $stats = [
                     <h3 style="font-size: 2rem; color: var(--success); margin-bottom: 0.5rem;"><?php echo $stats['found_count']; ?></h3>
                     <p style="color: var(--text-secondary); font-weight: 600;">Found Items</p>
                 </div>
+            </div>
+            
+            <!-- Debug Information (temporary) -->
+            <div style="margin-top: 2rem; padding: 1rem; background: #f0f0f0; border-radius: 8px; font-family: monospace; font-size: 0.8rem;">
+                <strong>Debug Info:</strong><br>
+                Session ID: <?php echo session_id(); ?><br>
+                Session Data: <?php echo var_export($_SESSION, true); ?><br>
+                Current User ID: <?php echo var_export($user_id, true); ?><br>
+                Username: <?php echo var_export($username, true); ?><br>
+                User Email: <?php echo var_export($userEmail, true); ?><br>
+                User Logged In: <?php echo isUserLoggedIn() ? 'Yes' : 'No'; ?><br>
+                API Result Success: <?php echo isset($result['success']) ? ($result['success'] ? 'Yes' : 'No') : 'Not Set'; ?><br>
+                Total Items from API: <?php echo count($all_items); ?><br>
+                Used Fallback DB Query: <?php echo (empty($all_items) && isset($result['error'])) ? 'Yes' : 'No'; ?><br>
+                Final User Items Count: <?php echo count($userItems); ?><br>
+                <?php if (!empty($all_items)): ?>
+                    <br><strong>Sample Item Data:</strong><br>
+                    <?php foreach (array_slice($all_items, 0, 2) as $item): ?>
+                        Item ID: <?php echo $item['id'] ?? 'N/A'; ?>, User ID: <?php echo var_export($item['user_id'] ?? 'NOT_SET', true); ?>, Title: <?php echo htmlspecialchars($item['title'] ?? 'N/A'); ?><br>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+                <?php if (isset($result['error'])): ?>
+                    <br><strong style="color: red;">API Error:</strong> <?php echo htmlspecialchars($result['error']); ?>
+                <?php endif; ?>
             </div>
         </div>
 
