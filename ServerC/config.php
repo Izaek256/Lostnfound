@@ -80,6 +80,40 @@ function connectDB() {
     return connectServerC();
 }
 
+// ============================================
+// API REQUEST FUNCTIONS
+// ============================================
+
+// Simple function to make API calls to other servers
+function makeAPIRequest($url, $data = [], $method = 'POST') {
+    $ch = curl_init($url);
+    
+    if ($method == 'POST') {
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+    } elseif ($method == 'GET' && !empty($data)) {
+        $url .= '?' . http_build_query($data);
+        curl_setopt($ch, CURLOPT_URL, $url);
+    }
+    
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+    
+    $response = curl_exec($ch);
+    $error = curl_error($ch);
+    curl_close($ch);
+    
+    if ($error) {
+        return ['success' => false, 'message' => 'Connection error: ' . $error];
+    }
+    
+    return $response;
+}
+
+// API URLs
+define('SERVERA_URL', 'http://localhost/Lostnfound/ServerA/api');
+define('SERVERB_URL', 'http://localhost/Lostnfound/ServerB/api');
+
 // Simple user check functions
 function isUserLoggedIn() {
     return isset($_SESSION['user_id']);

@@ -104,13 +104,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
         
-        // Update item in database if no errors
+        // Update item via ServerB API if no errors
         if (!isset($message) || $messageType !== 'error') {
-            $conn = connectDB();
+            // Call ServerB API to update item
+            $response = makeAPIRequest(SERVERB_URL . '/update_item.php', [
+                'id' => $item_id,
+                'user_id' => $current_user_id,
+                'title' => $title,
+                'description' => $description,
+                'type' => $type,
+                'location' => $location,
+                'contact' => $contact,
+                'image_filename' => $image_filename
+            ]);
             
-            $update_sql = "UPDATE items SET title = '$title', description = '$description', type = '$type', location = '$location', contact = '$contact', image = '$image_filename' WHERE id = '$item_id' AND user_id = '$current_user_id'";
+            // Parse response (format: "success|message" or "error|message")
+            $parts = explode('|', $response);
             
-            if (mysqli_query($conn, $update_sql)) {
+            if ($parts[0] == 'success') {
                 $message = 'Item updated successfully!';
                 $messageType = 'success';
                 
@@ -122,11 +133,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $item['contact'] = $contact;
                 $item['image'] = $image_filename;
             } else {
-                $message = 'Error updating item.';
+                $message = $parts[1] ?? 'Error updating item.';
                 $messageType = 'error';
             }
-            
-            mysqli_close($conn);
         }
     }
     }

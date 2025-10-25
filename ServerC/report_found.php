@@ -43,19 +43,27 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             move_uploaded_file($_FILES['image']['tmp_name'], $upload_path);
         }
         
-        $conn = connectDB();
-        $sql = "INSERT INTO items (user_id, title, description, type, location, contact, image, created_at) 
-                VALUES ('$user_id', '$title', '$description', 'found', '$location', '$contact', '$image_filename', NOW())";
+        // Call ServerB API to add item
+        $response = makeAPIRequest(SERVERB_URL . '/add_item.php', [
+            'user_id' => $user_id,
+            'title' => $title,
+            'description' => $description,
+            'type' => 'found',
+            'location' => $location,
+            'contact' => $contact,
+            'image_filename' => $image_filename
+        ]);
         
-        if (mysqli_query($conn, $sql)) {
+        // Parse response (format: "success|item_id" or "error|message")
+        $parts = explode('|', $response);
+        
+        if ($parts[0] == 'success') {
             $message = '✅ Found item reported successfully! The item owner will be able to find your listing and contact you directly.';
             // Clear form data on success
             $title = $description = $location = $contact = '';
         } else {
-            $message = 'Failed to report found item';
+            $message = $parts[1] ?? 'Failed to report found item';
         }
-        
-        mysqli_close($conn);
     }
 }
 

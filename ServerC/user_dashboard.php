@@ -18,43 +18,41 @@ if (isset($_GET['logout'])) {
 }
 
 // Handle item deletion
-if (isset($_POST['delete_item']) && isset($_POST['item_id'])) {
+if (isset($_POST['delete_item'])) {
     $item_id = $_POST['item_id'];
     $current_user_id = getCurrentUserId();
     
+    // First get item image for local cleanup
     $conn = connectDB();
-    
-    // Check if item belongs to user and get image name
     $check_sql = "SELECT image FROM items WHERE id = '$item_id' AND user_id = '$current_user_id'";
     $check_result = mysqli_query($conn, $check_sql);
+    $item = mysqli_fetch_assoc($check_result);
+    mysqli_close($conn);
     
-    if (mysqli_num_rows($check_result) > 0) {
-        $item_data = mysqli_fetch_assoc($check_result);
-        
-        // Delete the item
-        $delete_sql = "DELETE FROM items WHERE id = '$item_id' AND user_id = '$current_user_id'";
-        
-        if (mysqli_query($conn, $delete_sql)) {
-            // Delete image file if exists
-            if ($item_data['image'] && $item_data['image'] != 'default_item.jpg') {
-                $image_path = '../ServerB/uploads/' . $item_data['image'];
-                if (file_exists($image_path)) {
-                    unlink($image_path);
-                }
+    // Call ServerB API to delete item
+    $response = makeAPIRequest(SERVERB_URL . '/delete_item.php', [
+        'id' => $item_id,
+        'user_id' => $current_user_id
+    ]);
+    
+    // Parse response (format: "success|message" or "error|message")
+    $parts = explode('|', $response);
+    
+    if ($parts[0] == 'success') {
+        // Delete image file locally if exists
+        if ($item && $item['image']) {
+            $image_path = '../ServerB/uploads/' . $item['image'];
+            if (file_exists($image_path)) {
+                unlink($image_path);
             }
-            
-            $message = 'Item deleted successfully!';
-            $messageType = 'success';
-        } else {
-            $message = 'Error deleting item.';
-            $messageType = 'error';
         }
+        
+        $message = 'Item deleted successfully';
+        $messageType = 'success';
     } else {
-        $message = 'Item not found.';
+        $message = $parts[1] ?? 'Failed to delete item';
         $messageType = 'error';
     }
-    
-    mysqli_close($conn);
 }
 
 $user_id = getCurrentUserId();

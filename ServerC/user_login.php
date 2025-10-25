@@ -24,30 +24,26 @@ if ($_POST) {
     $password = $_POST['password'];
     
     if (!empty($username) && !empty($password)) {
-        $conn = connectDB();
+        // Call ServerA API to verify user
+        $response = makeAPIRequest(SERVERA_URL . '/verify_user.php', [
+            'username' => $username,
+            'password' => $password
+        ]);
         
-        $sql = "SELECT * FROM users WHERE username = '$username'";
-        $result = mysqli_query($conn, $sql);
+        // Parse response (format: "success|user_id|username|email|is_admin" or "error|message")
+        $parts = explode('|', $response);
         
-        if (mysqli_num_rows($result) > 0) {
-            $user = mysqli_fetch_assoc($result);
+        if ($parts[0] == 'success') {
+            $_SESSION['user_id'] = $parts[1];
+            $_SESSION['username'] = $parts[2];
+            $_SESSION['user_email'] = $parts[3];
+            $_SESSION['is_admin'] = $parts[4];
             
-            if (password_verify($password, $user['password'])) {
-                $_SESSION['user_id'] = $user['id'];
-                $_SESSION['username'] = $user['username'];
-                $_SESSION['user_email'] = $user['email'];
-                $_SESSION['is_admin'] = $user['is_admin'];
-                
-                header('Location: user_dashboard.php');
-                exit();
-            } else {
-                $error = 'Wrong password';
-            }
+            header('Location: user_dashboard.php');
+            exit();
         } else {
-            $error = 'User not found';
+            $error = $parts[1] ?? 'Login failed';
         }
-        
-        mysqli_close($conn);
     } else {
         $error = 'Please fill all fields';
     }

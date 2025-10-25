@@ -6,7 +6,7 @@ if ($_POST) {
     $password = $_POST['password'];
     
     if (empty($username) || empty($password)) {
-        echo "Please fill all fields";
+        echo "error|Please fill all fields";
         exit;
     }
     
@@ -19,17 +19,12 @@ if ($_POST) {
         $user = mysqli_fetch_assoc($result);
         
         if (password_verify($password, $user['password'])) {
-            $_SESSION['user_id'] = $user['id'];
-            $_SESSION['username'] = $user['username'];
-            $_SESSION['user_email'] = $user['email'];
-            $_SESSION['is_admin'] = $user['is_admin'];
-            
-            echo "success";
+            echo "success|{$user['id']}|{$user['username']}|{$user['email']}|{$user['is_admin']}";
         } else {
-            echo "Invalid password";
+            echo "error|Invalid password";
         }
     } else {
-        echo "User not found";
+        echo "error|User not found";
     }
     
     mysqli_close($conn);

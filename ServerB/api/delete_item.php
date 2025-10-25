@@ -35,9 +35,9 @@ if ($_POST) {
             }
         }
         
-        echo json_encode(['success' => true, 'message' => 'Item deleted successfully']);
+        echo "success|Item deleted successfully";
     } else {
-        echo "Failed to delete item";
+        echo "error|Failed to delete item";
     }
     
     mysqli_close($conn);
