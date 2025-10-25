@@ -11,85 +11,49 @@ require_once 'config.php';
 $filter = $_GET['filter'] ?? 'all';
 $search = $_GET['search'] ?? '';
 
-// Try to get data from Server B via API
-$apiParams = [];
+// Get data from database
+$conn = connectDB();
+
+// Build SQL query with filters
+$sql = "SELECT i.*, u.username FROM items i LEFT JOIN users u ON i.user_id = u.id WHERE 1=1";
+
 if ($filter !== 'all') {
-    $apiParams['type'] = $filter;  // ServerB API expects 'type' parameter, not 'filter'
+    $sql .= " AND i.type = '$filter'";
 }
+
 if (!empty($search)) {
-    $apiParams['search'] = $search;
+    $sql .= " AND (i.title LIKE '%$search%' OR i.description LIKE '%$search%' OR i.location LIKE '%$search%')";
 }
 
-// Build query string for GET request
-$queryString = '';
-if (!empty($apiParams)) {
-    $queryString = '?' . http_build_query($apiParams);
-}
+$sql .= " ORDER BY i.created_at DESC";
 
-// Update the API endpoint to include query parameters
-$itemsData = makeAPICall('get_items' . $queryString, null, 'GET');
+$result = mysqli_query($conn, $sql);
 $items = [];
-$stats = ['total' => 0, 'lost_count' => 0, 'found_count' => 0];
 
-if (isset($itemsData['success']) && $itemsData['success']) {
-    $items = $itemsData['items'];
-    // ServerB API returns count, not stats, so we need to calculate stats
-    $stats = [
-        'total' => $itemsData['count'],
-        'lost_count' => 0,
-        'found_count' => 0
-    ];
-    
-    // Calculate lost and found counts
-    foreach ($items as $item) {
-        if (isset($item['type']) && $item['type'] === 'lost') {
-            $stats['lost_count']++;
-        } elseif (isset($item['type']) && $item['type'] === 'found') {
-            $stats['found_count']++;
-        }
-    }
-} else {
-    // Fallback: try direct database connection
-    $conn = getDBConnection();
-    if ($conn) {
-        // Build query
-        $sql = "SELECT * FROM items WHERE 1=1";
-        
-        if ($filter !== 'all') {
-            $filter = $conn->real_escape_string($filter);
-            $sql .= " AND type = '$filter'";
-        }
-        
-        if (!empty($search)) {
-            $search = $conn->real_escape_string($search);
-            $sql .= " AND (title LIKE '%$search%' OR description LIKE '%$search%' OR location LIKE '%$search%')";
-        }
-        
-        $sql .= " ORDER BY created_at DESC";
-        
-        $result = $conn->query($sql);
-        if ($result) {
-            $items = $result->fetch_all(MYSQLI_ASSOC);
-        }
-        
-        // Get statistics
-        $sql = "SELECT 
-            COUNT(*) as total,
-            SUM(CASE WHEN type = 'lost' THEN 1 ELSE 0 END) as lost_count,
-            SUM(CASE WHEN type = 'found' THEN 1 ELSE 0 END) as found_count
-            FROM items";
-        $result = $conn->query($sql);
-        if ($result) {
-            $stats = $result->fetch_assoc();
-            // Ensure numeric values
-            $stats['total'] = (int)$stats['total'];
-            $stats['lost_count'] = (int)$stats['lost_count'];
-            $stats['found_count'] = (int)$stats['found_count'];
-        }
-        
-        $conn->close();
+while ($row = mysqli_fetch_assoc($result)) {
+    $items[] = $row;
+}
+
+// Calculate simple statistics
+$total = count($items);
+$lost_count = 0;
+$found_count = 0;
+
+foreach ($items as $item) {
+    if ($item['type'] == 'lost') {
+        $lost_count++;
+    } else {
+        $found_count++;
     }
 }
+
+$stats = [
+    'total' => $total,
+    'lost_count' => $lost_count,
+    'found_count' => $found_count
+];
+
+mysqli_close($conn);
 ?>
 
 <!DOCTYPE html>

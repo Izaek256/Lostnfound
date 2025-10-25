@@ -25,56 +25,42 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     } elseif (!isset($_FILES['image']) || $_FILES['image']['error'] != 0) {
         $message = 'Please upload an image of the found item';
     } else {
-        // Make direct API call with form data
-        $api_url = $api_endpoints['add_item'];
-        
-        $postData = [
-            'title' => $title,
-            'description' => $description,
-            'type' => 'found',
-            'location' => $location,
-            'contact' => $contact,
-            'user_id' => getCurrentUserId()
-        ];
+        $user_id = getCurrentUserId();
+        $image_filename = null;
         
         // Handle file upload
         if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
-            $postData['image'] = new CURLFile($_FILES['image']['tmp_name'], $_FILES['image']['type'], $_FILES['image']['name']);
-        }
-        
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $api_url);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-        
-        $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-        
-        if ($response === false) {
-            $result = ['error' => 'API call failed'];
-        } else {
-            $result = json_decode($response, true);
-            if ($result === null) {
-                $result = ['error' => 'Invalid API response'];
+            $upload_dir = '../ServerB/uploads/';
+            
+            if (!is_dir($upload_dir)) {
+                mkdir($upload_dir, 0755, true);
             }
+            
+            $extension = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
+            $image_filename = uniqid() . '.' . $extension;
+            $upload_path = $upload_dir . $image_filename;
+            
+            move_uploaded_file($_FILES['image']['tmp_name'], $upload_path);
         }
         
-        if (isset($result['success']) && $result['success']) {
+        $conn = connectDB();
+        $sql = "INSERT INTO items (user_id, title, description, type, location, contact, image, created_at) 
+                VALUES ('$user_id', '$title', '$description', 'found', '$location', '$contact', '$image_filename', NOW())";
+        
+        if (mysqli_query($conn, $sql)) {
             $message = '✅ Found item reported successfully! The item owner will be able to find your listing and contact you directly.';
             // Clear form data on success
             $title = $description = $location = $contact = '';
         } else {
-            $message = $result['error'] ?? 'Failed to report found item';
+            $message = 'Failed to report found item';
         }
+        
+        mysqli_close($conn);
     }
 }
 
 // Get database connection for recent items display
-$conn = getDBConnection();
+$conn = connectDB();
 ?>
 
 <!DOCTYPE html>

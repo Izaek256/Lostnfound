@@ -20,11 +20,17 @@ $user_id = getCurrentUserId();
 $username = getCurrentUsername();
 
 // Get all items for admin overview
-$result = makeAPICall('get_items');
-$all_items = $result['items'] ?? [];
+$conn = connectDB();
+
+$sql = "SELECT i.*, u.username FROM items i LEFT JOIN users u ON i.user_id = u.id ORDER BY i.created_at DESC";
+$result = mysqli_query($conn, $sql);
+$all_items = [];
+
+while ($row = mysqli_fetch_assoc($result)) {
+    $all_items[] = $row;
+}
 
 // Get user statistics
-$conn = getDBConnection();
 $stats = [
     'total_users' => 0,
     'admin_users' => 0,
@@ -34,23 +40,24 @@ $stats = [
     'found_items' => count(array_filter($all_items, function($item) { return $item['type'] === 'found'; }))
 ];
 
-if ($conn) {
-    // Get user statistics
-    $user_stats = $conn->query("SELECT 
-        COUNT(*) as total_users,
-        SUM(CASE WHEN is_admin = 1 THEN 1 ELSE 0 END) as admin_users,
-        SUM(CASE WHEN is_admin = 0 THEN 1 ELSE 0 END) as regular_users
-        FROM users");
-    
-    if ($user_stats && $user_stats->num_rows > 0) {
-        $user_data = $user_stats->fetch_assoc();
-        $stats['total_users'] = $user_data['total_users'];
-        $stats['admin_users'] = $user_data['admin_users'];
-        $stats['regular_users'] = $user_data['regular_users'];
-    }
-    
-    $conn->close();
-}
+// Get user statistics
+$user_sql = "SELECT COUNT(*) as total_users FROM users";
+$user_result = mysqli_query($conn, $user_sql);
+$user_data = mysqli_fetch_assoc($user_result);
+
+$admin_sql = "SELECT COUNT(*) as admin_users FROM users WHERE is_admin = 1";
+$admin_result = mysqli_query($conn, $admin_sql);
+$admin_data = mysqli_fetch_assoc($admin_result);
+
+$regular_sql = "SELECT COUNT(*) as regular_users FROM users WHERE is_admin = 0";
+$regular_result = mysqli_query($conn, $regular_sql);
+$regular_data = mysqli_fetch_assoc($regular_result);
+
+$stats['total_users'] = $user_data['total_users'];
+$stats['admin_users'] = $admin_data['admin_users'];
+$stats['regular_users'] = $regular_data['regular_users'];
+
+mysqli_close($conn);
 
 // Handle admin actions
 $action_message = '';
@@ -59,32 +66,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         switch ($_POST['action']) {
             case 'delete_item':
                 if (isset($_POST['item_id'])) {
-                    $delete_result = makeAPICall('delete_item', ['id' => $_POST['item_id']], 'POST');
-                    if (isset($delete_result['success']) && $delete_result['success']) {
+                    $item_id = $_POST['item_id'];
+                    $conn = connectDB();
+                    
+                    $delete_sql = "DELETE FROM items WHERE id = '$item_id'";
+                    
+                    if (mysqli_query($conn, $delete_sql)) {
                         $action_message = '<div class="alert alert-success">Item deleted successfully.</div>';
                     } else {
-                        $action_message = '<div class="alert alert-error">Failed to delete item: ' . ($delete_result['error'] ?? 'Unknown error') . '</div>';
+                        $action_message = '<div class="alert alert-error">Failed to delete item.</div>';
                     }
+                    
+                    mysqli_close($conn);
                 }
                 break;
             
             case 'toggle_user_status':
-                if (isset($_POST['user_id']) && $conn = getDBConnection()) {
-                    $user_id_to_toggle = intval($_POST['user_id']);
-                    $new_status = intval($_POST['new_status']);
+                if (isset($_POST['user_id'])) {
+                    $user_id_to_toggle = $_POST['user_id'];
+                    $new_status = $_POST['new_status'];
                     
-                    $update_query = "UPDATE users SET is_admin = ? WHERE id = ?";
-                    $stmt = $conn->prepare($update_query);
-                    $stmt->bind_param("ii", $new_status, $user_id_to_toggle);
+                    $conn = connectDB();
+                    $update_query = "UPDATE users SET is_admin = '$new_status' WHERE id = '$user_id_to_toggle'";
                     
-                    if ($stmt->execute()) {
+                    if (mysqli_query($conn, $update_query)) {
                         $action_message = '<div class="alert alert-success">User status updated successfully.</div>';
                     } else {
                         $action_message = '<div class="alert alert-error">Failed to update user status.</div>';
                     }
                     
-                    $stmt->close();
-                    $conn->close();
+                    mysqli_close($conn);
                 }
                 break;
         }

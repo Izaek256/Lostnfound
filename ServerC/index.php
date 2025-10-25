@@ -7,39 +7,38 @@
 
 require_once 'config.php';
 
-// Try to get data from Server A via API
-$itemsData = makeAPICall('get_items', ['limit' => 6], 'GET');
-$recentItems = [];
-$stats = ['total' => 0, 'lost_count' => 0, 'found_count' => 0];
+// Get data from database
+$conn = connectDB();
 
-if (isset($itemsData['success']) && $itemsData['success']) {
-    $recentItems = isset($itemsData['items']) ? $itemsData['items'] : [];
-    $stats = isset($itemsData['stats']) ? $itemsData['stats'] : $stats;
-} else {
-    // Fallback: try direct database connection
-    $conn = getDBConnection();
-    if ($conn) {
-        // Get recent items
-        $sql = "SELECT * FROM items ORDER BY created_at DESC LIMIT 6";
-        $result = $conn->query($sql);
-        if ($result) {
-            $recentItems = $result->fetch_all(MYSQLI_ASSOC);
-        }
-        
-        // Get statistics
-        $sql = "SELECT 
-            COUNT(*) as total,
-            SUM(CASE WHEN type = 'lost' THEN 1 ELSE 0 END) as lost_count,
-            SUM(CASE WHEN type = 'found' THEN 1 ELSE 0 END) as found_count
-            FROM items";
-        $result = $conn->query($sql);
-        if ($result) {
-            $stats = $result->fetch_assoc();
-        }
-        
-        $conn->close();
-    }
+// Get recent items
+$sql = "SELECT * FROM items ORDER BY created_at DESC LIMIT 6";
+$result = mysqli_query($conn, $sql);
+$recentItems = [];
+
+while ($row = mysqli_fetch_assoc($result)) {
+    $recentItems[] = $row;
 }
+
+// Get simple statistics
+$stats_sql = "SELECT COUNT(*) as total FROM items";
+$stats_result = mysqli_query($conn, $stats_sql);
+$stats_data = mysqli_fetch_assoc($stats_result);
+
+$lost_sql = "SELECT COUNT(*) as lost_count FROM items WHERE type = 'lost'";
+$lost_result = mysqli_query($conn, $lost_sql);
+$lost_data = mysqli_fetch_assoc($lost_result);
+
+$found_sql = "SELECT COUNT(*) as found_count FROM items WHERE type = 'found'";
+$found_result = mysqli_query($conn, $found_sql);
+$found_data = mysqli_fetch_assoc($found_result);
+
+$stats = [
+    'total' => $stats_data['total'],
+    'lost_count' => $lost_data['lost_count'],
+    'found_count' => $found_data['found_count']
+];
+
+mysqli_close($conn);
 ?>
 
 <!DOCTYPE html>
