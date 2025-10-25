@@ -15,9 +15,13 @@ $item = null;
 // Get item ID from URL
 $item_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
+
 if ($item_id <= 0) {
-    header('Location: user_dashboard.php');
-    exit();
+    $message = 'Invalid item ID provided.';
+    $messageType = 'error';
+    // Don't redirect immediately, show error instead
+    // header('Location: user_dashboard.php');
+    // exit();
 }
 
 // Get current user ID
@@ -34,17 +38,135 @@ foreach ($all_items as $i) {
     }
 }
 
+// If API failed or item not found, try direct database access
 if (!$item) {
-    header('Location: user_dashboard.php');
-    exit();
+    $conn = getDBConnection();
+    if ($conn) {
+        $sql = "SELECT * FROM items WHERE id = ? AND user_id = ?";
+        $stmt = $conn->prepare($sql);
+        if ($stmt) {
+            $stmt->bind_param("ii", $item_id, $current_user_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            
+            if ($result->num_rows > 0) {
+                $item = $result->fetch_assoc();
+            }
+            
+            $stmt->close();
+        }
+        $conn->close();
+    }
+}
+
+if (!$item && $item_id > 0) {
+    $message = 'Item not found or you do not have permission to edit this item.';
+    $messageType = 'error';
+    // Don't redirect immediately, show error instead
+    // header('Location: user_dashboard.php');
+    // exit();
 }
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // For now, redirect back to dashboard with a message
-    // TODO: Implement update functionality when update_item API is available
-    $message = 'Edit functionality will be implemented soon. Please delete and recreate the item for now.';
-    $messageType = 'info';
+    if (!$item) {
+        $message = 'Cannot update: Item not found or no permission.';
+        $messageType = 'error';
+    } else {
+        $title = trim($_POST['title'] ?? '');
+        $description = trim($_POST['description'] ?? '');
+        $type = $_POST['type'] ?? '';
+        $location = trim($_POST['location'] ?? '');
+        $contact = trim($_POST['contact'] ?? '');
+    
+    // Validate required fields
+    if (empty($title) || empty($description) || empty($type) || empty($location) || empty($contact)) {
+        $message = 'All fields are required.';
+        $messageType = 'error';
+    } elseif (!in_array($type, ['lost', 'found'])) {
+        $message = 'Invalid item type.';
+        $messageType = 'error';
+    } else {
+        // Handle image upload if provided
+        $image_filename = $item['image']; // Keep existing image by default
+        
+        if (isset($_FILES['new_image']) && $_FILES['new_image']['error'] === UPLOAD_ERR_OK) {
+            $upload_dir = '../ServerB/uploads/';
+            $allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+            $max_size = 5 * 1024 * 1024; // 5MB
+            
+            if (!in_array($_FILES['new_image']['type'], $allowed_types)) {
+                $message = 'Invalid image type. Please upload JPEG, PNG, GIF, or WebP images.';
+                $messageType = 'error';
+            } elseif ($_FILES['new_image']['size'] > $max_size) {
+                $message = 'Image too large. Maximum size is 5MB.';
+                $messageType = 'error';
+            } else {
+                // Generate unique filename
+                $extension = pathinfo($_FILES['new_image']['name'], PATHINFO_EXTENSION);
+                $image_filename = uniqid() . '.' . $extension;
+                $upload_path = $upload_dir . $image_filename;
+                
+                if (!move_uploaded_file($_FILES['new_image']['tmp_name'], $upload_path)) {
+                    $message = 'Failed to upload image.';
+                    $messageType = 'error';
+                    $image_filename = $item['image']; // Revert to original
+                } else {
+                    // Delete old image if it exists and is not default
+                    if ($item['image'] && $item['image'] !== 'default_item.jpg') {
+                        $old_image_path = $upload_dir . $item['image'];
+                        if (file_exists($old_image_path)) {
+                            unlink($old_image_path);
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Update item in database if no errors
+        if (!isset($message) || $messageType !== 'error') {
+            $conn = getDBConnection();
+            if ($conn) {
+                $update_sql = "UPDATE items SET title = ?, description = ?, type = ?, location = ?, contact = ?, image = ? WHERE id = ? AND user_id = ?";
+                $update_stmt = $conn->prepare($update_sql);
+                
+                if ($update_stmt) {
+                    $update_stmt->bind_param("ssssssii", $title, $description, $type, $location, $contact, $image_filename, $item_id, $current_user_id);
+                    
+                    if ($update_stmt->execute()) {
+                        $affected_rows = $update_stmt->affected_rows;
+                        if ($affected_rows > 0) {
+                            $message = 'Item updated successfully!';
+                            $messageType = 'success';
+                            
+                            // Refresh item data
+                            $item['title'] = $title;
+                            $item['description'] = $description;
+                            $item['type'] = $type;
+                            $item['location'] = $location;
+                            $item['contact'] = $contact;
+                            $item['image'] = $image_filename;
+                        } else {
+                            $message = 'No changes were made to the item (or item not found).';
+                            $messageType = 'error';
+                        }
+                    } else {
+                        $message = 'Error executing update query: ' . $update_stmt->error;
+                        $messageType = 'error';
+                    }
+                    $update_stmt->close();
+                } else {
+                    $message = 'Error preparing update query: ' . $conn->error;
+                    $messageType = 'error';
+                }
+                $conn->close();
+            } else {
+                $message = 'Database connection failed.';
+                $messageType = 'error';
+            }
+        }
+    }
+    }
 }
 ?>
 
@@ -99,6 +221,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <a href="user_dashboard.php" class="btn btn-secondary">← Back to Dashboard</a>
             </div>
 
+            <?php if ($item): ?>
             <form method="POST" enctype="multipart/form-data">
                 <div class="form-group">
                     <label for="title">Item Title</label>
@@ -147,6 +270,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <a href="user_dashboard.php" class="btn btn-secondary">Cancel</a>
                 </div>
             </form>
+            <?php else: ?>
+                <div style="text-align: center; padding: 2rem;">
+                    <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+                        <?php echo $message ?: 'No item to edit.'; ?>
+                    </p>
+                    <a href="user_dashboard.php" class="btn">← Back to Dashboard</a>
+                </div>
+            <?php endif; ?>
         </div>
     </main>
 

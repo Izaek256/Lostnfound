@@ -22,7 +22,7 @@ if (isset($_POST['delete_item']) && isset($_POST['item_id'])) {
     $item_id = intval($_POST['item_id']);
     $current_user_id = getCurrentUserId();
     
-    // Use DELETE method with proper data structure
+    // Try API first, then fallback to direct database
     $delete_data = [
         'id' => $item_id,
         'user_id' => $current_user_id
@@ -30,12 +30,54 @@ if (isset($_POST['delete_item']) && isset($_POST['item_id'])) {
     
     $delete_result = makeAPICall('delete_item', $delete_data, 'DELETE');
     
-    if (isset($delete_result['success']) && $delete_result['success']) {
+    // If API failed, try direct database deletion
+    if (!isset($delete_result['success']) || !$delete_result['success']) {
+        $conn = getDBConnection();
+        if ($conn) {
+            // First check if item exists and belongs to user
+            $check_sql = "SELECT image FROM items WHERE id = ? AND user_id = ?";
+            $check_stmt = $conn->prepare($check_sql);
+            $check_stmt->bind_param("ii", $item_id, $current_user_id);
+            $check_stmt->execute();
+            $check_result = $check_stmt->get_result();
+            
+            if ($check_result->num_rows > 0) {
+                $item_data = $check_result->fetch_assoc();
+                
+                // Delete the item
+                $delete_sql = "DELETE FROM items WHERE id = ? AND user_id = ?";
+                $delete_stmt = $conn->prepare($delete_sql);
+                $delete_stmt->bind_param("ii", $item_id, $current_user_id);
+                
+                if ($delete_stmt->execute()) {
+                    // Delete associated image file if it exists
+                    if ($item_data['image'] && $item_data['image'] !== 'default_item.jpg') {
+                        $image_path = '../ServerB/uploads/' . $item_data['image'];
+                        if (file_exists($image_path)) {
+                            unlink($image_path);
+                        }
+                    }
+                    
+                    $message = 'Item deleted successfully!';
+                    $messageType = 'success';
+                } else {
+                    $message = 'Error deleting item from database.';
+                    $messageType = 'error';
+                }
+                $delete_stmt->close();
+            } else {
+                $message = 'Item not found or access denied.';
+                $messageType = 'error';
+            }
+            $check_stmt->close();
+            $conn->close();
+        } else {
+            $message = 'Database connection failed.';
+            $messageType = 'error';
+        }
+    } else {
         $message = 'Item deleted successfully!';
         $messageType = 'success';
-    } else {
-        $message = 'Error deleting item: ' . ($delete_result['error'] ?? 'Unknown error');
-        $messageType = 'error';
     }
 }
 
@@ -48,6 +90,34 @@ $result = makeAPICall('get_items');
 $all_items = $result['items'] ?? [];
 $userItems = [];
 
+// If API call failed, try direct database access
+if (empty($all_items) && isset($result['error'])) {
+    $conn = getDBConnection();
+    if ($conn) {
+        $sql = "SELECT i.*, u.username FROM items i LEFT JOIN users u ON i.user_id = u.id WHERE i.user_id = ? ORDER BY i.created_at DESC";
+        $stmt = $conn->prepare($sql);
+        if ($stmt) {
+            $stmt->bind_param("i", $user_id);
+            $stmt->execute();
+            $db_result = $stmt->get_result();
+            
+            while ($row = $db_result->fetch_assoc()) {
+                $userItems[] = $row;
+            }
+            
+            $stmt->close();
+        }
+        $conn->close();
+    }
+} else {
+    // Use API result
+    if (!empty($all_items)) {
+        $userItems = array_filter($all_items, function($item) use ($user_id) {
+            $item_user_id = $item['user_id'] ?? null;
+            return $item_user_id !== null && (string)$item_user_id === (string)$user_id;
+        });
+    }
+}
 
 // Calculate statistics
 $stats = [
@@ -129,30 +199,6 @@ $stats = [
                     <p style="color: var(--text-secondary); font-weight: 600;">Found Items</p>
                 </div>
             </div>
-            
-            <!-- Debug Information (temporary) -->
-            <div style="margin-top: 2rem; padding: 1rem; background: #f0f0f0; border-radius: 8px; font-family: monospace; font-size: 0.8rem;">
-                <strong>Debug Info:</strong><br>
-                Session ID: <?php echo session_id(); ?><br>
-                Session Data: <?php echo var_export($_SESSION, true); ?><br>
-                Current User ID: <?php echo var_export($user_id, true); ?><br>
-                Username: <?php echo var_export($username, true); ?><br>
-                User Email: <?php echo var_export($userEmail, true); ?><br>
-                User Logged In: <?php echo isUserLoggedIn() ? 'Yes' : 'No'; ?><br>
-                API Result Success: <?php echo isset($result['success']) ? ($result['success'] ? 'Yes' : 'No') : 'Not Set'; ?><br>
-                Total Items from API: <?php echo count($all_items); ?><br>
-                Used Fallback DB Query: <?php echo (empty($all_items) && isset($result['error'])) ? 'Yes' : 'No'; ?><br>
-                Final User Items Count: <?php echo count($userItems); ?><br>
-                <?php if (!empty($all_items)): ?>
-                    <br><strong>Sample Item Data:</strong><br>
-                    <?php foreach (array_slice($all_items, 0, 2) as $item): ?>
-                        Item ID: <?php echo $item['id'] ?? 'N/A'; ?>, User ID: <?php echo var_export($item['user_id'] ?? 'NOT_SET', true); ?>, Title: <?php echo htmlspecialchars($item['title'] ?? 'N/A'); ?><br>
-                    <?php endforeach; ?>
-                <?php endif; ?>
-                <?php if (isset($result['error'])): ?>
-                    <br><strong style="color: red;">API Error:</strong> <?php echo htmlspecialchars($result['error']); ?>
-                <?php endif; ?>
-            </div>
         </div>
 
         <!-- User's Items -->
@@ -162,7 +208,7 @@ $stats = [
             <?php if (count($userItems) > 0): ?>
                 <div class="items-grid">
                     <?php foreach ($userItems as $item): ?>
-                    <div class="item-card">
+                    <div class="item-card" style="position: relative; overflow: visible;">
                         <div class="item-card-header">
                             <span class="item-type <?php echo $item['type']; ?>">
                                 <?php echo $item['type'] === 'lost' ? '🔴 Lost' : '🟢 Found'; ?>
@@ -224,23 +270,21 @@ $stats = [
                                 </p>
                             </div>
                             
-                            <div style="margin-top: 1rem; display: flex; gap: 0.75rem; padding-top: 1rem; border-top: 1px solid var(--border);">
-                                <a href="edit_item.php?id=<?php echo $item['id']; ?>" class="btn btn-secondary" style="flex: 1; text-align: center; padding: 0.7rem; font-size: 0.9rem;">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;">
-                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                                    </svg>
-                                    Edit
+                            <div class="item-actions" style="margin-top: 1rem; display: flex; gap: 0.75rem; padding-top: 1rem; border-top: 1px solid var(--border); background: white; position: relative; z-index: 100;">
+                                <!-- Edit Button -->
+                                <a href="edit_item.php?id=<?php echo $item['id']; ?>" 
+                                   class="btn btn-secondary" 
+                                   style="flex: 1; text-align: center; padding: 0.7rem; font-size: 0.9rem; text-decoration: none; display: block; border-radius: 8px;">
+                                    ✏️ Edit
                                 </a>
                                 
-                                <form method="POST" style="flex: 1;" onsubmit="return confirm('Are you sure you want to delete this item? This cannot be undone.')">
+                                <!-- Delete Form -->
+                                <form method="POST" style="flex: 1; margin: 0;" onsubmit="return confirm('Are you sure you want to delete this item? This cannot be undone.');">
                                     <input type="hidden" name="item_id" value="<?php echo $item['id']; ?>">
-                                    <button type="submit" name="delete_item" class="btn btn-danger" style="width: 100%; padding: 0.7rem; font-size: 0.9rem;">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;">
-                                            <polyline points="3 6 5 6 21 6"></polyline>
-                                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                        </svg>
-                                        Delete
+                                    <button type="submit" name="delete_item" 
+                                            class="btn btn-danger" 
+                                            style="width: 100%; padding: 0.7rem; font-size: 0.9rem; cursor: pointer; border: none; border-radius: 8px;">
+                                        🗑️ Delete
                                     </button>
                                 </form>
                             </div>
