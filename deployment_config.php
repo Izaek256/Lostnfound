@@ -27,23 +27,23 @@ switch (DEPLOYMENT_MODE) {
         
     case 'split':
         // Split deployment across 2 computers
-        define('SERVERA_IP', '192.168.1.10');  // Computer 1 - Replace with actual IP
-        define('SERVERB_IP', '192.168.1.10');  // Computer 1 (hosts database) - Replace with actual IP
-        define('SERVERC_IP', '192.168.1.20');  // Computer 2 - Replace with actual IP
+        define('SERVERA_IP', '192.168.72.225');  // Computer 1 - Replace with actual IP
+        define('SERVERB_IP', '192.168.72.225');  // Computer 1 (hosts database) - Replace with actual IP
+        define('SERVERC_IP', '192.168.72.170');  // Computer 2 - Replace with actual IP
         break;
         
     case 'production':
         // Production deployment with actual server IPs
-        define('SERVERA_IP', '10.0.1.10');     // Production Server A
-        define('SERVERB_IP', '10.0.1.20');     // Production Server B (database)
-        define('SERVERC_IP', '10.0.1.30');     // Production Server C
+        define('SERVERA_IP', '192.168.72.225');     // Production Server A
+        define('SERVERB_IP', '192.168.72.225');     // Production Server B (database)
+        define('SERVERC_IP', '192.168.72.170');     // Production Server C
         break;
         
     default:
         // Fallback to localhost
         define('SERVERA_IP', 'localhost');
         define('SERVERB_IP', 'localhost');
-        define('SERVERC_IP', 'localhost');
+        define('SERVERC_IP', '192.168.72.170');
 }
 
 // ============================================
