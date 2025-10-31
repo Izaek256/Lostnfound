@@ -18,7 +18,7 @@
 // Set deployment mode - can be overridden by environment variable
 if (!defined('DEPLOYMENT_MODE')) {
     // Check environment variable first, then use default
-    $mode = $_ENV['DEPLOYMENT_MODE'] ?? 'split';
+    $mode = $_ENV['DEPLOYMENT_MODE'] ?? 'ngrok';
     define('DEPLOYMENT_MODE', $mode);
 }
 
@@ -64,6 +64,19 @@ $deployment_configs = [
         'db_user' => 'root',     // Use dedicated user in production
         'db_pass' => 'secure_password',    // Change this!
         'use_https' => true
+    ],
+    
+    'ngrok' => [
+        'name' => 'Ngrok Tunnel Deployment',
+        'servera_ip' => 'awfully-ophthalmoscopical-brittny.ngrok-free.dev',
+        'serverb_ip' => 'awfully-ophthalmoscopical-brittny.ngrok-free.dev',
+        'serverc_ip' => 'nonformal-nontemporally-marjorie.ngrok-free.dev',  // ServerC ngrok URL
+        'base_path' => '',  // No base path for ngrok URLs
+        'db_host' => '192.168.72.225',     // Database still on local ServerB IP
+        'db_name' => 'lostfound_db',
+        'db_user' => 'root',
+        'db_pass' => '',
+        'use_https' => true  // ngrok uses HTTPS
     ],
     
     'custom' => [
@@ -180,11 +193,11 @@ function validateDeploymentConfig() {
         }
     }
     
-    // Validate IP addresses
-    \$ips = [SERVERA_IP, SERVERB_IP, SERVERC_IP];
-    foreach (\$ips as \$ip) {
-        if (\$ip !== 'localhost' && !filter_var(\$ip, FILTER_VALIDATE_IP)) {
-            \$errors[] = \"Invalid IP address: \$ip\";
+    // Validate IP addresses and hostnames
+    \$hosts = [SERVERA_IP, SERVERB_IP, SERVERC_IP];
+    foreach (\$hosts as \$host) {
+        if (\$host !== 'localhost' && !filter_var(\$host, FILTER_VALIDATE_IP) && !filter_var(\$host, FILTER_VALIDATE_DOMAIN)) {
+            \$errors[] = \"Invalid IP address or hostname: \$host\";
         }
     }
     
