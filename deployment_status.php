@@ -41,19 +41,40 @@ function checkServerStatus($server_name) {
                 $status['last_updated'] = trim($matches[1]);
             }
             
-            // Check if config is valid by including it
+            // Check if config is valid by parsing content instead of including
             try {
-                ob_start();
-                include $config_file;
-                ob_end_clean();
+                // Check for required constants in the file content
+                $required_constants = ['SERVERA_IP', 'SERVERB_IP', 'SERVERC_IP', 'DB_HOST', 'DB_NAME'];
+                $found_constants = 0;
                 
-                if (defined('SERVERA_IP') && defined('SERVERB_IP') && defined('SERVERC_IP')) {
+                foreach ($required_constants as $constant) {
+                    if (preg_match("/define\('$constant',\s*'[^']+'\)/", $content)) {
+                        $found_constants++;
+                    }
+                }
+                
+                if ($found_constants >= count($required_constants)) {
                     $status['config_valid'] = true;
                 } else {
-                    $status['errors'][] = 'Missing required IP definitions';
+                    $status['errors'][] = "Missing required constants (found $found_constants/" . count($required_constants) . ")";
                 }
+                
+                // Check for syntax errors by validating PHP syntax
+                $temp_file = tempnam(sys_get_temp_dir(), 'config_check');
+                file_put_contents($temp_file, $content);
+                
+                $output = [];
+                $return_code = 0;
+                exec("php -l \"$temp_file\" 2>&1", $output, $return_code);
+                
+                if ($return_code !== 0) {
+                    $status['errors'][] = 'PHP syntax errors detected';
+                }
+                
+                unlink($temp_file);
+                
             } catch (Exception $e) {
-                $status['errors'][] = 'Config file has syntax errors: ' . $e->getMessage();
+                $status['errors'][] = 'Config validation error: ' . $e->getMessage();
             }
         } else {
             $status['errors'][] = 'Config file is not readable';
