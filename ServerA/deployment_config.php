@@ -20,7 +20,7 @@ define('CURRENT_SERVER', 'ServerA');
 // ============================================
 define('SERVERA_IP', 'awfully-ophthalmoscopical-brittny.ngrok-free.dev');
 define('SERVERB_IP', 'awfully-ophthalmoscopical-brittny.ngrok-free.dev');
-define('SERVERC_IP', '192.168.72.170');
+define('SERVERC_IP', 'nonformal-nontemporally-marjorie.ngrok-free.dev');
 
 // ============================================
 // DATABASE CONFIGURATION
@@ -33,17 +33,17 @@ define('DB_PASS', '');
 // ============================================
 // API AND SERVICE URLS
 // ============================================
-define('SERVERA_API_URL', 'https://awfully-ophthalmoscopical-brittny.ngrok-free.dev/ServerA/api');
-define('SERVERB_API_URL', 'https://awfully-ophthalmoscopical-brittny.ngrok-free.dev/ServerB/api');
-define('SERVERC_API_URL', 'https://192.168.72.170/ServerC/api');
+define('SERVERA_API_URL', 'https://awfully-ophthalmoscopical-brittny.ngrok-free.dev/Lostnfound/ServerA/api');
+define('SERVERB_API_URL', 'https://awfully-ophthalmoscopical-brittny.ngrok-free.dev/Lostnfound/ServerB/api');
+define('SERVERC_API_URL', 'https://nonformal-nontemporally-marjorie.ngrok-free.dev/Lostnfound/ServerC/api');
 
 // Upload URLs (ServerB hosts uploads)
-define('UPLOADS_BASE_URL', 'https://awfully-ophthalmoscopical-brittny.ngrok-free.dev/ServerB/uploads/');
+define('UPLOADS_BASE_URL', 'https://awfully-ophthalmoscopical-brittny.ngrok-free.dev/Lostnfound/ServerB/uploads/');
 
 // Health check URLs
-define('SERVERA_HEALTH_URL', 'https://awfully-ophthalmoscopical-brittny.ngrok-free.dev/ServerA/api/health.php');
-define('SERVERB_HEALTH_URL', 'https://awfully-ophthalmoscopical-brittny.ngrok-free.dev/ServerB/api/health.php');
-define('SERVERC_HEALTH_URL', 'https://192.168.72.170/ServerC/health.php');
+define('SERVERA_HEALTH_URL', 'https://awfully-ophthalmoscopical-brittny.ngrok-free.dev/Lostnfound/ServerA/api/health.php');
+define('SERVERB_HEALTH_URL', 'https://awfully-ophthalmoscopical-brittny.ngrok-free.dev/Lostnfound/ServerB/api/health.php');
+define('SERVERC_HEALTH_URL', 'https://nonformal-nontemporally-marjorie.ngrok-free.dev/Lostnfound/ServerC/health.php');
 
 // ============================================
 // SERVER ROLE DEFINITIONS

@@ -29,7 +29,7 @@ switch (DEPLOYMENT_MODE) {
         // Split deployment across 2 computers with ngrok
         define('SERVERA_IP', 'awfully-ophthalmoscopical-brittny.ngrok-free.dev');  // Ngrok tunnel
         define('SERVERB_IP', 'awfully-ophthalmoscopical-brittny.ngrok-free.dev');  // Ngrok tunnel
-        define('SERVERC_IP', '192.168.72.170');  // Computer 2 - Local IP
+        define('SERVERC_IP', 'nonformal-nontemporally-marjorie.ngrok-free.dev');  // ServerC ngrok tunnel
         break;
         
     case 'production':

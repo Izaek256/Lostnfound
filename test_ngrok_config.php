@@ -56,12 +56,14 @@ foreach ($servers as $server) {
 
 echo "Configuration Summary:\n";
 echo "✅ ServerA and ServerB now use ngrok URL: awfully-ophthalmoscopical-brittny.ngrok-free.dev\n";
-echo "✅ ServerC remains on local IP: 192.168.72.170\n";
+echo "✅ ServerC now uses ngrok URL: nonformal-nontemporally-marjorie.ngrok-free.dev\n";
 echo "✅ Database connections updated\n";
 echo "✅ All URLs now use HTTPS for ngrok domains\n\n";
 
 echo "Next Steps:\n";
-echo "1. Make sure ngrok is running and pointing to your local servers\n";
+echo "1. Make sure both ngrok tunnels are running:\n";
+echo "   - awfully-ophthalmoscopical-brittny.ngrok-free.dev (ServerA & ServerB)\n";
+echo "   - nonformal-nontemporally-marjorie.ngrok-free.dev (ServerC)\n";
 echo "2. Test the health check URLs to verify connectivity\n";
 echo "3. Update any client applications to use the new URLs\n";
 ?>
