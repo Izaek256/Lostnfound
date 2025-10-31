@@ -168,6 +168,7 @@ define('SERVER_ROLES', [
 // ============================================
 // DEPLOYMENT VALIDATION
 // ============================================
+if (!function_exists('validateDeploymentConfig')) {
 function validateDeploymentConfig() {
     \$errors = [];
     
@@ -189,14 +190,18 @@ function validateDeploymentConfig() {
     
     return \$errors;
 }
+}
 
 // ============================================
 // HELPER FUNCTIONS
 // ============================================
+if (!function_exists('getCurrentServerRole')) {
 function getCurrentServerRole() {
     return SERVER_ROLES[CURRENT_SERVER] ?? 'Unknown Server';
 }
+}
 
+if (!function_exists('getDeploymentInfo')) {
 function getDeploymentInfo() {
     return [
         'mode' => DEPLOYMENT_MODE,
@@ -211,13 +216,18 @@ function getDeploymentInfo() {
         'generated_at' => '" . date('Y-m-d H:i:s') . "'
     ];
 }
+}
 
+if (!function_exists('isLocalDeployment')) {
 function isLocalDeployment() {
     return DEPLOYMENT_MODE === 'local';
 }
+}
 
+if (!function_exists('isProductionDeployment')) {
 function isProductionDeployment() {
     return DEPLOYMENT_MODE === 'production';
+}
 }
 
 // Auto-validate configuration
