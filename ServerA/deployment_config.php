@@ -54,7 +54,7 @@ switch (DEPLOYMENT_MODE) {
 define('DB_HOST', SERVERB_IP);
 define('DB_NAME', 'lostfound_db');
 define('DB_USER', 'root');
-define('DB_PASS', 'isaacK@12345');
+define('DB_PASS', '');
 
 // API URLs
 define('SERVERA_API_URL', 'http://' . SERVERA_IP . '/Lostnfound/ServerA/api');
