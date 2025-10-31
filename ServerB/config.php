@@ -6,6 +6,9 @@
  * Easy to deploy on different computers by changing the IPs/hosts below.
  */
 
+// Load deployment configuration
+require_once '../deployment_config.php';
+
 // Start session
 session_start();
 
@@ -15,11 +18,11 @@ session_start();
 // ServerB hosts the CENTRALIZED DATABASE
 // All other servers connect to this database
 
-// Database Configuration (Hosted on ServerB)
-$db_host = "localhost";  // This is localhost since DB is on this server
-$db_name = "lostfound_db";
-$db_user = "root";
-$db_pass = "isaacK@12345";
+// Database Configuration (Hosted on ServerB) - Using deployment config
+$db_host = "localhost";  // This is always localhost since DB is on this server
+$db_name = DB_NAME;      // Database name from deployment config
+$db_user = DB_USER;      // Database username from deployment config
+$db_pass = DB_PASS;      // Database password from deployment config
 
 // Note: When deploying to separate computers:
 // - Keep this as "localhost" on ServerB (where database is)

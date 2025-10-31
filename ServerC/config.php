@@ -6,6 +6,9 @@
  * Easy to deploy on different computers by changing the IPs/hosts below.
  */
 
+// Load deployment configuration
+require_once '../deployment_config.php';
+
 // Start session
 session_start();
 
@@ -14,11 +17,11 @@ session_start();
 // ============================================
 // ServerC connects to ServerB's centralized database
 
-// Database Configuration (Points to ServerB)
-$db_host = "localhost";   // PC 1's IP address
-$db_name = "lostfound_db";   // Database name on ServerB
-$db_user = "root";           // Database username
-$db_pass = "isaacK@12345";           // Database password
+// Database Configuration (Points to ServerB) - Using deployment config
+$db_host = DB_HOST;          // Automatically set from deployment_config.php
+$db_name = DB_NAME;          // Database name on ServerB
+$db_user = DB_USER;          // Database username
+$db_pass = DB_PASS;          // Database password
 // ============================================
 // DATABASE CONNECTION FUNCTIONS
 // ============================================
@@ -155,15 +158,14 @@ function makeAPIRequest($url, $data = [], $method = 'POST') {
     return $response;
 }
 
-// API URLs - Update these when deploying to different computers
-// DEPLOYMENT CONFIGURATION: Update these IPs to match your server locations
-define('SERVERA_URL', 'http://localhost/Lostnfound/ServerA/api');  // Change to ServerA IP (e.g., http://192.168.1.10/Lostnfound/ServerA/api)
-define('SERVERB_URL', 'http://localhost/Lostnfound/ServerB/api');  // Change to ServerB IP (e.g., http://192.168.1.20/Lostnfound/ServerB/api)
+// API URLs - Automatically configured from deployment_config.php
+define('SERVERA_URL', SERVERA_API_URL);
+define('SERVERB_URL', SERVERB_API_URL);
 
 // Upload paths - supports both network mount and HTTP access
 define('UPLOADS_PATH', '../ServerB/uploads/');  // Local/mounted path for file operations (if servers share filesystem)
 define('UPLOADS_URL', '../ServerB/uploads/');   // Browser path (works if mounted locally)
-define('UPLOADS_HTTP_URL', 'http://localhost/Lostnfound/ServerB/uploads/');  // Change to ServerB IP (e.g., http://192.168.1.20/Lostnfound/ServerB/uploads/)
+define('UPLOADS_HTTP_URL', UPLOADS_BASE_URL);   // Automatically configured from deployment_config.php
 
 // Simple user check functions
 function isUserLoggedIn() {

@@ -14,7 +14,7 @@
 
 // SCENARIO 1: All servers on same computer (Development)
 if (!defined('DEPLOYMENT_MODE')) {
-    define('DEPLOYMENT_MODE', 'local'); // Options: 'local', 'split', 'production'
+    define('DEPLOYMENT_MODE', 'split'); // Options: 'local', 'split', 'production'
 }
 
 switch (DEPLOYMENT_MODE) {
@@ -26,10 +26,10 @@ switch (DEPLOYMENT_MODE) {
         break;
         
     case 'split':
-        // Example: Split deployment across 2 computers
-        define('SERVERA_IP', '192.168.1.10');  // Computer 1
-        define('SERVERB_IP', '192.168.1.10');  // Computer 1 (hosts database)
-        define('SERVERC_IP', '192.168.1.20');  // Computer 2
+        // Split deployment across 2 computers
+        define('SERVERA_IP', '192.168.1.10');  // Computer 1 - Replace with actual IP
+        define('SERVERB_IP', '192.168.1.10');  // Computer 1 (hosts database) - Replace with actual IP
+        define('SERVERC_IP', '192.168.1.20');  // Computer 2 - Replace with actual IP
         break;
         
     case 'production':
@@ -54,7 +54,7 @@ switch (DEPLOYMENT_MODE) {
 define('DB_HOST', SERVERB_IP);
 define('DB_NAME', 'lostfound_db');
 define('DB_USER', 'root');
-define('DB_PASS', 'kpet');
+define('DB_PASS', 'isaacK@12345');
 
 // API URLs
 define('SERVERA_API_URL', 'http://' . SERVERA_IP . '/Lostnfound/ServerA/api');
