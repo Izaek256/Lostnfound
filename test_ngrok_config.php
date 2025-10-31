@@ -57,8 +57,8 @@ foreach ($servers as $server) {
 echo "Configuration Summary:\n";
 echo "✅ ServerA and ServerB now use ngrok URL: awfully-ophthalmoscopical-brittny.ngrok-free.dev\n";
 echo "✅ ServerC now uses ngrok URL: nonformal-nontemporally-marjorie.ngrok-free.dev\n";
-echo "✅ Database connections updated\n";
-echo "✅ All URLs now use HTTPS for ngrok domains\n\n";
+echo "✅ Database connections use local IPs (not ngrok) for performance and reliability\n";
+echo "✅ All public URLs now use HTTPS for ngrok domains\n\n";
 
 echo "Next Steps:\n";
 echo "1. Make sure both ngrok tunnels are running:\n";

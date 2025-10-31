@@ -25,7 +25,7 @@ define('SERVERC_IP', 'nonformal-nontemporally-marjorie.ngrok-free.dev');
 // ============================================
 // DATABASE CONFIGURATION
 // ============================================
-define('DB_HOST', 'awfully-ophthalmoscopical-brittny.ngrok-free.dev');  // Connect to ServerB
+define('DB_HOST', '192.168.72.225');  // Connect to ServerB via local IP
 define('DB_NAME', 'lostfound_db');
 define('DB_USER', 'root');
 define('DB_PASS', '');
