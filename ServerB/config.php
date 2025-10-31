@@ -19,7 +19,7 @@ session_start();
 $db_host = "localhost";  // This is localhost since DB is on this server
 $db_name = "lostfound_db";
 $db_user = "root";
-$db_pass = "kpet";
+$db_pass = "isaacK@12345";
 
 // Note: When deploying to separate computers:
 // - Keep this as "localhost" on ServerB (where database is)
