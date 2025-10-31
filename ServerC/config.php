@@ -7,7 +7,7 @@
  */
 
 // Load deployment configuration
-require_once '../deployment_config.php';
+require_once __DIR__ . '/../deployment_config.php';
 
 // Start session
 session_start();
@@ -163,7 +163,7 @@ define('SERVERA_URL', SERVERA_API_URL);
 define('SERVERB_URL', SERVERB_API_URL);
 
 // Upload paths - supports both network mount and HTTP access
-define('UPLOADS_PATH', '../ServerB/uploads/');  // Local/mounted path for file operations (if servers share filesystem)
+define('UPLOADS_PATH', __DIR__ . '/../ServerB/uploads/');  // Local/mounted path for file operations (if servers share filesystem)
 define('UPLOADS_URL', '../ServerB/uploads/');   // Browser path (works if mounted locally)
 define('UPLOADS_HTTP_URL', UPLOADS_BASE_URL);   // Automatically configured from deployment_config.php
 

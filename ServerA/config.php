@@ -7,7 +7,7 @@
  */
 
 // Load deployment configuration
-require_once '../deployment_config.php';
+require_once __DIR__ . '/../deployment_config.php';
 
 // Start session
 session_start();

@@ -43,3 +43,4 @@ error_log
 
 # Local development
 *.local
+test_config.php

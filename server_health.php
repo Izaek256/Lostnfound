@@ -7,7 +7,7 @@
  */
 
 // Load ServerC config to get server URLs
-require_once 'ServerC/config.php';
+require_once __DIR__ . '/ServerC/config.php';
 
 // Server endpoints to check - using configured URLs
 $servers = [

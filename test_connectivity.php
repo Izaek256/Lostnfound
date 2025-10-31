@@ -6,7 +6,7 @@
  * Usage: php test_connectivity.php
  */
 
-require_once 'ServerC/config.php';
+require_once __DIR__ . '/ServerC/config.php';
 
 echo "=== Lost & Found Multi-Server Connectivity Test ===\n\n";
 

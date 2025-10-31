@@ -163,7 +163,7 @@ echo "<div class='test-section'>";
 echo "<h2>📊 Database Connectivity</h2>";
 
 // Load ServerC config once (it has all connection functions)
-require_once 'ServerC/config.php';
+require_once __DIR__ . '/ServerC/config.php';
 
 // Test ServerA connection
 runTest("ServerA Database Connection", function() {
