@@ -26,10 +26,10 @@ switch (DEPLOYMENT_MODE) {
         break;
         
     case 'split':
-        // Split deployment across 2 computers
-        define('SERVERA_IP', '192.168.72.225');  // Computer 1 - Replace with actual IP
-        define('SERVERB_IP', '192.168.72.225');  // Computer 1 (hosts database) - Replace with actual IP
-        define('SERVERC_IP', '192.168.72.170');  // Computer 2 - Replace with actual IP
+        // Split deployment across 2 computers with ngrok
+        define('SERVERA_IP', 'awfully-ophthalmoscopical-brittny.ngrok-free.dev');  // Ngrok tunnel
+        define('SERVERB_IP', 'awfully-ophthalmoscopical-brittny.ngrok-free.dev');  // Ngrok tunnel
+        define('SERVERC_IP', '192.168.72.170');  // Computer 2 - Local IP
         break;
         
     case 'production':
@@ -56,18 +56,22 @@ define('DB_NAME', 'lostfound_db');
 define('DB_USER', 'root');
 define('DB_PASS', '');
 
-// API URLs
-define('SERVERA_API_URL', 'http://' . SERVERA_IP . '/Lostnfound/ServerA/api');
-define('SERVERB_API_URL', 'http://' . SERVERB_IP . '/Lostnfound/ServerB/api');
-define('SERVERC_API_URL', 'http://' . SERVERC_IP . '/Lostnfound/ServerC/api');
+// API URLs - Use HTTPS for ngrok domains, HTTP for local IPs
+$protocol_a = (strpos(SERVERA_IP, '.ngrok') !== false) ? 'https' : 'http';
+$protocol_b = (strpos(SERVERB_IP, '.ngrok') !== false) ? 'https' : 'http';
+$protocol_c = (strpos(SERVERC_IP, '.ngrok') !== false) ? 'https' : 'http';
+
+define('SERVERA_API_URL', $protocol_a . '://' . SERVERA_IP . '/Lostnfound/ServerA/api');
+define('SERVERB_API_URL', $protocol_b . '://' . SERVERB_IP . '/Lostnfound/ServerB/api');
+define('SERVERC_API_URL', $protocol_c . '://' . SERVERC_IP . '/Lostnfound/ServerC/api');
 
 // Upload URLs (ServerB hosts uploads)
-define('UPLOADS_BASE_URL', 'http://' . SERVERB_IP . '/Lostnfound/ServerB/uploads/');
+define('UPLOADS_BASE_URL', $protocol_b . '://' . SERVERB_IP . '/Lostnfound/ServerB/uploads/');
 
 // Health check URLs
-define('SERVERA_HEALTH_URL', 'http://' . SERVERA_IP . '/Lostnfound/ServerA/api/health.php');
-define('SERVERB_HEALTH_URL', 'http://' . SERVERB_IP . '/Lostnfound/ServerB/api/health.php');
-define('SERVERC_HEALTH_URL', 'http://' . SERVERC_IP . '/Lostnfound/ServerC/health.php');
+define('SERVERA_HEALTH_URL', $protocol_a . '://' . SERVERA_IP . '/Lostnfound/ServerA/api/health.php');
+define('SERVERB_HEALTH_URL', $protocol_b . '://' . SERVERB_IP . '/Lostnfound/ServerB/api/health.php');
+define('SERVERC_HEALTH_URL', $protocol_c . '://' . SERVERC_IP . '/Lostnfound/ServerC/health.php');
 
 // ============================================
 // DEPLOYMENT VALIDATION
