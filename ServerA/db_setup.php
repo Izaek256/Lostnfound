@@ -8,7 +8,7 @@
 
 require_once 'config.php';
 
-$conn = getDBConnection();
+$conn = connectDB();
 
 // Create users table
 $sql = "CREATE TABLE IF NOT EXISTS users (

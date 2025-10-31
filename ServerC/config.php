@@ -15,10 +15,10 @@ session_start();
 // ServerC connects to ServerB's centralized database
 
 // Database Configuration (Points to ServerB)
-$db_host = "192.168.5.242";   // PC 1's IP address
+$db_host = "localhost";   // PC 1's IP address
 $db_name = "lostfound_db";   // Database name on ServerB
 $db_user = "root";           // Database username
-$db_pass = "kpet";           // Database password
+$db_pass = "isaacK@12345";           // Database password
 // ============================================
 // DATABASE CONNECTION FUNCTIONS
 // ============================================

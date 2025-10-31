@@ -19,7 +19,7 @@ session_start();
 $db_host = "localhost";  // Change to ServerB IP when on different computer (e.g., 192.168.1.20)
 $db_name = "lostfound_db";
 $db_user = "root";
-$db_pass = "kpet";
+$db_pass = "isaacK@12345";
 
 // ============================================
 // DATABASE CONNECTION FUNCTIONS
