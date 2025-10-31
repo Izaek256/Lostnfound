@@ -105,11 +105,14 @@ function sendJSONResponse($data, $status_code = 200) {
     exit();
 }
 
-// Set CORS headers for API endpoints
+// Set CORS headers for API endpoints - Enhanced for cross-server communication
 function setCORSHeaders() {
+    // Allow requests from any origin (adjust for production security)
     header('Access-Control-Allow-Origin: *');
     header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-    header('Access-Control-Allow-Headers: Content-Type');
+    header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
+    header('Access-Control-Allow-Credentials: false');
+    header('Access-Control-Max-Age: 86400'); // Cache preflight for 24 hours
     
     // Handle preflight OPTIONS request
     if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {

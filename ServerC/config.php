@@ -85,11 +85,12 @@ function imageExists($filename) {
 // API REQUEST FUNCTIONS
 // ============================================
 
-// Simple function to make API calls to other servers
+// Enhanced function to make API calls to other servers with better cross-server support
 function makeAPIRequest($url, $data = [], $method = 'POST') {
     // Initialize cURL
     $ch = curl_init();
     
+    // Set method-specific options
     if ($method == 'POST') {
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_POST, true);
@@ -108,43 +109,62 @@ function makeAPIRequest($url, $data = [], $method = 'POST') {
         }
     }
     
-    // Set cURL options
+    // Enhanced cURL options for cross-server communication
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_TIMEOUT, 30);
     curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
     curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
     curl_setopt($ch, CURLOPT_MAXREDIRS, 3);
     
+    // Headers for better cross-server compatibility
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'Content-Type: application/x-www-form-urlencoded',
+        'Accept: */*',
+        'User-Agent: LostFound-ServerC/1.0'
+    ]);
+    
+    // SSL and security options (for HTTPS if needed)
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+    
     // Execute request
     $response = curl_exec($ch);
     $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $error = curl_error($ch);
+    $info = curl_getinfo($ch);
     curl_close($ch);
     
-    // Handle errors
+    // Enhanced error handling
     if ($error) {
-        error_log("API Request Error to $url: $error");
+        error_log("API Request cURL Error to $url: $error");
         return "error|Connection failed: $error";
     }
     
+    if ($http_code == 0) {
+        error_log("API Request Connection Error to $url: No response received");
+        return "error|No response from server. Check if server is running and accessible.";
+    }
+    
     if ($http_code >= 400) {
-        error_log("API Request HTTP Error $http_code to $url");
+        error_log("API Request HTTP Error $http_code to $url. Response: " . substr($response, 0, 200));
         return "error|Server error (HTTP $http_code)";
     }
     
-    // Return response
+    // Log successful requests for debugging
+    error_log("API Request Success to $url: HTTP $http_code");
+    
     return $response;
 }
 
 // API URLs - Update these when deploying to different computers
-// Example:// SPLIT SERVER DEPLOYMENT - ServerC on PC2, ServerA+B on PC1 (192.168.5.242)
-define('SERVERA_URL', 'http://192.168.5.242/Lostnfound/ServerA/api');
-define('SERVERB_URL', 'http://192.168.5.242/Lostnfound/ServerB/api');
+// DEPLOYMENT CONFIGURATION: Update these IPs to match your server locations
+define('SERVERA_URL', 'http://localhost/Lostnfound/ServerA/api');  // Change to ServerA IP (e.g., http://192.168.1.10/Lostnfound/ServerA/api)
+define('SERVERB_URL', 'http://localhost/Lostnfound/ServerB/api');  // Change to ServerB IP (e.g., http://192.168.1.20/Lostnfound/ServerB/api)
 
 // Upload paths - supports both network mount and HTTP access
-define('UPLOADS_PATH', '../ServerB/uploads/');  // Local/mounted path for file operations
+define('UPLOADS_PATH', '../ServerB/uploads/');  // Local/mounted path for file operations (if servers share filesystem)
 define('UPLOADS_URL', '../ServerB/uploads/');   // Browser path (works if mounted locally)
-define('UPLOADS_HTTP_URL', 'http://192.168.5.242/Lostnfound/ServerB/uploads/');  // HTTP fallback
+define('UPLOADS_HTTP_URL', 'http://localhost/Lostnfound/ServerB/uploads/');  // Change to ServerB IP (e.g., http://192.168.1.20/Lostnfound/ServerB/uploads/)
 
 // Simple user check functions
 function isUserLoggedIn() {
@@ -178,5 +198,53 @@ function logoutUser() {
     session_destroy();
     header('Location: index.php');
     exit();
+}
+
+// ============================================
+// SERVER CONNECTIVITY FUNCTIONS
+// ============================================
+
+// Test if a server is reachable
+function testServerConnection($server_url) {
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $server_url . '/health.php');
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
+    curl_setopt($ch, CURLOPT_NOBODY, true);
+    
+    curl_exec($ch);
+    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $error = curl_error($ch);
+    curl_close($ch);
+    
+    return ($error === '' && $http_code == 200);
+}
+
+// Get server status with details
+function getServerStatus($server_url, $server_name) {
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $server_url . '/health.php');
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
+    
+    $start_time = microtime(true);
+    $response = curl_exec($ch);
+    $response_time = round((microtime(true) - $start_time) * 1000, 2);
+    
+    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $error = curl_error($ch);
+    curl_close($ch);
+    
+    return [
+        'name' => $server_name,
+        'url' => $server_url,
+        'online' => ($error === '' && $http_code == 200),
+        'response_time' => $response_time,
+        'http_code' => $http_code,
+        'error' => $error,
+        'response' => $response
+    ];
 }
 ?>

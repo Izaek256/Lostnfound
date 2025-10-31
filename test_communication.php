@@ -203,17 +203,22 @@ echo "</div>";
 echo "<div class='test-section'>";
 echo "<h2>🌐 API Endpoints</h2>";
 
-// Test ServerA API endpoints
+// Test ServerA API endpoints using configured URLs
 runTest("ServerA - verify_user.php endpoint", function() {
-    $url = 'http://localhost/Lostnfound/ServerA/api/verify_user.php';
+    $url = SERVERA_URL . '/verify_user.php';
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_NOBODY, true);
     curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
     curl_exec($ch);
     $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $error = curl_error($ch);
     curl_close($ch);
     
+    if ($error) {
+        return ['success' => false, 'details' => "Connection Error: $error"];
+    }
     if ($http_code == 200 || $http_code == 0) {
         return ['success' => true, 'details' => "Endpoint accessible (HTTP $http_code)"];
     }
@@ -221,31 +226,41 @@ runTest("ServerA - verify_user.php endpoint", function() {
 });
 
 runTest("ServerA - register_user.php endpoint", function() {
-    $url = 'http://localhost/Lostnfound/ServerA/api/register_user.php';
+    $url = SERVERA_URL . '/register_user.php';
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_NOBODY, true);
     curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
     curl_exec($ch);
     $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $error = curl_error($ch);
     curl_close($ch);
     
+    if ($error) {
+        return ['success' => false, 'details' => "Connection Error: $error"];
+    }
     if ($http_code == 200 || $http_code == 0) {
         return ['success' => true, 'details' => "Endpoint accessible (HTTP $http_code)"];
     }
     return ['success' => false, 'details' => "HTTP Error: $http_code"];
 });
 
-// Test ServerB API endpoints
+// Test ServerB API endpoints using configured URLs
 runTest("ServerB - get_items.php endpoint", function() {
-    $url = 'http://localhost/Lostnfound/ServerB/api/get_items.php';
+    $url = SERVERB_URL . '/get_items.php';
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
     $response = curl_exec($ch);
     $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $error = curl_error($ch);
     curl_close($ch);
     
+    if ($error) {
+        return ['success' => false, 'details' => "Connection Error: $error"];
+    }
     if ($http_code == 200) {
         $data = json_decode($response, true);
         if (isset($data['success'])) {
@@ -256,15 +271,20 @@ runTest("ServerB - get_items.php endpoint", function() {
 });
 
 runTest("ServerB - add_item.php endpoint", function() {
-    $url = 'http://localhost/Lostnfound/ServerB/api/add_item.php';
+    $url = SERVERB_URL . '/add_item.php';
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_NOBODY, true);
     curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
     curl_exec($ch);
     $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $error = curl_error($ch);
     curl_close($ch);
     
+    if ($error) {
+        return ['success' => false, 'details' => "Connection Error: $error"];
+    }
     if ($http_code == 200 || $http_code == 0) {
         return ['success' => true, 'details' => "Endpoint accessible (HTTP $http_code)"];
     }
@@ -272,15 +292,20 @@ runTest("ServerB - add_item.php endpoint", function() {
 });
 
 runTest("ServerB - delete_item.php endpoint", function() {
-    $url = 'http://localhost/Lostnfound/ServerB/api/delete_item.php';
+    $url = SERVERB_URL . '/delete_item.php';
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_NOBODY, true);
     curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
     curl_exec($ch);
     $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $error = curl_error($ch);
     curl_close($ch);
     
+    if ($error) {
+        return ['success' => false, 'details' => "Connection Error: $error"];
+    }
     if ($http_code == 200 || $http_code == 0) {
         return ['success' => true, 'details' => "Endpoint accessible (HTTP $http_code)"];
     }
@@ -288,15 +313,20 @@ runTest("ServerB - delete_item.php endpoint", function() {
 });
 
 runTest("ServerB - update_item.php endpoint", function() {
-    $url = 'http://localhost/Lostnfound/ServerB/api/update_item.php';
+    $url = SERVERB_URL . '/update_item.php';
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_NOBODY, true);
     curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
     curl_exec($ch);
     $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $error = curl_error($ch);
     curl_close($ch);
     
+    if ($error) {
+        return ['success' => false, 'details' => "Connection Error: $error"];
+    }
     if ($http_code == 200 || $http_code == 0) {
         return ['success' => true, 'details' => "Endpoint accessible (HTTP $http_code)"];
     }

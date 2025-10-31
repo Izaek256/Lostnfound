@@ -6,20 +6,23 @@
  * Access via: http://localhost/Lostnfound/server_health.php
  */
 
-// Server endpoints to check
+// Load ServerC config to get server URLs
+require_once 'ServerC/config.php';
+
+// Server endpoints to check - using configured URLs
 $servers = [
     'ServerA' => [
-        'url' => 'http://localhost/Lostnfound/ServerA/api/health.php',
+        'url' => str_replace('/api', '/api/health.php', SERVERA_URL),
         'name' => 'Server A - User Authentication',
         'color' => '#3b82f6'
     ],
     'ServerB' => [
-        'url' => 'http://localhost/Lostnfound/ServerB/api/health.php',
+        'url' => str_replace('/api', '/api/health.php', SERVERB_URL),
         'name' => 'Server B - Item Management',
         'color' => '#10b981'
     ],
     'ServerC' => [
-        'url' => 'http://localhost/Lostnfound/ServerC/health.php',
+        'url' => 'http://localhost/Lostnfound/ServerC/health.php',  // Local ServerC
         'name' => 'Server C - User Interface',
         'color' => '#8b5cf6'
     ]

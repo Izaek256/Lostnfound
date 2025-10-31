@@ -1,70 +1,63 @@
 <?php
 /**
  * ServerC Health Check Endpoint
- * Returns status of user interface server and database
+ * Returns JSON status of ServerC and its connectivity to other servers
  */
+
+require_once 'config.php';
+
+// Set JSON headers
 header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: *');
 
-// Direct database connection (avoid session_start from config.php)
-$db_host = "localhost";
-$db_name = "lostfound_db";
-$db_user = "root";
-$db_pass = "kpet";
-
-$conn = mysqli_connect($db_host, $db_user, $db_pass, $db_name);
-
-$health = [
+$health_data = [
     'server' => 'ServerC',
+    'role' => 'User Interface Server',
     'status' => 'online',
-    'database' => 'disconnected',
     'timestamp' => date('Y-m-d H:i:s'),
+    'database' => 'connected',
     'services' => []
 ];
 
-// Check database connection
-if ($conn && !$conn->connect_error) {
-    $health['database'] = 'connected';
-    
-    // Check both tables
-    $result = mysqli_query($conn, "SELECT COUNT(*) as count FROM users");
-    if ($result) {
-        $row = mysqli_fetch_assoc($result);
-        $health['services']['users_table'] = $row['count'] . ' users';
+// Test database connection
+try {
+    $conn = connectDB();
+    if ($conn) {
+        $health_data['database'] = 'connected';
+        $health_data['services']['database_connection'] = 'active';
+        mysqli_close($conn);
+    } else {
+        $health_data['database'] = 'failed';
+        $health_data['services']['database_connection'] = 'failed';
     }
-    
-    $result = mysqli_query($conn, "SELECT COUNT(*) as count FROM items");
-    if ($result) {
-        $row = mysqli_fetch_assoc($result);
-        $health['services']['items_table'] = $row['count'] . ' items';
-    }
+} catch (Exception $e) {
+    $health_data['database'] = 'error';
+    $health_data['services']['database_connection'] = 'error: ' . $e->getMessage();
 }
 
-// Check UI pages
-$health['services']['user_dashboard'] = file_exists(__DIR__ . '/user_dashboard.php') ? 'active' : 'missing';
-$health['services']['user_login'] = file_exists(__DIR__ . '/user_login.php') ? 'active' : 'missing';
-$health['services']['report_lost'] = file_exists(__DIR__ . '/report_lost.php') ? 'active' : 'missing';
-$health['services']['report_found'] = file_exists(__DIR__ . '/report_found.php') ? 'active' : 'missing';
+// Test ServerA connectivity
+$servera_status = testServerConnection(SERVERA_URL);
+$health_data['services']['servera_api'] = $servera_status ? 'reachable' : 'unreachable';
 
-// Check ServerA reachability (cross-server communication test)
-$serverA_url = 'http://localhost/Lostnfound/ServerA/api/health.php';
-$ch = curl_init();
-curl_setopt($ch, CURLOPT_URL, $serverA_url);
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_TIMEOUT, 2);
-$response = curl_exec($ch);
-$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-curl_close($ch);
-$health['services']['serverA_connection'] = ($http_code == 200) ? 'reachable' : 'unreachable';
+// Test ServerB connectivity  
+$serverb_status = testServerConnection(SERVERB_URL);
+$health_data['services']['serverb_api'] = $serverb_status ? 'reachable' : 'unreachable';
 
-// Check ServerB reachability (cross-server communication test)
-$serverB_url = 'http://localhost/Lostnfound/ServerB/api/health.php';
-$ch = curl_init();
-curl_setopt($ch, CURLOPT_URL, $serverB_url);
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_TIMEOUT, 2);
-$response = curl_exec($ch);
-$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-curl_close($ch);
-$health['services']['serverB_connection'] = ($http_code == 200) ? 'reachable' : 'unreachable';
+// Test uploads directory access
+$uploads_accessible = is_dir(UPLOADS_PATH) && is_readable(UPLOADS_PATH);
+$health_data['services']['uploads_directory'] = $uploads_accessible ? 'accessible' : 'inaccessible';
 
-echo json_encode($health);
+// Overall health status
+$all_services_ok = (
+    $health_data['database'] === 'connected' &&
+    $servera_status &&
+    $serverb_status
+);
+
+if (!$all_services_ok) {
+    $health_data['status'] = 'degraded';
+    http_response_code(503); // Service Unavailable
+}
+
+echo json_encode($health_data, JSON_PRETTY_PRINT);
+?>
