@@ -56,7 +56,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         
         // Parse JSON response
         if (is_array($response) && isset($response['success']) && $response['success']) {
-            $message = '✅ Found item reported successfully! The item owner will be able to find your listing and contact you directly.';
+            $message = '✅ Found item reported successfully! 
+            The item owner will be able to find your listing and contact you directly.';
             // Clear form data on success
             $title = $description = $location = $contact = '';
         } else {
