@@ -17,40 +17,30 @@ session_start();
 // ============================================
 // ServerC provides the user interface and connects to ServerB for data
 
-// Database connection (connects to centralized DB on ServerB)
-$db_host = DB_HOST;      // Automatically configured by deployment system
-$db_name = DB_NAME;      
-$db_user = DB_USER;      
-$db_pass = DB_PASS;
 // ============================================
 // DATABASE CONNECTION FUNCTIONS
 // ============================================
-// ServerC connects to the centralized database on ServerB
+// ServerC does NOT connect directly to the database
+// All database operations must go through ServerA APIs
+// This ensures ServerA is the only server with direct DB access
 
-// Main database connection - connects to ServerB's database
+// Placeholder function - NOT USED in ServerC
+// ServerC must use ServerA APIs for all database operations
 function connectDB() {
-    global $db_host, $db_name, $db_user, $db_pass;
-    
-    $conn = mysqli_connect($db_host, $db_user, $db_pass, $db_name);
-    
-    if (!$conn) {
-        die("Database connection failed: " . mysqli_connect_error());
-    }
-    
-    return $conn;
+    die("ERROR: ServerC cannot connect directly to the database.\nServerC must use ServerA APIs for all database operations.\nThis ensures ServerA is the single point of database access.");
 }
 
-// Legacy function names for backward compatibility
+// Legacy function names - also disabled
 function connectServerA() {
-    return connectDB();
+    die("ERROR: ServerC cannot connect directly to the database.");
 }
 
 function connectServerB() {
-    return connectDB();
+    die("ERROR: ServerC cannot connect directly to the database.");
 }
 
 function connectServerC() {
-    return connectDB();
+    die("ERROR: ServerC cannot connect directly to the database.");
 }
 
 // ============================================

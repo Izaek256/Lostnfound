@@ -27,18 +27,21 @@ if ($item_id <= 0) {
 // Get current user ID
 $current_user_id = getCurrentUserId();
 
-// Get item from database
-$conn = connectDB();
-$sql = "SELECT * FROM items WHERE id = '$item_id' AND user_id = '$current_user_id'";
-$result = mysqli_query($conn, $sql);
+// Get item from ServerA API instead of direct database connection
+$api_response = makeAPIRequest(SERVERA_URL . '/get_item.php', [
+    'item_id' => $item_id
+], 'GET', ['return_json' => true]);
 
-if (mysqli_num_rows($result) > 0) {
-    $item = mysqli_fetch_assoc($result);
+// Check if item exists and user has permission
+if (is_array($api_response) && isset($api_response['success']) && $api_response['success']) {
+    $item = $api_response['item'];
+    // Check if user owns this item
+    if ($item['user_id'] != $current_user_id) {
+        $item = null;
+    }
 } else {
     $item = null;
 }
-
-mysqli_close($conn);
 
 if (!$item && $item_id > 0) {
     $message = 'Item not found or you do not have permission to edit this item.';
@@ -104,10 +107,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
         
-        // Update item via ServerB API if no errors
+        // Update item via ServerA API if no errors
         if (!isset($message) || $messageType !== 'error') {
-            // Call ServerB API to update item
-            $response = makeAPIRequest(SERVERB_URL . '/update_item.php', [
+            // Call ServerA API to update item
+            $response = makeAPIRequest(SERVERA_URL . '/update_item.php', [
                 'id' => $item_id,
                 'user_id' => $current_user_id,
                 'title' => $title,
@@ -116,12 +119,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'location' => $location,
                 'contact' => $contact,
                 'image_filename' => $image_filename
-            ]);
+            ], 'POST', ['return_json' => true]);
             
-            // Parse response (format: "success|message" or "error|message")
-            $parts = explode('|', $response);
-            
-            if ($parts[0] == 'success') {
+            // Handle JSON response from ServerA
+            if (is_array($response) && isset($response['success']) && $response['success']) {
                 $message = 'Item updated successfully!';
                 $messageType = 'success';
                 
@@ -133,7 +134,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $item['contact'] = $contact;
                 $item['image'] = $image_filename;
             } else {
-                $message = $parts[1] ?? 'Error updating item.';
+                $message = isset($response['error']) ? $response['error'] : 'Error updating item.';
                 $messageType = 'error';
             }
         }

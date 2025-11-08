@@ -141,19 +141,24 @@ define('SERVERC_IP', '{$config['serverc_ip']}');
 // ============================================
 ";
 
-    // Database host depends on which server this is
+    // Database credentials - Only ServerA and ServerB should have direct DB access
     if ($server_name === 'ServerB') {
         // ServerB hosts the database, so it connects to localhost
         $server_config .= "define('DB_HOST', 'localhost');  // Local database on this server\n";
-    } else {
-        // Other servers connect to ServerB
+        $server_config .= "define('DB_NAME', '{$config['db_name']}');\ndefine('DB_USER', '{$config['db_user']}');\ndefine('DB_PASS', '{$config['db_pass']}');\n";
+    } elseif ($server_name === 'ServerA') {
+        // ServerA also has database access for authentication operations
         $server_config .= "define('DB_HOST', '{$config['serverb_ip']}');  // Connect to ServerB\n";
+        $server_config .= "define('DB_NAME', '{$config['db_name']}');\ndefine('DB_USER', '{$config['db_user']}');\ndefine('DB_PASS', '{$config['db_pass']}');\n";
+    } else {
+        // ServerC does NOT get database credentials - must use APIs
+        $server_config .= "// ServerC does not have direct database access\n";
+        $server_config .= "// All database operations must go through ServerA APIs\n";
+        $server_config .= "define('DB_HOST', '');  // Not used\n";
+        $server_config .= "define('DB_NAME', '');\ndefine('DB_USER', '');\ndefine('DB_PASS', '');\n";
     }
-    
-    $server_config .= "define('DB_NAME', '{$config['db_name']}');
-define('DB_USER', '{$config['db_user']}');
-define('DB_PASS', '{$config['db_pass']}');
 
+    $server_config .= "
 // ============================================
 // API AND SERVICE URLS
 // ============================================

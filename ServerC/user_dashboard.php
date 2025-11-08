@@ -22,23 +22,28 @@ if (isset($_POST['delete_item'])) {
     $item_id = $_POST['item_id'];
     $current_user_id = getCurrentUserId();
     
-    // First get item image for local cleanup
-    $conn = connectDB();
-    $check_sql = "SELECT image FROM items WHERE id = '$item_id' AND user_id = '$current_user_id'";
-    $check_result = mysqli_query($conn, $check_sql);
-    $item = mysqli_fetch_assoc($check_result);
-    mysqli_close($conn);
+    // First get item from ServerA API to verify ownership
+    $api_response = makeAPIRequest(SERVERA_URL . '/get_item.php', [
+        'item_id' => $item_id
+    ], 'GET', ['return_json' => true]);
     
-    // Call ServerB API to delete item
-    $response = makeAPIRequest(SERVERB_URL . '/delete_item.php', [
+    $item = null;
+    if (is_array($api_response) && isset($api_response['success']) && $api_response['success']) {
+        $item = $api_response['item'];
+        // Verify user owns this item
+        if ($item['user_id'] != $current_user_id) {
+            $item = null;
+        }
+    }
+    
+    // Call ServerA API to delete item
+    $response = makeAPIRequest(SERVERA_URL . '/delete_item.php', [
         'id' => $item_id,
         'user_id' => $current_user_id
-    ]);
+    ], 'POST', ['return_json' => true]);
     
-    // Parse response (format: "success|message" or "error|message")
-    $parts = explode('|', $response);
-    
-    if ($parts[0] == 'success') {
+    // Parse JSON response
+    if (is_array($response) && isset($response['success']) && $response['success']) {
         // Delete image file locally if exists
         if ($item && $item['image']) {
             $image_path = '../ServerB/uploads/' . $item['image'];
@@ -50,7 +55,7 @@ if (isset($_POST['delete_item'])) {
         $message = 'Item deleted successfully';
         $messageType = 'success';
     } else {
-        $message = $parts[1] ?? 'Failed to delete item';
+        $message = isset($response['error']) ? $response['error'] : 'Failed to delete item';
         $messageType = 'error';
     }
 }
@@ -59,36 +64,22 @@ $user_id = getCurrentUserId();
 $username = getCurrentUsername();
 $userEmail = getCurrentUserEmail();
 
-// Get user's items from database
-$conn = connectDB();
-$sql = "SELECT i.*, u.username FROM items i LEFT JOIN users u ON i.user_id = u.id WHERE i.user_id = '$user_id' ORDER BY i.created_at DESC";
-$result = mysqli_query($conn, $sql);
+// Get user's items from ServerA API instead of direct database connection
+$api_response = makeAPIRequest(SERVERA_URL . '/get_user_items.php', [
+    'user_id' => $user_id
+], 'GET', ['return_json' => true]);
 
 $userItems = [];
-while ($row = mysqli_fetch_assoc($result)) {
-    $userItems[] = $row;
-}
-
-// Calculate simple statistics
-$total = count($userItems);
-$lost_count = 0;
-$found_count = 0;
-
-foreach ($userItems as $item) {
-    if ($item['type'] == 'lost') {
-        $lost_count++;
-    } else {
-        $found_count++;
-    }
-}
-
 $stats = [
-    'total' => $total,
-    'lost_count' => $lost_count,
-    'found_count' => $found_count
+    'total' => 0,
+    'lost_count' => 0,
+    'found_count' => 0
 ];
 
-mysqli_close($conn);
+if (is_array($api_response) && isset($api_response['success']) && $api_response['success']) {
+    $userItems = $api_response['items'] ?? [];
+    $stats = $api_response['stats'] ?? $stats;
+}
 ?>
 
 <!DOCTYPE html>
