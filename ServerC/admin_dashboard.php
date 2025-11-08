@@ -79,16 +79,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $user_id = getCurrentUserId();
 $username = getCurrentUsername();
 
-// Get all items for admin overview via ServerA API
-$api_response = makeAPIRequest(SERVERA_URL . '/get_all_items.php', [], 'GET', ['return_json' => true]);
+
+// Get all items for admin overview via ServerA API (with timeout)
+$api_response = makeAPIRequest(SERVERA_URL . '/get_all_items.php', [], 'GET', ['return_json' => true, 'timeout' => 3, 'connect_timeout' => 2]);
 $all_items = [];
 if (is_array($api_response) && isset($api_response['success']) && $api_response['success']) {
     $all_items = $api_response['items'] ?? [];
 }
 
-// Get all users via ServerB API
+// Get all users via ServerB API (with timeout)
 $users = [];
-$api_response = makeAPIRequest(SERVERB_URL . '/get_all_users.php', [], 'GET', ['return_json' => true]);
+$api_response = makeAPIRequest(SERVERB_URL . '/get_all_users.php', [], 'GET', ['return_json' => true, 'timeout' => 3, 'connect_timeout' => 2]);
 if (is_array($api_response) && isset($api_response['success']) && $api_response['success']) {
     $users = $api_response['users'] ?? [];
     $user_stats = $api_response['stats'] ?? [];
@@ -294,7 +295,7 @@ $stats = [
             </div>
             <?php endif; ?>
 
-            <!-- System Information -->
+            <!-- System Information & Server Status -->
             <div class="admin-section">
                 <h3>ℹ️ System Information</h3>
                 <div class="info-grid">
@@ -315,6 +316,7 @@ $stats = [
                     </div>
                 </div>
             </div>
+
         </div>
     </main>
 
@@ -342,6 +344,11 @@ $stats = [
                 setTimeout(() => alert.remove(), 300);
             });
         }, 5000);
+
+        // Auto-refresh server status every 30 seconds
+        // setInterval(function() {
+        //     location.reload();
+        // }, 30000); // 30 seconds
     </script>
 </body>
 </html>
