@@ -126,11 +126,6 @@ try {
 
     <!-- Main Content -->
     <main>
-        <div class="server-info">
-            <h3>🖥️ Server B - Secondary Node</h3>
-            <p>Connected to Server A (Main Backend) | Data synchronized in real-time</p>
-        </div>
-
         <!-- Hero Section -->
         <section class="hero">
             <h2>University Lost and Found Portal</h2>
