@@ -14,7 +14,7 @@
 
 // SCENARIO 1: All servers on same computer (Development)
 if (!defined('DEPLOYMENT_MODE')) {
-    define('DEPLOYMENT_MODE', 'split'); // Options: 'local', 'split', 'production'
+    define('DEPLOYMENT_MODE', 'local'); // Options: 'local', 'split', 'production'
 }
 
 switch (DEPLOYMENT_MODE) {
@@ -54,7 +54,7 @@ switch (DEPLOYMENT_MODE) {
 define('DB_HOST', SERVERB_IP);
 define('DB_NAME', 'lostfound_db');
 define('DB_USER', 'root');
-define('DB_PASS', '');
+define('DB_PASS', 'Isaac@1234');
 
 // API URLs - Use HTTPS for ngrok domains, HTTP for local IPs
 $protocol_a = (strpos(SERVERA_IP, '.ngrok') !== false) ? 'https' : 'http';

@@ -7,38 +7,69 @@
 
 require_once 'config.php';
 
-// Get data from database
-$conn = connectDB();
-
-// Get recent items
-$sql = "SELECT * FROM items ORDER BY created_at DESC LIMIT 6";
-$result = mysqli_query($conn, $sql);
+// Get data from ServerA API instead of direct database connection
 $recentItems = [];
-
-while ($row = mysqli_fetch_assoc($result)) {
-    $recentItems[] = $row;
-}
-
-// Get simple statistics
-$stats_sql = "SELECT COUNT(*) as total FROM items";
-$stats_result = mysqli_query($conn, $stats_sql);
-$stats_data = mysqli_fetch_assoc($stats_result);
-
-$lost_sql = "SELECT COUNT(*) as lost_count FROM items WHERE type = 'lost'";
-$lost_result = mysqli_query($conn, $lost_sql);
-$lost_data = mysqli_fetch_assoc($lost_result);
-
-$found_sql = "SELECT COUNT(*) as found_count FROM items WHERE type = 'found'";
-$found_result = mysqli_query($conn, $found_sql);
-$found_data = mysqli_fetch_assoc($found_result);
-
 $stats = [
-    'total' => $stats_data['total'],
-    'lost_count' => $lost_data['lost_count'],
-    'found_count' => $found_data['found_count']
+    'total' => 0,
+    'lost_count' => 0,
+    'found_count' => 0
 ];
 
-mysqli_close($conn);
+// Get recent items from ServerA
+try {
+    $api_url = SERVERA_URL . '/get_all_items.php';
+    error_log("[DEBUG] Calling API: $api_url");
+    $response = makeAPIRequest($api_url, [
+        'limit' => 6,
+        'sort' => 'recent'
+    ], 'GET');
+    
+    if ($response && strpos($response, 'error|') !== 0) {
+        $decoded = json_decode($response, true);
+        if (is_array($decoded)) {
+            // Check if response has 'items' key (API might return {"items": [...]})
+            if (isset($decoded['items']) && is_array($decoded['items'])) {
+                $recentItems = array_slice($decoded['items'], 0, 6);
+            } else if (isset($decoded['data']) && is_array($decoded['data'])) {
+                $recentItems = array_slice($decoded['data'], 0, 6);
+            } else if (isset($decoded[0]) || count($decoded) > 0) {
+                // It's already an array of items
+                $recentItems = array_slice($decoded, 0, 6);
+            }
+        }
+    }
+} catch (Exception $e) {
+    error_log("Error fetching recent items: " . $e->getMessage());
+}
+
+// Get statistics from ServerA
+try {
+    $response = makeAPIRequest(SERVERA_URL . '/get_all_items.php', [], 'GET');
+    
+    if ($response && strpos($response, 'error|') !== 0) {
+        $decoded = json_decode($response, true);
+        $items = $decoded;
+        
+        // Extract items from API response structure
+        if (isset($decoded['items']) && is_array($decoded['items'])) {
+            $items = $decoded['items'];
+        } elseif (isset($decoded['data']) && is_array($decoded['data'])) {
+            $items = $decoded['data'];
+        }
+        
+        if (is_array($items) && count($items) > 0) {
+            $stats['total'] = count($items);
+            $stats['lost_count'] = count(array_filter($items, function($item) { 
+                return is_array($item) && isset($item['type']) && $item['type'] === 'lost'; 
+            }));
+            $stats['found_count'] = count(array_filter($items, function($item) { 
+                return is_array($item) && isset($item['type']) && $item['type'] === 'found'; 
+            }));
+        }
+    }
+} catch (Exception $e) {
+    error_log("Error fetching statistics: " . $e->getMessage());
+}
 ?>
 
 <!DOCTYPE html>
@@ -95,11 +126,6 @@ mysqli_close($conn);
 
     <!-- Main Content -->
     <main>
-        <div class="server-info">
-            <h3>🖥️ Server B - Secondary Node</h3>
-            <p>Connected to Server A (Main Backend) | Data synchronized in real-time</p>
-        </div>
-
         <!-- Hero Section -->
         <section class="hero">
             <h2>University Lost and Found Portal</h2>
@@ -142,6 +168,7 @@ mysqli_close($conn);
             
             <div class="items-grid">
                 <?php foreach ($recentItems as $item): ?>
+                <?php if (is_array($item)): ?>
                 <div class="item-card">
                     <div class="item-card-header">
                         <span class="item-type <?php echo $item['type']; ?>">
@@ -205,6 +232,7 @@ mysqli_close($conn);
                         </div>
                     </div>
                 </div>
+                <?php endif; ?>
                 <?php endforeach; ?>
             </div>
         </section>

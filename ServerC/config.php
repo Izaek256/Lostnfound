@@ -15,42 +15,35 @@ session_start();
 // ============================================
 // SERVER-SPECIFIC CONFIGURATION
 // ============================================
-// ServerC provides the user interface and connects to ServerB for data
+// ServerC is the user interface client
+// It communicates with ServerA (item operations) and ServerB (user operations)
+// ServerC CANNOT access the database directly
 
-// Database connection (connects to centralized DB on ServerB)
-$db_host = DB_HOST;      // Automatically configured by deployment system
-$db_name = DB_NAME;      
-$db_user = DB_USER;      
-$db_pass = DB_PASS;
 // ============================================
 // DATABASE CONNECTION FUNCTIONS
 // ============================================
-// ServerC connects to the centralized database on ServerB
+// ServerC is a client and DOES NOT connect directly to the database
+// All operations must go through ServerA and ServerB APIs
+// ServerA: Handles item logic (add, update, delete, get items)
+// ServerB: Handles user logic (register, verify, authentication)
 
-// Main database connection - connects to ServerB's database
+// Placeholder function - NOT USED in ServerC
+// ServerC must use ServerA APIs for all database operations
 function connectDB() {
-    global $db_host, $db_name, $db_user, $db_pass;
-    
-    $conn = mysqli_connect($db_host, $db_user, $db_pass, $db_name);
-    
-    if (!$conn) {
-        die("Database connection failed: " . mysqli_connect_error());
-    }
-    
-    return $conn;
+    die("ERROR: ServerC cannot connect directly to the database.\nServerC must use ServerA APIs for all database operations.\nThis ensures ServerA is the single point of database access.");
 }
 
-// Legacy function names for backward compatibility
+// Legacy function names - also disabled
 function connectServerA() {
-    return connectDB();
+    die("ERROR: ServerC cannot connect directly to the database.");
 }
 
 function connectServerB() {
-    return connectDB();
+    die("ERROR: ServerC cannot connect directly to the database.");
 }
 
 function connectServerC() {
-    return connectDB();
+    die("ERROR: ServerC cannot connect directly to the database.");
 }
 
 // ============================================
@@ -87,80 +80,191 @@ function imageExists($filename) {
 // API REQUEST FUNCTIONS
 // ============================================
 
-// Enhanced function to make API calls to other servers with better cross-server support
-function makeAPIRequest($url, $data = [], $method = 'POST') {
-    // Initialize cURL
-    $ch = curl_init();
+// Enhanced and reliable function to make API calls to other servers
+// Features: Retry logic, timeout handling, better error messages, logging, and response validation
+function makeAPIRequest($url, $data = [], $method = 'POST', $options = []) {
+    // Default options
+    $retry_count = $options['retry_count'] ?? 3;
+    $retry_delay = $options['retry_delay'] ?? 1; // seconds
+    $timeout = $options['timeout'] ?? 30;
+    $connect_timeout = $options['connect_timeout'] ?? 10;
+    $return_json = $options['return_json'] ?? false; // Return parsed JSON instead of raw response
+    $verify_ssl = $options['verify_ssl'] ?? false; // SSL verification
     
-    // Set method-specific options
-    if ($method == 'POST') {
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
-    } elseif ($method == 'GET') {
-        if (!empty($data)) {
-            $url .= '?' . http_build_query($data);
+    $attempt = 0;
+    $last_error = null;
+    
+    while ($attempt < $retry_count) {
+        $attempt++;
+        
+        try {
+            // Initialize cURL
+            $ch = curl_init();
+            
+            // Validate URL
+            if (!filter_var($url, FILTER_VALIDATE_URL)) {
+                throw new Exception("Invalid URL format: $url");
+            }
+            
+            // Set method-specific options
+            if ($method === 'POST') {
+                curl_setopt($ch, CURLOPT_URL, $url);
+                curl_setopt($ch, CURLOPT_POST, true);
+                
+                // Handle both form data and JSON
+                $is_json = $options['send_json'] ?? false;
+                if ($is_json) {
+                    $post_data = json_encode($data);
+                    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                        'Content-Type: application/json',
+                        'Accept: application/json',
+                        'User-Agent: LostFound-ServerC/2.0'
+                    ]);
+                } else {
+                    $post_data = http_build_query($data);
+                    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                        'Content-Type: application/x-www-form-urlencoded',
+                        'Accept: */*',
+                        'User-Agent: LostFound-ServerC/2.0'
+                    ]);
+                }
+                curl_setopt($ch, CURLOPT_POSTFIELDS, $post_data);
+                
+            } elseif ($method === 'GET') {
+                if (!empty($data)) {
+                    $url .= '?' . http_build_query($data);
+                }
+                curl_setopt($ch, CURLOPT_URL, $url);
+                curl_setopt($ch, CURLOPT_HTTPGET, true);
+                curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                    'Accept: */*',
+                    'User-Agent: LostFound-ServerC/2.0'
+                ]);
+                
+            } elseif ($method === 'DELETE') {
+                curl_setopt($ch, CURLOPT_URL, $url);
+                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
+                if (!empty($data)) {
+                    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+                }
+                curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                    'Content-Type: application/x-www-form-urlencoded',
+                    'Accept: */*',
+                    'User-Agent: LostFound-ServerC/2.0'
+                ]);
+                
+            } elseif ($method === 'PUT') {
+                curl_setopt($ch, CURLOPT_URL, $url);
+                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
+                $post_data = http_build_query($data);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, $post_data);
+                curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                    'Content-Type: application/x-www-form-urlencoded',
+                    'Accept: */*',
+                    'User-Agent: LostFound-ServerC/2.0'
+                ]);
+            }
+            
+            // Standard cURL options for reliable cross-server communication
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $connect_timeout);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+            curl_setopt($ch, CURLOPT_MAXREDIRS, 5);
+            curl_setopt($ch, CURLOPT_ENCODING, 'gzip, deflate, br'); // Handle compressed responses
+            curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4); // Force IPv4 for better compatibility
+            
+            // SSL options
+            if (!$verify_ssl) {
+                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+                curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+            }
+            
+            // Execute request with timing
+            $start_time = microtime(true);
+            $response = curl_exec($ch);
+            $elapsed_time = round((microtime(true) - $start_time) * 1000, 2);
+            
+            // Gather response information
+            $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curl_error = curl_error($ch);
+            $curl_errno = curl_errno($ch);
+            $content_type = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
+            curl_close($ch);
+            
+            // Handle cURL errors
+            if ($curl_errno !== 0) {
+                $error_msg = "cURL error ($curl_errno): $curl_error";
+                throw new Exception($error_msg);
+            }
+            
+            // Handle empty response
+            if (empty($response)) {
+                throw new Exception("Empty response from server (HTTP $http_code)");
+            }
+            
+            // Handle HTTP errors
+            if ($http_code >= 500) {
+                throw new Exception("Server error (HTTP $http_code): " . substr($response, 0, 100));
+            } elseif ($http_code >= 400) {
+                throw new Exception("Client error (HTTP $http_code): " . substr($response, 0, 100));
+            } elseif ($http_code == 0) {
+                throw new Exception("No HTTP response received. Server may be unreachable.");
+            }
+            
+            // Log successful request
+            error_log("[APIRequest] Success: $method $url | HTTP $http_code | {$elapsed_time}ms");
+            
+            // Return parsed JSON if requested and content-type indicates JSON
+            if ($return_json && (strpos($content_type, 'application/json') !== false || $options['force_json'] ?? false)) {
+                $decoded = json_decode($response, true);
+                if ($decoded === null && json_last_error() !== JSON_ERROR_NONE) {
+                    error_log("[APIRequest] Warning: Failed to parse JSON response. Returning raw response.");
+                    return $response;
+                }
+                return $decoded;
+            }
+            
+            return $response;
+            
+        } catch (Exception $e) {
+            $last_error = $e->getMessage();
+            error_log("[APIRequest] Attempt $attempt/$retry_count failed: $last_error");
+            
+            // Don't retry on client errors (4xx), only on server errors and connection issues
+            if (isset($http_code) && $http_code >= 400 && $http_code < 500) {
+                break; // Stop retrying for 4xx errors
+            }
+            
+            // Wait before retrying (exponential backoff)
+            if ($attempt < $retry_count) {
+                $wait_time = $retry_delay * $attempt; // Linear backoff: 1s, 2s, 3s, etc.
+                error_log("[APIRequest] Waiting {$wait_time}s before retry...");
+                sleep($wait_time);
+            }
         }
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_HTTPGET, true);
-    } elseif ($method == 'DELETE') {
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
-        if (!empty($data)) {
-            curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
-        }
     }
     
-    // Enhanced cURL options for cross-server communication
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
-    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-    curl_setopt($ch, CURLOPT_MAXREDIRS, 3);
+    // All retries exhausted - return error
+    $error_message = $last_error ?? "Unknown error after $retry_count attempts";
+    error_log("[APIRequest] Final error for $method $url: $error_message");
     
-    // Headers for better cross-server compatibility
-    curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        'Content-Type: application/x-www-form-urlencoded',
-        'Accept: */*',
-        'User-Agent: LostFound-ServerC/1.0'
-    ]);
-    
-    // SSL and security options (for HTTPS if needed)
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-    
-    // Execute request
-    $response = curl_exec($ch);
-    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $error = curl_error($ch);
-    $info = curl_getinfo($ch);
-    curl_close($ch);
-    
-    // Enhanced error handling
-    if ($error) {
-        error_log("API Request cURL Error to $url: $error");
-        return "error|Connection failed: $error";
+    // Return error in expected format
+    if ($return_json) {
+        return [
+            'success' => false,
+            'error' => $error_message,
+            'url' => $url,
+            'method' => $method
+        ];
     }
     
-    if ($http_code == 0) {
-        error_log("API Request Connection Error to $url: No response received");
-        return "error|No response from server. Check if server is running and accessible.";
-    }
-    
-    if ($http_code >= 400) {
-        error_log("API Request HTTP Error $http_code to $url. Response: " . substr($response, 0, 200));
-        return "error|Server error (HTTP $http_code)";
-    }
-    
-    // Log successful requests for debugging
-    error_log("API Request Success to $url: HTTP $http_code");
-    
-    return $response;
+    return "error|$error_message";
 }
 
 // API URLs - Automatically configured from deployment_config.php
-define('SERVERA_URL', SERVERA_API_URL);
-define('SERVERB_URL', SERVERB_API_URL);
+define('SERVERA_URL', SERVERA_API_URL);  // Item operations
+define('SERVERB_URL', SERVERB_API_URL);  // User operations
 
 // Upload paths - supports both network mount and HTTP access
 define('UPLOADS_PATH', __DIR__ . '/../ServerB/uploads/');  // Local/mounted path for file operations (if servers share filesystem)
@@ -205,47 +309,81 @@ function logoutUser() {
 // SERVER CONNECTIVITY FUNCTIONS
 // ============================================
 
-// Test if a server is reachable
-function testServerConnection($server_url) {
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $server_url . '/health.php');
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 5);
-    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
-    curl_setopt($ch, CURLOPT_NOBODY, true);
+// Test if a server is reachable with timeout and detailed error info
+function testServerConnection($server_url, $timeout = 5) {
+    if (empty($server_url)) {
+        return [
+            'success' => false,
+            'error' => 'Empty server URL provided',
+            'response_time' => 0
+        ];
+    }
     
-    curl_exec($ch);
-    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $error = curl_error($ch);
-    curl_close($ch);
-    
-    return ($error === '' && $http_code == 200);
+    try {
+        $health_url = $server_url . '/health.php';
+        
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $health_url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, min($timeout, 3));
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+        
+        $start_time = microtime(true);
+        $response = curl_exec($ch);
+        $response_time = round((microtime(true) - $start_time) * 1000, 2);
+        
+        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $error = curl_error($ch);
+        curl_close($ch);
+        
+        if ($error) {
+            return [
+                'success' => false,
+                'error' => $error,
+                'http_code' => $http_code,
+                'response_time' => $response_time
+            ];
+        }
+        
+        return [
+            'success' => ($http_code === 200),
+            'http_code' => $http_code,
+            'error' => $http_code !== 200 ? "HTTP $http_code" : '',
+            'response_time' => $response_time,
+            'response' => $response
+        ];
+        
+    } catch (Exception $e) {
+        return [
+            'success' => false,
+            'error' => $e->getMessage(),
+            'response_time' => 0
+        ];
+    }
 }
 
-// Get server status with details
-function getServerStatus($server_url, $server_name) {
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $server_url . '/health.php');
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 5);
-    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
-    
-    $start_time = microtime(true);
-    $response = curl_exec($ch);
-    $response_time = round((microtime(true) - $start_time) * 1000, 2);
-    
-    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $error = curl_error($ch);
-    curl_close($ch);
+// Get detailed server status with health metrics
+function getServerStatus($server_url, $server_name, $timeout = 5) {
+    $result = testServerConnection($server_url, $timeout);
     
     return [
         'name' => $server_name,
         'url' => $server_url,
-        'online' => ($error === '' && $http_code == 200),
-        'response_time' => $response_time,
-        'http_code' => $http_code,
-        'error' => $error,
-        'response' => $response
+        'online' => $result['success'],
+        'response_time' => $result['response_time'],
+        'http_code' => $result['http_code'] ?? 0,
+        'error' => $result['error'] ?? '',
+        'response' => $result['response'] ?? ''
     ];
+}
+
+// Check if all critical servers are reachable
+function areAllServersOnline() {
+    $servera_check = testServerConnection(SERVERA_URL, 3);
+    $serverb_check = testServerConnection(SERVERB_URL, 3);
+    
+    return $servera_check['success'] && $serverb_check['success'];
 }
 ?>

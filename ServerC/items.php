@@ -11,49 +11,28 @@ require_once 'config.php';
 $filter = $_GET['filter'] ?? 'all';
 $search = $_GET['search'] ?? '';
 
-// Get data from database
-$conn = connectDB();
+// Get data from ServerA API instead of direct database connection
+$api_response = makeAPIRequest(SERVERA_URL . '/get_all_items.php', [
+    'type' => $filter !== 'all' ? $filter : '',
+    'search' => $search
+], 'GET', ['return_json' => true]);
 
-// Build SQL query with filters
-$sql = "SELECT i.*, u.username FROM items i LEFT JOIN users u ON i.user_id = u.id WHERE 1=1";
-
-if ($filter !== 'all') {
-    $sql .= " AND i.type = '$filter'";
-}
-
-if (!empty($search)) {
-    $sql .= " AND (i.title LIKE '%$search%' OR i.description LIKE '%$search%' OR i.location LIKE '%$search%')";
-}
-
-$sql .= " ORDER BY i.created_at DESC";
-
-$result = mysqli_query($conn, $sql);
+// Initialize default data
 $items = [];
-
-while ($row = mysqli_fetch_assoc($result)) {
-    $items[] = $row;
-}
-
-// Calculate simple statistics
-$total = count($items);
-$lost_count = 0;
-$found_count = 0;
-
-foreach ($items as $item) {
-    if ($item['type'] == 'lost') {
-        $lost_count++;
-    } else {
-        $found_count++;
-    }
-}
-
 $stats = [
-    'total' => $total,
-    'lost_count' => $lost_count,
-    'found_count' => $found_count
+    'total' => 0,
+    'lost_count' => 0,
+    'found_count' => 0
 ];
 
-mysqli_close($conn);
+// Process API response
+if (is_array($api_response) && isset($api_response['success']) && $api_response['success']) {
+    $items = $api_response['items'] ?? [];
+    $stats = $api_response['stats'] ?? $stats;
+} else {
+    // Handle API error
+    error_log('ServerA API error: ' . json_encode($api_response));
+}
 ?>
 
 <!DOCTYPE html>

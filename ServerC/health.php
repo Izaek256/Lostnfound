@@ -15,25 +15,13 @@ $health_data = [
     'role' => 'User Interface Server',
     'status' => 'online',
     'timestamp' => date('Y-m-d H:i:s'),
-    'database' => 'connected',
+    'database' => 'not_applicable',
     'services' => []
 ];
 
-// Test database connection
-try {
-    $conn = connectDB();
-    if ($conn) {
-        $health_data['database'] = 'connected';
-        $health_data['services']['database_connection'] = 'active';
-        mysqli_close($conn);
-    } else {
-        $health_data['database'] = 'failed';
-        $health_data['services']['database_connection'] = 'failed';
-    }
-} catch (Exception $e) {
-    $health_data['database'] = 'error';
-    $health_data['services']['database_connection'] = 'error: ' . $e->getMessage();
-}
+// Note: ServerC is a client and does NOT connect directly to the database
+// It communicates with ServerA and ServerB through APIs
+// So we check API connectivity instead of database connectivity
 
 // Test ServerA connectivity
 $servera_status = testServerConnection(SERVERA_URL);
@@ -49,7 +37,6 @@ $health_data['services']['uploads_directory'] = $uploads_accessible ? 'accessibl
 
 // Overall health status
 $all_services_ok = (
-    $health_data['database'] === 'connected' &&
     $servera_status &&
     $serverb_status
 );

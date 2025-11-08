@@ -25,26 +25,26 @@ if ($_POST) {
     } elseif ($password != $confirm_password) {
         $error = 'Passwords do not match';
     } else {
-        // Call ServerA API to register user
-        $response = makeAPIRequest(SERVERA_URL . '/register_user.php', [
+        // Call ServerB API to register user
+        $response = makeAPIRequest(SERVERB_URL . '/register_user.php', [
             'username' => $username,
             'email' => $email,
             'password' => $password
-        ]);
+        ], 'POST');
         
-        // Parse response (format: "success|user_id|username|email|is_admin" or "error|message")
-        $parts = explode('|', $response);
+        // Parse JSON response
+        $decoded = json_decode($response, true);
         
-        if ($parts[0] == 'success') {
-            $_SESSION['user_id'] = $parts[1];
-            $_SESSION['username'] = $parts[2];
-            $_SESSION['user_email'] = $parts[3];
-            $_SESSION['is_admin'] = $parts[4];
+        if ($decoded && isset($decoded['success']) && $decoded['success']) {
+            $_SESSION['user_id'] = $decoded['user_id'];
+            $_SESSION['username'] = $decoded['username'];
+            $_SESSION['user_email'] = $decoded['email'];
+            $_SESSION['is_admin'] = $decoded['is_admin'] ?? 0;
             
             header('Location: user_dashboard.php');
             exit();
         } else {
-            $error = $parts[1] ?? 'Registration failed';
+            $error = $decoded['error'] ?? 'Registration failed';
         }
     }
 }

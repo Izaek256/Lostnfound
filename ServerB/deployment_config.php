@@ -11,16 +11,16 @@
 // ============================================
 // DEPLOYMENT MODE AND SERVER INFO
 // ============================================
-define('DEPLOYMENT_MODE', 'ngrok');
-define('DEPLOYMENT_NAME', 'Ngrok Tunnel Deployment');
+define('DEPLOYMENT_MODE', 'local');
+define('DEPLOYMENT_NAME', 'Local Development');
 define('CURRENT_SERVER', 'ServerB');
 
 // ============================================
 // SERVER IP ADDRESSES
 // ============================================
-define('SERVERA_IP', 'awfully-ophthalmoscopical-brittny.ngrok-free.dev');
-define('SERVERB_IP', 'awfully-ophthalmoscopical-brittny.ngrok-free.dev');
-define('SERVERC_IP', 'nonformal-nontemporally-marjorie.ngrok-free.dev');
+define('SERVERA_IP', 'localhost');
+define('SERVERB_IP', 'localhost');
+define('SERVERC_IP', 'localhost');
 
 // ============================================
 // DATABASE CONFIGURATION
@@ -28,22 +28,22 @@ define('SERVERC_IP', 'nonformal-nontemporally-marjorie.ngrok-free.dev');
 define('DB_HOST', 'localhost');  // Local database on this server
 define('DB_NAME', 'lostfound_db');
 define('DB_USER', 'root');
-define('DB_PASS', '');
+define('DB_PASS', 'Isaac@1234');
 
 // ============================================
 // API AND SERVICE URLS
 // ============================================
-define('SERVERA_API_URL', 'https://awfully-ophthalmoscopical-brittny.ngrok-free.dev/ServerA/api');
-define('SERVERB_API_URL', 'https://awfully-ophthalmoscopical-brittny.ngrok-free.dev/ServerB/api');
-define('SERVERC_API_URL', 'https://nonformal-nontemporally-marjorie.ngrok-free.dev/ServerC/api');
+define('SERVERA_API_URL', 'http://localhost/Lostnfound/ServerA/api');
+define('SERVERB_API_URL', 'http://localhost/Lostnfound/ServerB/api');
+define('SERVERC_API_URL', 'http://localhost/Lostnfound/ServerC/api');
 
 // Upload URLs (ServerB hosts uploads)
-define('UPLOADS_BASE_URL', 'https://awfully-ophthalmoscopical-brittny.ngrok-free.dev/ServerB/uploads/');
+define('UPLOADS_BASE_URL', 'http://localhost/Lostnfound/ServerB/uploads/');
 
 // Health check URLs
-define('SERVERA_HEALTH_URL', 'https://awfully-ophthalmoscopical-brittny.ngrok-free.dev/ServerA/api/health.php');
-define('SERVERB_HEALTH_URL', 'https://awfully-ophthalmoscopical-brittny.ngrok-free.dev/ServerB/api/health.php');
-define('SERVERC_HEALTH_URL', 'https://nonformal-nontemporally-marjorie.ngrok-free.dev/ServerC/health.php');
+define('SERVERA_HEALTH_URL', 'http://localhost/Lostnfound/ServerA/api/health.php');
+define('SERVERB_HEALTH_URL', 'http://localhost/Lostnfound/ServerB/api/health.php');
+define('SERVERC_HEALTH_URL', 'http://localhost/Lostnfound/ServerC/api/health.php');
 
 // ============================================
 // SERVER ROLE DEFINITIONS

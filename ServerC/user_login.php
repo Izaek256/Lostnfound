@@ -24,25 +24,23 @@ if ($_POST) {
     $password = $_POST['password'];
     
     if (!empty($username) && !empty($password)) {
-        // Call ServerA API to verify user
-        $response = makeAPIRequest(SERVERA_URL . '/verify_user.php', [
+        // Call ServerB API to verify user
+        $response = makeAPIRequest(SERVERB_URL . '/verify_user.php', [
             'username' => $username,
             'password' => $password
-        ]);
+        ], 'POST', ['return_json' => true]);
         
-        // Parse response (format: "success|user_id|username|email|is_admin" or "error|message")
-        $parts = explode('|', $response);
-        
-        if ($parts[0] == 'success') {
-            $_SESSION['user_id'] = $parts[1];
-            $_SESSION['username'] = $parts[2];
-            $_SESSION['user_email'] = $parts[3];
-            $_SESSION['is_admin'] = $parts[4];
+        // Parse JSON response
+        if (is_array($response) && isset($response['success']) && $response['success']) {
+            $_SESSION['user_id'] = $response['user_id'];
+            $_SESSION['username'] = $response['username'];
+            $_SESSION['user_email'] = $response['email'];
+            $_SESSION['is_admin'] = $response['is_admin'] ?? 0;
             
             header('Location: user_dashboard.php');
             exit();
         } else {
-            $error = $parts[1] ?? 'Login failed';
+            $error = isset($response['error']) ? $response['error'] : 'Login failed';
         }
     } else {
         $error = 'Please fill all fields';
