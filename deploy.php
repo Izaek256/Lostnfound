@@ -18,7 +18,7 @@
 // Set deployment mode - can be overridden by environment variable
 if (!defined('DEPLOYMENT_MODE')) {
     // Check environment variable first, then use default
-    $mode = $_ENV['DEPLOYMENT_MODE'] ?? 'ngrok';
+    $mode = $_ENV['DEPLOYMENT_MODE'] ?? 'local';
     define('DEPLOYMENT_MODE', $mode);
 }
 
@@ -36,7 +36,7 @@ $deployment_configs = [
         'db_host' => 'localhost',
         'db_name' => 'lostfound_db',
         'db_user' => 'root',
-        'db_pass' => '',
+        'db_pass' => 'Isaac@1234',
         'use_https' => false
     ],
     
