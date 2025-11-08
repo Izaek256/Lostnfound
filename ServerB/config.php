@@ -15,14 +15,20 @@ session_start();
 // ============================================
 // SERVER-SPECIFIC CONFIGURATION  
 // ============================================
-// ServerB hosts the centralized database and file uploads
-// All other servers connect to this database
+// ServerB handles user logic (registration, authentication, user management)
+// ServerB connects to ServerA for item-related operations
 
-// Database connection (local database on this server)
+// Database connection (ServerB connects to the database for user management)
 $db_host = DB_HOST;      // Automatically configured by deployment system
 $db_name = DB_NAME;      
 $db_user = DB_USER;      
 $db_pass = DB_PASS;
+
+// ============================================
+// SERVER CONNECTIVITY
+// ============================================
+// ServerB URL for connecting to ServerA APIs (for item operations)
+define('SERVERA_API_URL', SERVERA_API_URL);
 
 // ============================================
 // DATABASE CONNECTION FUNCTIONS
@@ -92,6 +98,140 @@ function logoutUser() {
 // ============================================
 // API HELPER FUNCTIONS
 // ============================================
+
+// Enhanced function to make API calls to ServerA for item operations
+function makeAPIRequest($url, $data = [], $method = 'POST', $options = []) {
+    // Default options
+    $retry_count = $options['retry_count'] ?? 3;
+    $retry_delay = $options['retry_delay'] ?? 1; // seconds
+    $timeout = $options['timeout'] ?? 30;
+    $connect_timeout = $options['connect_timeout'] ?? 10;
+    $return_json = $options['return_json'] ?? false;
+    $verify_ssl = $options['verify_ssl'] ?? false;
+    
+    $attempt = 0;
+    $last_error = null;
+    
+    while ($attempt < $retry_count) {
+        $attempt++;
+        
+        try {
+            $ch = curl_init();
+            
+            if (!filter_var($url, FILTER_VALIDATE_URL)) {
+                throw new Exception("Invalid URL format: $url");
+            }
+            
+            if ($method === 'POST') {
+                curl_setopt($ch, CURLOPT_URL, $url);
+                curl_setopt($ch, CURLOPT_POST, true);
+                
+                $is_json = $options['send_json'] ?? false;
+                if ($is_json) {
+                    $post_data = json_encode($data);
+                    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                        'Content-Type: application/json',
+                        'Accept: application/json',
+                        'User-Agent: LostFound-ServerB/2.0'
+                    ]);
+                } else {
+                    $post_data = http_build_query($data);
+                    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                        'Content-Type: application/x-www-form-urlencoded',
+                        'Accept: */*',
+                        'User-Agent: LostFound-ServerB/2.0'
+                    ]);
+                }
+                curl_setopt($ch, CURLOPT_POSTFIELDS, $post_data);
+                
+            } elseif ($method === 'GET') {
+                if (!empty($data)) {
+                    $url .= '?' . http_build_query($data);
+                }
+                curl_setopt($ch, CURLOPT_URL, $url);
+                curl_setopt($ch, CURLOPT_HTTPGET, true);
+                curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                    'Accept: */*',
+                    'User-Agent: LostFound-ServerB/2.0'
+                ]);
+            }
+            
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $connect_timeout);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+            curl_setopt($ch, CURLOPT_MAXREDIRS, 5);
+            
+            if (!$verify_ssl) {
+                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+                curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+            }
+            
+            $response = curl_exec($ch);
+            $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curl_error = curl_error($ch);
+            $curl_errno = curl_errno($ch);
+            curl_close($ch);
+            
+            if ($curl_errno !== 0) {
+                throw new Exception("cURL error ($curl_errno): $curl_error");
+            }
+            
+            if (empty($response)) {
+                throw new Exception("Empty response from server (HTTP $http_code)");
+            }
+            
+            if ($http_code >= 500) {
+                throw new Exception("Server error (HTTP $http_code): " . substr($response, 0, 100));
+            } elseif ($http_code >= 400) {
+                throw new Exception("Client error (HTTP $http_code): " . substr($response, 0, 100));
+            } elseif ($http_code == 0) {
+                throw new Exception("No HTTP response received. Server may be unreachable.");
+            }
+            
+            error_log("[APIRequest] Success: $method $url | HTTP $http_code");
+            
+            if ($return_json && (strpos(curl_getinfo($ch, CURLINFO_CONTENT_TYPE), 'application/json') !== false || $options['force_json'] ?? false)) {
+                $decoded = json_decode($response, true);
+                if ($decoded === null && json_last_error() !== JSON_ERROR_NONE) {
+                    error_log("[APIRequest] Warning: Failed to parse JSON response. Returning raw response.");
+                    return $response;
+                }
+                return $decoded;
+            }
+            
+            return $response;
+            
+        } catch (Exception $e) {
+            $last_error = $e->getMessage();
+            error_log("[APIRequest] Attempt $attempt/$retry_count failed: $last_error");
+            
+            if (isset($http_code) && $http_code >= 400 && $http_code < 500) {
+                break;
+            }
+            
+            if ($attempt < $retry_count) {
+                $wait_time = $retry_delay * $attempt;
+                error_log("[APIRequest] Waiting {$wait_time}s before retry...");
+                sleep($wait_time);
+            }
+        }
+    }
+    
+    $error_message = $last_error ?? "Unknown error after $retry_count attempts";
+    error_log("[APIRequest] Final error for $method $url: $error_message");
+    
+    if ($return_json) {
+        return [
+            'success' => false,
+            'error' => $error_message,
+            'url' => $url,
+            'method' => $method
+        ];
+    }
+    
+    return "error|$error_message";
+}
 
 // Send JSON response with proper headers
 function sendJSONResponse($data, $status_code = 200) {

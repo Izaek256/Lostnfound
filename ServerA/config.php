@@ -15,9 +15,9 @@ session_start();
 // ============================================
 // SERVER-SPECIFIC CONFIGURATION
 // ============================================
-// ServerA handles authentication and user management
+// ServerA handles item logic (add, update, delete, retrieve items)
 
-// Database connection (connects to centralized DB on ServerB)
+// Database connection (ServerA connects directly to the database)
 $db_host = DB_HOST;      // Automatically configured by deployment system
 $db_name = DB_NAME;      
 $db_user = DB_USER;      

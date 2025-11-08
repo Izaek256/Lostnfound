@@ -15,14 +15,17 @@ session_start();
 // ============================================
 // SERVER-SPECIFIC CONFIGURATION
 // ============================================
-// ServerC provides the user interface and connects to ServerB for data
+// ServerC is the user interface client
+// It communicates with ServerA (item operations) and ServerB (user operations)
+// ServerC CANNOT access the database directly
 
 // ============================================
 // DATABASE CONNECTION FUNCTIONS
 // ============================================
-// ServerC does NOT connect directly to the database
-// All database operations must go through ServerA APIs
-// This ensures ServerA is the only server with direct DB access
+// ServerC is a client and DOES NOT connect directly to the database
+// All operations must go through ServerA and ServerB APIs
+// ServerA: Handles item logic (add, update, delete, get items)
+// ServerB: Handles user logic (register, verify, authentication)
 
 // Placeholder function - NOT USED in ServerC
 // ServerC must use ServerA APIs for all database operations
@@ -260,8 +263,8 @@ function makeAPIRequest($url, $data = [], $method = 'POST', $options = []) {
 }
 
 // API URLs - Automatically configured from deployment_config.php
-define('SERVERA_URL', SERVERA_API_URL);
-define('SERVERB_URL', SERVERB_API_URL);
+define('SERVERA_URL', SERVERA_API_URL);  // Item operations
+define('SERVERB_URL', SERVERB_API_URL);  // User operations
 
 // Upload paths - supports both network mount and HTTP access
 define('UPLOADS_PATH', __DIR__ . '/../ServerB/uploads/');  // Local/mounted path for file operations (if servers share filesystem)
