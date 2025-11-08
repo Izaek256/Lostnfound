@@ -11,21 +11,21 @@
 // ============================================
 // DEPLOYMENT MODE AND SERVER INFO
 // ============================================
-define('DEPLOYMENT_MODE', 'local');
-define('DEPLOYMENT_NAME', 'Local Development');
+define('DEPLOYMENT_MODE', 'staging');
+define('DEPLOYMENT_NAME', 'Staging Deployment');
 define('CURRENT_SERVER', 'ServerB');
 
 // ============================================
 // SERVER IP ADDRESSES
 // ============================================
-define('SERVERA_IP', 'localhost');
-define('SERVERB_IP', 'localhost');
-define('SERVERC_IP', 'localhost');
+define('SERVERA_IP', '172.24.194.6');
+define('SERVERB_IP', '172.24.194.6');
+define('SERVERC_IP', '172.24.14.184');
 
 // ============================================
 // DATABASE CONFIGURATION
 // ============================================
-define('DB_HOST', 'localhost');  // Local database on this server
+define('DB_HOST', '172.24.194.6');  // Local database on this server
 define('DB_NAME', 'lostfound_db');
 define('DB_USER', 'root');
 define('DB_PASS', 'Isaac@1234');
@@ -33,17 +33,17 @@ define('DB_PASS', 'Isaac@1234');
 // ============================================
 // API AND SERVICE URLS
 // ============================================
-define('SERVERA_API_URL', 'http://localhost/Lostnfound/ServerA/api');
-define('SERVERB_API_URL', 'http://localhost/Lostnfound/ServerB/api');
-define('SERVERC_API_URL', 'http://localhost/Lostnfound/ServerC/api');
+define('SERVERA_API_URL', 'http://172.24.194.6/Lostnfound/ServerA/api');
+define('SERVERB_API_URL', 'http://172.24.194.6/Lostnfound/ServerB/api');
+define('SERVERC_API_URL', 'http://172.24.14.184/Lostnfound/ServerC/api');
 
 // Upload URLs (ServerB hosts uploads)
-define('UPLOADS_BASE_URL', 'http://localhost/Lostnfound/ServerB/uploads/');
+define('UPLOADS_BASE_URL', 'http://172.24.194.6/Lostnfound/ServerB/uploads/');
 
 // Health check URLs
-define('SERVERA_HEALTH_URL', 'http://localhost/Lostnfound/ServerA/api/health.php');
-define('SERVERB_HEALTH_URL', 'http://localhost/Lostnfound/ServerB/api/health.php');
-define('SERVERC_HEALTH_URL', 'http://localhost/Lostnfound/ServerC/api/health.php');
+define('SERVERA_HEALTH_URL', 'http://172.24.194.6/Lostnfound/ServerA/api/health.php');
+define('SERVERB_HEALTH_URL', 'http://172.24.194.6/Lostnfound/ServerB/api/health.php');
+define('SERVERC_HEALTH_URL', 'http://172.24.14.184/Lostnfound/ServerC/health.php');
 
 // ============================================
 // SERVER ROLE DEFINITIONS

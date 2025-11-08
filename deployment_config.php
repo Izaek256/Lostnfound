@@ -32,6 +32,13 @@ switch (DEPLOYMENT_MODE) {
         define('SERVERC_IP', 'nonformal-nontemporally-marjorie.ngrok-free.dev');  // ServerC ngrok tunnel
         break;
         
+    case 'staging':
+        // Staging deployment with actual server IPs
+        define('SERVERA_IP', '172.24.194.6');     // Staging Server A
+        define('SERVERB_IP', '172.24.194.6');     // Staging Server B (database)
+        define('SERVERC_IP', '172.24.14.184');     // Staging Server C
+        break;
+        
     case 'production':
         // Production deployment with actual server IPs
         define('SERVERA_IP', '192.168.72.225');     // Production Server A
