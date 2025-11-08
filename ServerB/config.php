@@ -28,7 +28,9 @@ $db_pass = DB_PASS;
 // SERVER CONNECTIVITY
 // ============================================
 // ServerB URL for connecting to ServerA APIs (for item operations)
-define('SERVERA_API_URL', SERVERA_API_URL);
+if (!defined('SERVERA_API_URL')) {
+    define('SERVERA_API_URL', SERVERA_API_URL);
+}
 
 // ============================================
 // DATABASE CONNECTION FUNCTIONS

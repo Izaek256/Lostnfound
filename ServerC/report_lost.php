@@ -227,13 +227,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             </p>
             
             <?php
-            // Get recent lost items from database for display
-            if ($conn) {
-                $sql = "SELECT * FROM items WHERE type = 'lost' ORDER BY created_at DESC LIMIT 3";
-                $result = mysqli_query($conn, $sql);
-                $recentLostItems = $result ? mysqli_fetch_all($result, MYSQLI_ASSOC) : [];
-            } else {
-                $recentLostItems = [];
+            // Get recent lost items from ServerA API
+            $api_response = makeAPIRequest(SERVERA_URL . '/get_all_items.php', [
+                'type' => 'lost'
+            ], 'GET', ['return_json' => true]);
+            
+            $recentLostItems = [];
+            if (is_array($api_response) && isset($api_response['success']) && $api_response['success']) {
+                $items = $api_response['items'] ?? [];
+                $recentLostItems = array_slice($items, 0, 3);
             }
             ?>
             
