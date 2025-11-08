@@ -107,7 +107,7 @@ class CentralControl {
         $db_host = defined('DB_HOST') ? DB_HOST : 'localhost';
         $db_name = defined('DB_NAME') ? DB_NAME : 'lostfound_db';
         $db_user = defined('DB_USER') ? DB_USER : 'root';
-        $db_pass = defined('DB_PASS') ? DB_PASS : '';
+        $db_pass = defined('DB_PASS') ? DB_PASS : 'Isaac@1234';
         
         // If connecting to a remote server, adjust host
         if ($server !== 'ServerB' && $server !== 'default') {

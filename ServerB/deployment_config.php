@@ -28,7 +28,7 @@ define('SERVERC_IP', 'localhost');
 define('DB_HOST', 'localhost');  // Local database on this server
 define('DB_NAME', 'lostfound_db');
 define('DB_USER', 'root');
-define('DB_PASS', '');
+define('DB_PASS', 'Isaac@1234');
 
 // ============================================
 // API AND SERVICE URLS
