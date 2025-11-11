@@ -37,8 +37,8 @@ define('SERVERA_API_URL', 'http://172.24.194.6/Lostnfound/ServerA/api');
 define('SERVERB_API_URL', 'http://172.24.194.6/Lostnfound/ServerB/api');
 define('SERVERC_API_URL', 'http://172.24.14.184/Lostnfound/ServerC/api');
 
-// Upload URLs (ServerB hosts uploads)
-define('UPLOADS_BASE_URL', 'http://172.24.194.6/Lostnfound/ServerB/uploads/');
+// Upload URLs (ServerA hosts uploads - Items Service)
+define('UPLOADS_BASE_URL', 'http://172.24.194.6/Lostnfound/ServerA/uploads/');
 
 // Health check URLs
 define('SERVERA_HEALTH_URL', 'http://172.24.194.6/Lostnfound/ServerA/api/health.php');
@@ -49,7 +49,7 @@ define('SERVERC_HEALTH_URL', 'http://172.24.14.184/Lostnfound/ServerC/health.php
 // SERVER ROLE DEFINITIONS
 // ============================================
 define('SERVER_ROLES', [
-    'ServerA' => 'Item Logic Server',
+    'ServerA' => 'Item Logic Server (with uploads)',
     'ServerB' => 'User Logic & Database Server', 
     'ServerC' => 'User Interface Client'
 ]);

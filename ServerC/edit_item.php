@@ -75,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $image_filename = $item['image']; // Keep existing image by default
         
         if (isset($_FILES['new_image']) && $_FILES['new_image']['error'] === UPLOAD_ERR_OK) {
-            $upload_dir = '../ServerB/uploads/';
+            $upload_dir = '../ServerA/uploads/';
             $allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
             $max_size = 5 * 1024 * 1024; // 5MB
             
@@ -98,7 +98,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 } else {
                     // Delete old image if it exists and is not default
                     if ($item['image'] && $item['image'] !== 'default_item.jpg') {
-                        $old_image_path = $upload_dir . $item['image'];
+                        $old_image_path = '../ServerA/uploads/' . $item['image'];
                         if (file_exists($old_image_path)) {
                             unlink($old_image_path);
                         }

@@ -267,8 +267,8 @@ define('SERVERA_URL', SERVERA_API_URL);  // Item operations
 define('SERVERB_URL', SERVERB_API_URL);  // User operations
 
 // Upload paths - supports both network mount and HTTP access
-define('UPLOADS_PATH', __DIR__ . '/../ServerB/uploads/');  // Local/mounted path for file operations (if servers share filesystem)
-define('UPLOADS_URL', '../ServerB/uploads/');   // Browser path (works if mounted locally)
+define('UPLOADS_PATH', __DIR__ . '/../ServerA/uploads/');  // Local/mounted path for file operations (if servers share filesystem)
+define('UPLOADS_URL', '../ServerA/uploads/');   // Browser path (works if mounted locally)
 define('UPLOADS_HTTP_URL', UPLOADS_BASE_URL);   // Automatically configured from deployment_config.php
 
 // Simple user check functions

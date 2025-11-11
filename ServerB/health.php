@@ -12,7 +12,7 @@ header('Access-Control-Allow-Origin: *');
 
 $health_data = [
     'server' => 'ServerB',
-    'role' => 'Database & File Server',
+    'role' => 'User Logic & Database Server',
     'status' => 'online',
     'timestamp' => date('Y-m-d H:i:s'),
     'deployment_mode' => DEPLOYMENT_MODE,
@@ -39,15 +39,6 @@ try {
     $health_data['services']['database_connection'] = 'error: ' . $e->getMessage();
     $health_data['status'] = 'degraded';
     http_response_code(503);
-}
-
-// Test uploads directory
-$uploads_dir = __DIR__ . '/uploads';
-if (is_dir($uploads_dir) && is_writable($uploads_dir)) {
-    $health_data['services']['uploads_directory'] = 'accessible';
-} else {
-    $health_data['services']['uploads_directory'] = 'inaccessible';
-    $health_data['status'] = 'degraded';
 }
 
 // Test API endpoint

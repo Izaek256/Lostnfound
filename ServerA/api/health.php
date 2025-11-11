@@ -25,19 +25,28 @@ $health = [
 if ($conn && !$conn->connect_error) {
     $health['database'] = 'connected';
     
-    // Check users table
-    $result = mysqli_query($conn, "SELECT COUNT(*) as count FROM users");
+    // Check items table
+    $result = mysqli_query($conn, "SELECT COUNT(*) as count FROM items");
     if ($result) {
         $row = mysqli_fetch_assoc($result);
-        $health['services']['user_database'] = $row['count'] . ' users registered';
+        $health['services']['items_database'] = $row['count'] . ' items stored';
     } else {
-        $health['services']['user_database'] = 'table not accessible';
+        $health['services']['items_database'] = 'table not accessible';
     }
 }
 
+// Check uploads directory (ServerA is the Items Service)
+$upload_dir = __DIR__ . '/../uploads';
+if (is_dir($upload_dir) && is_writable($upload_dir)) {
+    $health['services']['uploads_directory'] = 'writable';
+} else {
+    $health['services']['uploads_directory'] = 'not writable or missing';
+}
+
 // Check API endpoints
-$health['services']['register_api'] = file_exists(__DIR__ . '/register_user.php') ? 'active' : 'missing';
-$health['services']['verify_api'] = file_exists(__DIR__ . '/verify_user.php') ? 'active' : 'missing';
-$health['services']['session_api'] = file_exists(__DIR__ . '/session_status.php') ? 'active' : 'missing';
+$health['services']['add_item_api'] = file_exists(__DIR__ . '/add_item.php') ? 'active' : 'missing';
+$health['services']['get_items_api'] = file_exists(__DIR__ . '/get_all_items.php') ? 'active' : 'missing';
+$health['services']['update_item_api'] = file_exists(__DIR__ . '/update_item.php') ? 'active' : 'missing';
+$health['services']['delete_item_api'] = file_exists(__DIR__ . '/delete_item.php') ? 'active' : 'missing';
 
 echo json_encode($health);

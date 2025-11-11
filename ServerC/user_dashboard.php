@@ -46,7 +46,7 @@ if (isset($_POST['delete_item'])) {
     if (is_array($response) && isset($response['success']) && $response['success']) {
         // Delete image file locally if exists
         if ($item && $item['image']) {
-            $image_path = '../ServerB/uploads/' . $item['image'];
+            $image_path = '../ServerA/uploads/' . $item['image'];
             if (file_exists($image_path)) {
                 unlink($image_path);
             }
