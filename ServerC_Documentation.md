@@ -9,7 +9,7 @@
 ✅ Handle user interactions and form submissions  
 ✅ Make API calls to ServerA (items) and ServerB (users)  
 ✅ Manage user sessions and authentication state  
-✅ Upload files to ServerB's storage directory  
+✅ Upload files to ServerA's storage directory (items)  
 ✅ Display dynamic data from backend APIs  
 ✅ Provide responsive mobile-friendly UI  
 
@@ -49,16 +49,16 @@ function connectDB() {
 - **Database Access**: None (API only)
 
 ### File Upload Strategy
-ServerC uploads files to ServerB's directory via **filesystem access**:
+ServerC uploads files to ServerA's directory via **filesystem access**:
 ```php
-$upload_dir = '../ServerB/uploads/';  // Network mount or shared directory
+$upload_dir = '../ServerA/uploads/';  // Network mount or shared directory
 move_uploaded_file($_FILES['image']['tmp_name'], $upload_dir . $filename);
 ```
 
-This assumes ServerB's uploads directory is accessible via:
+This assumes ServerA's uploads directory is accessible via:
 - **Network share/mount** (if servers on different machines)
 - **Local filesystem** (if servers share the same filesystem)
-- **HTTP upload** (future enhancement via ServerB API)
+- **HTTP upload** (future enhancement via ServerA API)
 
 ---
 
@@ -218,9 +218,9 @@ function getImageUrl($filename) {
 
 **Configuration Constants:**
 ```php
-define('UPLOADS_PATH', __DIR__ . '/../ServerB/uploads/');       // Filesystem path
-define('UPLOADS_URL', '../ServerB/uploads/');                   // Relative browser path
-define('UPLOADS_HTTP_URL', 'http://172.24.194.6/Lostnfound/ServerB/uploads/');  // HTTP URL
+define('UPLOADS_PATH', __DIR__ . '/../ServerA/uploads/');       // Filesystem path
+define('UPLOADS_URL', '../ServerA/uploads/');                   // Relative browser path
+define('UPLOADS_HTTP_URL', 'http://172.24.194.6/Lostnfound/ServerA/uploads/');  // HTTP URL
 ```
 
 #### 4. Server Connectivity Functions
@@ -397,7 +397,7 @@ Each item displayed with:
 **File Upload Implementation:**
 ```php
 if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
-    $upload_dir = '../ServerB/uploads/';
+    $upload_dir = '../ServerA/uploads/';
     
     if (!is_dir($upload_dir)) {
         mkdir($upload_dir, 0755, true);
@@ -529,7 +529,7 @@ if (isset($_POST['delete_item'])) {
         
         // Clean up image file locally
         if ($item['item']['image']) {
-            $image_path = '../ServerB/uploads/' . $item['item']['image'];
+            $image_path = '../ServerA/uploads/' . $item['item']['image'];
             if (file_exists($image_path)) {
                 unlink($image_path);
             }

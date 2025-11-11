@@ -11,12 +11,12 @@
 ✅ Item statistics and analytics  
 ✅ Provide RESTful API endpoints for item operations  
 ✅ Validate item data before database insertion  
+✅ Store uploaded item images in `/uploads/` directory  
 
 ### What ServerA Does NOT Handle
 ❌ User authentication  
 ❌ User registration  
 ❌ Session management  
-❌ File uploads (images stored on ServerB)  
 ❌ Frontend rendering (handled by ServerC)  
 
 ---
@@ -62,6 +62,8 @@ ServerA/
 │   ├── get_user_items.php    # Get items by user (GET)
 │   ├── health.php            # Health check endpoint (GET)
 │   └── update_item.php       # Update item (POST)
+├── uploads/                  # Image storage directory for items
+│   └── [user_uploaded_files]
 ├── config.php                # Server configuration & functions
 ├── db_setup.php              # Database initialization script
 └── deployment_config.php     # Auto-generated deployment settings
@@ -568,10 +570,12 @@ GET /api/health.php
   "database": "connected",
   "timestamp": "2024-11-11 14:30:45",
   "services": {
-    "user_database": "150 users registered",
-    "register_api": "missing",
-    "verify_api": "missing",
-    "session_api": "missing"
+    "items_database": "50 items stored",
+    "uploads_directory": "writable",
+    "add_item_api": "active",
+    "get_items_api": "active",
+    "update_item_api": "active",
+    "delete_item_api": "active"
   }
 }
 ```
@@ -582,7 +586,12 @@ GET /api/health.php
 - **Service availability**: Checks for API endpoint files
 - **Timestamp**: Current server time
 
-**Note**: Some service checks reference old endpoints (register_api, verify_api) which have been moved to ServerB.
+**Features:**
+- **Direct DB check**: Bypasses session_start to avoid conflicts
+- **Item count**: Queries items table for statistics
+- **Service availability**: Checks for API endpoint files
+- **Uploads directory**: Verifies uploads folder is writable
+- **Timestamp**: Current server time
 
 ---
 
@@ -611,10 +620,10 @@ CREATE TABLE items (
 - **`title`**: Item name/title (max 100 characters)
 - **`description`**: Detailed description (TEXT field)
 - **`type`**: ENUM restricting values to 'lost' or 'found'
-- **`location`**: Where item was lost/found
-- **`contact`**: Email or phone for contact
-- **`image`**: Filename of uploaded image (stored on ServerB)
-- **`created_at`**: Automatic timestamp on creation
+- **location**: Where item was lost/found
+- **contact**: Email or phone for contact
+- **image**: Filename of uploaded image (stored in ServerA/uploads/)
+- **created_at**: Automatic timestamp on creation
 
 ---
 
@@ -680,7 +689,7 @@ $response = makeAPIRequest(
 ```
 User fills out "Report Lost Item" form on ServerC
     ↓
-ServerC uploads image to ../ServerB/uploads/
+ServerC uploads image to ../ServerA/uploads/
     ↓
 ServerC calls ServerA: POST /add_item.php
     ↓

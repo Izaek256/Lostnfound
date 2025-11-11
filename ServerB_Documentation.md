@@ -8,7 +8,6 @@
 ✅ Host the centralized MySQL database (`lostfound_db`)  
 ✅ Handle all user authentication (login/registration)  
 ✅ Manage user accounts and admin privileges  
-✅ Store uploaded images in `/uploads/` directory  
 ✅ Proxy item requests to ServerA via API calls  
 ✅ Provide user management APIs for admin operations  
 ✅ Database administration and maintenance  
@@ -18,6 +17,7 @@
 ❌ Frontend rendering (handled by ServerC)  
 ❌ Client-side JavaScript execution  
 ❌ Session management for UI (ServerC handles this)  
+❌ File uploads for item images (ServerA handles this)  
 
 ---
 
@@ -38,14 +38,12 @@
 - **Access**: Direct local access + remote access for ServerA
 - **Tables**: `users`, `items`
 
-### File Storage
-- **Upload Directory**: `ServerB/uploads/`
-- **Permissions**: `755` (rwxr-xr-x)
-- **Supported Formats**: JPG, JPEG, PNG, GIF
-- **Naming Convention**: `uniqid() + extension`
-- **Access URL**: `http://172.24.194.6/Lostnfound/ServerB/uploads/`
-
-### API Endpoints
+### Database Hosting
+- **Host**: `localhost` or `172.24.194.6` (local database)
+- **Database**: `lostfound_db`
+- **User**: `root`
+- **Access**: Direct local access + remote access for ServerA
+- **Tables**: `users`, `items`
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
 | `/api/register_user.php` | POST | Create new user account |
@@ -68,8 +66,6 @@ ServerB/
 │   ├── get_user_items.php    # Proxy to ServerA for user's items (GET)
 │   ├── toggle_admin.php      # Toggle admin status (POST, admin only)
 │   └── health.php            # Health check endpoint (GET)
-├── uploads/                   # Image storage directory
-│   └── [user_uploaded_files]
 ├── config.php                 # Server configuration & functions
 └── deployment_config.php      # Auto-generated deployment settings
 ```
@@ -640,42 +636,34 @@ GET /api/health.php
   "database": "connected",
   "timestamp": "2024-11-11 14:30:45",
   "services": {
-    "items_database": "50 items stored",
-    "upload_directory": "writable",
-    "add_item_api": "missing",
-    "get_items_api": "missing",
-    "delete_item_api": "missing"
+    "users_database": "150 users stored",
+    "register_user_api": "active",
+    "verify_user_api": "active",
+    "get_all_users_api": "active"
   }
 }
 ```
 
 **Health Checks Performed:**
-1. **Database Connection**: Attempts to connect and query items table
-2. **Upload Directory**: Checks if `/uploads/` exists and is writable
-3. **API Endpoints**: Checks for presence of API files (legacy check)
+1. **Database Connection**: Attempts to connect and query users table
+2. **API Endpoints**: Checks for presence of user management API files
 
 **Implementation:**
 ```php
 // Direct database connection (bypasses session_start)
 $conn = mysqli_connect($db_host, $db_user, $db_pass, $db_name);
 
-// Check items table
-$result = mysqli_query($conn, "SELECT COUNT(*) as count FROM items");
+// Check users table
+$result = mysqli_query($conn, "SELECT COUNT(*) as count FROM users");
 if ($result) {
     $row = mysqli_fetch_assoc($result);
-    $health['services']['items_database'] = $row['count'] . ' items stored';
+    $health['services']['users_database'] = $row['count'] . ' users stored';
 }
 
-// Check upload directory
-$upload_dir = __DIR__ . '/../uploads';
-if (is_dir($upload_dir) && is_writable($upload_dir)) {
-    $health['services']['upload_directory'] = 'writable';
-} else {
-    $health['services']['upload_directory'] = 'not writable or missing';
-}
+// Check API endpoints
+$health['services']['register_user_api'] = file_exists(__DIR__ . '/register_user.php') ? 'active' : 'missing';
+$health['services']['verify_user_api'] = file_exists(__DIR__ . '/verify_user.php') ? 'active' : 'missing';
 ```
-
-**Note**: Some API checks reference old endpoints that have been moved to ServerA.
 
 ---
 
@@ -706,56 +694,6 @@ CREATE TABLE users (
 - **PRIMARY KEY**: `id`
 - **UNIQUE INDEX**: `username`
 - **UNIQUE INDEX**: `email`
-
----
-
-## 📂 File Storage System
-
-### Upload Directory Structure
-```
-ServerB/
-└── uploads/
-    ├── 673d4a1b2e5f8.jpg
-    ├── 673d4b2c3f6g9.png
-    └── 673d4c3d4g7h0.gif
-```
-
-### File Handling (handled by ServerC)
-ServerC handles file uploads and saves to ServerB's uploads directory:
-
-```php
-// In ServerC's report_lost.php or report_found.php
-if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
-    $upload_dir = '../ServerB/uploads/';
-    
-    if (!is_dir($upload_dir)) {
-        mkdir($upload_dir, 0755, true);
-    }
-    
-    $extension = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
-    $image_filename = uniqid() . '.' . $extension;
-    $upload_path = $upload_dir . $image_filename;
-    
-    move_uploaded_file($_FILES['image']['tmp_name'], $upload_path);
-}
-```
-
-### File Naming Convention
-- **Format**: `uniqid() + extension`
-- **Example**: `673d4a1b2e5f8.jpg`
-- **Uniqueness**: Guaranteed by `uniqid()` + timestamp
-- **Extension**: Preserved from original filename
-
-### File Access
-- **HTTP URL**: `http://172.24.194.6/Lostnfound/ServerB/uploads/filename.jpg`
-- **File System**: `c:/xampp/htdocs/Lostnfound/ServerB/uploads/filename.jpg`
-- **Permissions**: `755` (owner: rwx, group: r-x, others: r-x)
-
-### Security Measures
-- **File type validation**: Accept only images
-- **File size limits**: Configured in php.ini
-- **Unique naming**: Prevents filename collisions
-- **Directory permissions**: 755 (not writable by others)
 
 ---
 
@@ -897,9 +835,9 @@ define('SERVERA_API_URL', 'http://172.24.194.6/Lostnfound/ServerA/api');
 ### Server Role
 ```php
 define('SERVER_ROLES', [
-    'ServerA' => 'Authentication Server',
-    'ServerB' => 'Database & File Server', 
-    'ServerC' => 'User Interface Server'
+    'ServerA' => 'Item Logic Server (with uploads)',
+    'ServerB' => 'User Logic & Database Server', 
+    'ServerC' => 'User Interface Client'
 ]);
 ```
 
@@ -916,9 +854,6 @@ define('SERVER_ROLES', [
 - **Retry logic**: Prevents immediate failure on temporary network issues
 - **Timeout management**: Prevents indefinite waiting
 - **Exponential backoff**: Reduces server load during high traffic
-
-### File Storage
-- **Direct file access**: No database queries for image retrieval
 - **HTTP serving**: Apache/Nginx serves static files efficiently
 - **No image processing**: Files stored as-is (could add resizing)
 
@@ -983,14 +918,6 @@ sudo systemctl start mysql
 ### Issue: "Username or email already exists"
 **Cause**: Attempting to register with existing credentials  
 **Solution**: Use different username/email or delete existing user
-
-### Issue: "Upload directory not writable"
-**Cause**: Incorrect permissions on `/uploads/` directory  
-**Solution**: 
-```bash
-chmod 755 ServerB/uploads/
-# Or on Windows, ensure IIS_IUSRS has write permissions
-```
 
 ### Issue: "Unexpected response from ServerA"
 **Cause**: ServerA is down or unreachable  

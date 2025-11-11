@@ -121,6 +121,7 @@ define('SERVERB_URL', SERVERB_API_URL);  // User operations
 - Direct database access for items
 - Enforce business rules for items
 - Provide REST APIs for item data
+- Store uploaded item images in `/uploads/` directory
 
 **Key Files**:
 ```
@@ -176,14 +177,12 @@ function connectDB() {
 - Password hashing and verification
 - Admin role management
 - User data CRUD operations
-- File upload storage (images)
 
 **Key Files**:
 ```
 ServerB/
 ├── config.php                 # Server configuration
 ├── deployment_config.php      # Auto-generated config
-├── uploads/                   # User uploaded images
 └── api/
     ├── register_user.php      # User registration
     ├── verify_user.php        # Login authentication
