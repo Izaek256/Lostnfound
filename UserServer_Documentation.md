@@ -738,6 +738,31 @@ $email = mysqli_real_escape_string($conn, $email);
 - **Type validation**: Ensure `is_admin` is 0 or 1
 
 ### CORS Security
+```
+CORS stands for Cross-Origin Resource Sharing.
+
+It’s a security feature built into web browsers that controls how web pages can request resources from a different domain (origin).
+
+Common use cases include:
+- Web applications hosted on different domains
+- APIs accessed by multiple clients
+- Microservices architecture
+
+By default, web browsers block requests from different origins for security reasons. CORS headers allow controlled access from trusted domains while preventing unauthorized requests.
+
+
+<details>
+<summary>🎯 Why CORS Is Needed</summary>
+
+🔐 Security	|Prevents cross-site scripting (XSS) and clickjacking attacks by restricting resource sharing
+
+🌍 Controlled sharing	|Allows trusted websites or mobile apps to communicate with your API
+
+⚙️ API access management | Lets developers define which domains can use their backend resources
+
+🧩 Frontend-backend separation |	Enables frontend apps (e.g., React, Angular, or mobile) to safely talk to backend servers (e.g., Django, Node.js, PHP)
+```
+
 ```php
 header('Access-Control-Allow-Origin: *');  // Should be restricted in production
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
