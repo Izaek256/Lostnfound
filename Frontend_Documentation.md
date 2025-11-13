@@ -5,9 +5,10 @@
 2. [Server Role](#server-role)
 3. [HTML Structure](#html-structure)
 4. [CSS Styling](#css-styling)
-5. [JavaScript Functionality](#javascript-functionality)
-6. [Responsive Design](#responsive-design)
-7. [Page-by-Page Breakdown](#page-by-page-breakdown)
+5. [API Client](#api-client)
+6. [JavaScript Functionality](#javascript-functionality)
+7. [Responsive Design](#responsive-design)
+8. [Page-by-Page Breakdown](#page-by-page-breakdown)
 
 ---
 
@@ -50,7 +51,7 @@ The Frontend is built using vanilla HTML, CSS, and JavaScript with a modern, cle
 
 ### Header Component
 
-```html
+```
 <header>
     <div class="header-content">
         <div class="logo">
@@ -79,7 +80,7 @@ The Frontend is built using vanilla HTML, CSS, and JavaScript with a modern, cle
 
 #### 1. Hero Section
 
-```html
+```
 <section class="hero">
     <h2>University Lost and Found Portal</h2>
     <p>Help reunite lost items with their owners...</p>
@@ -94,7 +95,7 @@ The Frontend is built using vanilla HTML, CSS, and JavaScript with a modern, cle
 
 #### 2. Form Container
 
-```html
+```
 <div class="form-container">
     <h2>📢 Report a Lost Item</h2>
     <form method="POST" enctype="multipart/form-data">
@@ -111,7 +112,7 @@ The Frontend is built using vanilla HTML, CSS, and JavaScript with a modern, cle
 
 #### 3. Items Grid
 
-```html
+```
 <div class="items-grid">
     <div class="item-card">
         <div class="item-card-header">
@@ -135,7 +136,7 @@ The Frontend is built using vanilla HTML, CSS, and JavaScript with a modern, cle
 **Design**: Card-based layout improves scannability, fixed image header prevents distortion, SVG icons are scalable
 
 ### Footer Component
-```html
+```
 <footer>
     <p>&copy; 2025University Lost and Found Portal. Built to help our campus community stay connected.</p>
 </footer>
@@ -144,7 +145,7 @@ The Frontend is built using vanilla HTML, CSS, and JavaScript with a modern, cle
 ## CSS Styling
 
 ### CSS Variables
-```css
+```
 :root {
     --primary: #2563eb;
     --primary-dark: #1e40af;
@@ -164,7 +165,7 @@ The Frontend is built using vanilla HTML, CSS, and JavaScript with a modern, cle
 **Benefits**: Consistency, maintainability, semantic naming, easy theme switching
 
 ### Reset and Base Styles
-```css
+```
 * {
     margin: 0;
     padding: 0;
@@ -185,7 +186,7 @@ body {
 
 ### Header Styling
 
-```css
+```
 header {
     background: var(--bg-primary);
     border-bottom: 1px solid var(--border);
@@ -206,7 +207,7 @@ header {
 
 ### Navigation Styling
 
-```css
+```
 nav ul {
     list-style: none;
     display: flex;
@@ -244,7 +245,7 @@ nav a.active {
 
 ### Button Styling
 
-```css
+```
 .btn {
     background: var(--primary);
     color: white;
@@ -276,7 +277,7 @@ nav a.active {
 
 ### Form Styling
 
-```css
+```
 .form-group input,
 .form-group textarea,
 .form-group select {
@@ -310,7 +311,7 @@ nav a.active {
 
 ### Item Card Styling
 
-```css
+```
 .item-card {
     background: var(--bg-primary);
     border-radius: 12px;
@@ -339,7 +340,7 @@ nav a.active {
 
 ### Item Type Badges
 
-```css
+```
 .item-type {
     position: absolute;
     top: 1rem;
@@ -375,7 +376,7 @@ nav a.active {
 
 ### Grid Layouts
 
-```css
+```
 .items-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -392,11 +393,157 @@ nav a.active {
 
 ---
 
-## JavaScript Functionality
+## API Client
 
+### API Client (`api_client.php`)
+
+The Frontend uses a custom [APIClient](file:///C:/xampp/htdocs/Lostnfound/Frontend/api_client.php#L7-L264) class for all communication with backend servers (ItemsServer and UserServer). This class provides a robust, object-oriented interface for making HTTP requests with built-in retry logic and error handling.
+
+#### Class Overview
+
+```
+class APIClient {
+    // Configuration
+    private $base_url;
+    private $timeout = 30;
+    private $connect_timeout = 10;
+    private $max_retries = 3;
+    private $retry_delay = 1;
+    private $verify_ssl = false;
+    
+    // Response tracking
+    private $last_response = null;
+    private $last_http_code = null;
+    private $last_error = null;
+}
+```
+
+#### Constructor and Configuration
+
+The APIClient is initialized with a base URL and optional configuration:
+
+```
+// Basic initialization
+$itemsClient = new APIClient('http://172.24.194.6/Lostnfound/ItemsServer/api');
+
+// With custom options
+$userClient = new APIClient('http://172.24.194.6/Lostnfound/UserServer/api', [
+    'timeout' => 45,
+    'max_retries' => 5,
+    'retry_delay' => 2
+]);
+```
+
+**Configuration Options**:
+- **timeout**: Request timeout in seconds (default: 30)
+- **connect_timeout**: Connection timeout in seconds (default: 10)
+- **max_retries**: Maximum retry attempts for failed requests (default: 3)
+- **retry_delay**: Base delay between retries in seconds (default: 1)
+- **verify_ssl**: Whether to verify SSL certificates (default: false)
+
+#### HTTP Methods
+
+The client supports all standard HTTP methods with automatic JSON handling:
+
+```
+// GET request with parameters
+$response = $client->get('get_all_items.php', [
+    'type' => 'lost',
+    'limit' => 10
+], true); // true = return JSON
+
+// POST request with data
+$response = $client->post('add_item.php', [
+    'title' => 'Lost Keys',
+    'description' => 'Room keys with blue fob',
+    'user_id' => 123
+], true);
+
+// PUT request for updates
+$response = $client->put('update_item.php', [
+    'id' => 456,
+    'status' => 'found'
+], true);
+
+// DELETE request
+$response = $client->delete('delete_item.php', [
+    'id' => 456
+], true);
+```
+
+#### Retry Logic and Error Handling
+
+The client implements intelligent retry logic:
+- **4xx errors**: Client errors (400-499) are not retried
+- **5xx errors**: Server errors (500-599) trigger retries
+- **Connection issues**: Network failures trigger retries
+- **Exponential backoff**: Delay increases with each retry attempt
+
+```
+// Check if last request was successful
+if ($client->isSuccess()) {
+    echo "Request successful!";
+} else {
+    echo "Error: " . $client->getLastError();
+}
+
+// Get detailed response information
+$httpCode = $client->getLastHttpCode();
+$rawResponse = $client->getLastResponse();
+```
+
+#### Usage Examples
+
+```
+// ItemsServer API client
+$itemsClient = new APIClient(ITEMSSERVER_URL . '/api');
+
+// Get all lost items
+$items = $itemsClient->get('get_all_items.php', [
+    'type' => 'lost'
+], true);
+
+if ($itemsClient->isSuccess()) {
+    foreach ($items['data'] as $item) {
+        echo $item['title'] . "<br>";
+    }
+} else {
+    error_log("Failed to fetch items: " . $itemsClient->getLastError());
+}
+
+// UserServer API client
+$userClient = new APIClient(USERSERVER_URL . '/api');
+
+// Register a new user
+$result = $userClient->post('register_user.php', [
+    'username' => 'john_doe',
+    'email' => 'john@example.com',
+    'password' => 'secure_password'
+], true);
+
+if ($result['success']) {
+    echo "User registered successfully!";
+} else {
+    echo "Registration failed: " . $result['error'];
+}
+```
+
+#### Benefits of Using APIClient
+
+1. **Consistent Interface**: Unified approach to all API calls
+2. **Automatic Retries**: Handles transient network issues
+3. **Error Handling**: Standardized error responses
+4. **JSON Support**: Automatic encoding/decoding when requested
+5. **Logging**: Built-in request/response logging
+6. **Security**: Configurable SSL verification
+7. **Flexibility**: Customizable timeouts and retry behavior
+
+---
+
+## JavaScript Functionality
 ### Form Validation (`script.js`)
 
-```javascript
+```
 function validateForm() {
     var title = document.getElementById('title');
     var description = document.getElementById('description');
@@ -426,7 +573,7 @@ function validateForm() {
 4. **Return False**: Prevents form submission on error
 
 **Improvements Made** (in inline script):
-```javascript
+```
 function validateLostForm() {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(contact)) {
@@ -459,7 +606,7 @@ function validateLostForm() {
 
 ### Mobile Menu Toggle
 
-```javascript
+```
 document.addEventListener('DOMContentLoaded', function() {
     var menuToggle = document.querySelector('.menu-toggle');
     var nav = document.querySelector('nav');
@@ -483,7 +630,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 ### Menu Close on Outside Click
 
-```javascript
+```
 document.addEventListener('click', function(e) {
     if (nav && nav.classList.contains('active') && 
         !nav.contains(e.target) && 
@@ -503,7 +650,7 @@ document.addEventListener('click', function(e) {
 
 ### Read More Functionality
 
-```javascript
+```
 function initializeReadMore() {
     var descriptions = document.querySelectorAll('.item-description');
     
@@ -549,7 +696,7 @@ function toggleDescription(descElement, btnElement) {
 
 ### Image Modal (items.php)
 
-```javascript
+```
 function openImageModal(imageSrc, title) {
     document.getElementById('imageModal').style.display = 'block';
     document.getElementById('modalImage').src = imageSrc;
@@ -583,7 +730,7 @@ document.addEventListener('keydown', function(event) {
 ### Breakpoint Strategy
 
 **768px (Mobile)**:
-```css
+```
 @media (max-width: 768px) {
     .menu-toggle {
         display: flex;  /* Show hamburger menu */
@@ -622,7 +769,7 @@ document.addEventListener('keydown', function(event) {
 ---
 
 **480px (Small Mobile)**:
-```css
+```
 @media (max-width: 480px) {
     .hero h2 {
         font-size: 1.6rem;  /* Reduced from 2.5rem */
@@ -648,7 +795,7 @@ document.addEventListener('keydown', function(event) {
 
 ### Grid Responsiveness
 
-```css
+```
 /* Desktop: 3-4 columns */
 .items-grid {
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -703,7 +850,7 @@ document.addEventListener('keydown', function(event) {
 - Image modal for enlargement
 
 **Advanced Features**:
-```php
+```
 // Server-side filtering
 $filter = $_GET['filter'] ?? 'all';
 $search = $_GET['search'] ?? '';
@@ -730,7 +877,7 @@ $api_response = makeAPIRequest(ITEMSSERVER_URL . '/get_all_items.php', [
 - Campus resource information
 
 **Form Processing**:
-```php
+```
 // Image upload handling
 if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
     $upload_dir = '../ItemsServer/uploads/';
@@ -764,7 +911,7 @@ $response = makeAPIRequest(ITEMSSERVER_URL . '/add_item.php', [
 - Edit/Delete actions per item
 
 **Item Actions**:
-```html
+```
 <div class="item-actions">
     <a href="edit_item.php?id=<?php echo $item['id']; ?>" 
        class="btn btn-secondary">✏️ Edit</a>
@@ -793,7 +940,7 @@ $response = makeAPIRequest(ITEMSSERVER_URL . '/add_item.php', [
 - System information panel
 
 **Admin Actions**:
-```php
+```
 // Toggle admin status
 if ($action === 'toggle_user_status') {
     $api_response = makeAPIRequest(

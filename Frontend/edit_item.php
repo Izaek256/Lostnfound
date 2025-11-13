@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Server C - Edit Item Page
  */
@@ -62,89 +63,90 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $type = $_POST['type'] ?? '';
         $location = trim($_POST['location'] ?? '');
         $contact = trim($_POST['contact'] ?? '');
-    
-    // Validate required fields
-    if (empty($title) || empty($description) || empty($type) || empty($location) || empty($contact)) {
-        $message = 'All fields are required.';
-        $messageType = 'error';
-    } elseif (!in_array($type, ['lost', 'found'])) {
-        $message = 'Invalid item type.';
-        $messageType = 'error';
-    } else {
-        // Handle image upload if provided
-        $image_filename = $item['image']; // Keep existing image by default
-        
-        if (isset($_FILES['new_image']) && $_FILES['new_image']['error'] === UPLOAD_ERR_OK) {
-            $upload_dir = '../ItemsServer/uploads/';
-            $allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-            $max_size = 5 * 1024 * 1024; // 5MB
-            
-            if (!in_array($_FILES['new_image']['type'], $allowed_types)) {
-                $message = 'Invalid image type. Please upload JPEG, PNG, GIF, or WebP images.';
-                $messageType = 'error';
-            } elseif ($_FILES['new_image']['size'] > $max_size) {
-                $message = 'Image too large. Maximum size is 5MB.';
-                $messageType = 'error';
-            } else {
-                // Generate unique filename
-                $extension = pathinfo($_FILES['new_image']['name'], PATHINFO_EXTENSION);
-                $image_filename = uniqid() . '.' . $extension;
-                $upload_path = $upload_dir . $image_filename;
-                
-                if (!move_uploaded_file($_FILES['new_image']['tmp_name'], $upload_path)) {
-                    $message = 'Failed to upload image.';
+
+        // Validate required fields
+        if (empty($title) || empty($description) || empty($type) || empty($location) || empty($contact)) {
+            $message = 'All fields are required.';
+            $messageType = 'error';
+        } elseif (!in_array($type, ['lost', 'found'])) {
+            $message = 'Invalid item type.';
+            $messageType = 'error';
+        } else {
+            // Handle image upload if provided
+            $image_filename = $item['image']; // Keep existing image by default
+
+            if (isset($_FILES['new_image']) && $_FILES['new_image']['error'] === UPLOAD_ERR_OK) {
+                $upload_dir = '../ItemsServer/uploads/';
+                $allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+                $max_size = 15 * 1024 * 1024; // 15MB
+
+                if (!in_array($_FILES['new_image']['type'], $allowed_types)) {
+                    $message = 'Invalid image type. Please upload JPEG, PNG, GIF, or WebP images.';
                     $messageType = 'error';
-                    $image_filename = $item['image']; // Revert to original
+                } elseif ($_FILES['new_image']['size'] > $max_size) {
+                    $message = 'Image too large. Maximum size is 5MB.';
+                    $messageType = 'error';
                 } else {
-                    // Delete old image if it exists and is not default
-                    if ($item['image'] && $item['image'] !== 'default_item.jpg') {
-                        $old_image_path = '../ItemsServer/uploads/' . $item['image'];
-                        if (file_exists($old_image_path)) {
-                            unlink($old_image_path);
+                    // Generate unique filename
+                    $extension = pathinfo($_FILES['new_image']['name'], PATHINFO_EXTENSION);
+                    $image_filename = uniqid() . '.' . $extension;
+                    $upload_path = $upload_dir . $image_filename;
+
+                    if (!move_uploaded_file($_FILES['new_image']['tmp_name'], $upload_path)) {
+                        $message = 'Failed to upload image.';
+                        $messageType = 'error';
+                        $image_filename = $item['image']; // Revert to original
+                    } else {
+                        // Delete old image if it exists and is not default
+                        if ($item['image'] && $item['image'] !== 'default_item.jpg') {
+                            $old_image_path = '../ItemsServer/uploads/' . $item['image'];
+                            if (file_exists($old_image_path)) {
+                                unlink($old_image_path);
+                            }
                         }
                     }
                 }
             }
-        }
-        
-        // Update item via ItemsServer API if no errors
-        if (!isset($message) || $messageType !== 'error') {
-            // Call ItemsServer API to update item
-            $response = makeAPIRequest(ITEMSSERVER_URL . '/update_item.php', [
-                'id' => $item_id,
-                'user_id' => $current_user_id,
-                'title' => $title,
-                'description' => $description,
-                'type' => $type,
-                'location' => $location,
-                'contact' => $contact,
-                'image_filename' => $image_filename
-            ], 'POST', ['return_json' => true]);
-            
-            // Handle JSON response from ItemsServer
-            if (is_array($response) && isset($response['success']) && $response['success']) {
-                $message = 'Item updated successfully!';
-                $messageType = 'success';
-                
-                // Refresh item data
-                $item['title'] = $title;
-                $item['description'] = $description;
-                $item['type'] = $type;
-                $item['location'] = $location;
-                $item['contact'] = $contact;
-                $item['image'] = $image_filename;
-            } else {
-                $message = isset($response['error']) ? $response['error'] : 'Error updating item.';
-                $messageType = 'error';
+
+            // Update item via ItemsServer API if no errors
+            if (!isset($message) || $messageType !== 'error') {
+                // Call ItemsServer API to update item
+                $response = makeAPIRequest(ITEMSSERVER_URL . '/update_item.php', [
+                    'id' => $item_id,
+                    'user_id' => $current_user_id,
+                    'title' => $title,
+                    'description' => $description,
+                    'type' => $type,
+                    'location' => $location,
+                    'contact' => $contact,
+                    'image_filename' => $image_filename
+                ], 'POST', ['return_json' => true]);
+
+                // Handle JSON response from ItemsServer
+                if (is_array($response) && isset($response['success']) && $response['success']) {
+                    $message = 'Item updated successfully!';
+                    $messageType = 'success';
+
+                    // Refresh item data
+                    $item['title'] = $title;
+                    $item['description'] = $description;
+                    $item['type'] = $type;
+                    $item['location'] = $location;
+                    $item['contact'] = $contact;
+                    $item['image'] = $image_filename;
+                } else {
+                    $message = isset($response['error']) ? $response['error'] : 'Error updating item.';
+                    $messageType = 'error';
+                }
             }
         }
-    }
     }
 }
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -152,6 +154,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="assets/style.css">
 </head>
+
 <body>
     <header>
         <div class="header-content">
@@ -189,60 +192,60 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <div class="form-container">
             <h2>✏️ Edit Item</h2>
-            
+
             <div style="text-align: center; margin-bottom: 2rem;">
                 <a href="user_dashboard.php" class="btn btn-secondary">← Back to Dashboard</a>
             </div>
 
             <?php if ($item): ?>
-            <form method="POST" enctype="multipart/form-data">
-                <div class="form-group">
-                    <label for="title">Item Title</label>
-                    <input type="text" id="title" name="title" value="<?php echo htmlspecialchars($item['title']); ?>" required>
-                </div>
+                <form method="POST" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label for="title">Item Title</label>
+                        <input type="text" id="title" name="title" value="<?php echo htmlspecialchars($item['title']); ?>" required>
+                    </div>
 
-                <div class="form-group">
-                    <label for="description">Description</label>
-                    <textarea id="description" name="description" rows="4" required><?php echo htmlspecialchars($item['description']); ?></textarea>
-                </div>
+                    <div class="form-group">
+                        <label for="description">Description</label>
+                        <textarea id="description" name="description" rows="4" required><?php echo htmlspecialchars($item['description']); ?></textarea>
+                    </div>
 
-                <div class="form-group">
-                    <label for="type">Type</label>
-                    <select id="type" name="type" required>
-                        <option value="lost" <?php echo $item['type'] === 'lost' ? 'selected' : ''; ?>>Lost Item</option>
-                        <option value="found" <?php echo $item['type'] === 'found' ? 'selected' : ''; ?>>Found Item</option>
-                    </select>
-                </div>
+                    <div class="form-group">
+                        <label for="type">Type</label>
+                        <select id="type" name="type" required>
+                            <option value="lost" <?php echo $item['type'] === 'lost' ? 'selected' : ''; ?>>Lost Item</option>
+                            <option value="found" <?php echo $item['type'] === 'found' ? 'selected' : ''; ?>>Found Item</option>
+                        </select>
+                    </div>
 
-                <div class="form-group">
-                    <label for="location">Location</label>
-                    <input type="text" id="location" name="location" value="<?php echo htmlspecialchars($item['location']); ?>" required>
-                </div>
+                    <div class="form-group">
+                        <label for="location">Location</label>
+                        <input type="text" id="location" name="location" value="<?php echo htmlspecialchars($item['location']); ?>" required>
+                    </div>
 
-                <div class="form-group">
-                    <label for="contact">Contact Information</label>
-                    <input type="text" id="contact" name="contact" value="<?php echo htmlspecialchars($item['contact']); ?>" required>
-                </div>
+                    <div class="form-group">
+                        <label for="contact">Contact Information</label>
+                        <input type="text" id="contact" name="contact" value="<?php echo htmlspecialchars($item['contact']); ?>" required>
+                    </div>
 
-                <div class="form-group">
-                    <label for="image">Current Image</label>
-                    <?php if ($item['image']): ?>
-                        <div style="margin-bottom: 1rem;">
-                            <img src="<?php echo getImageUrl($item['image']); ?>" 
-                                 alt="Current item image" 
-                                 style="max-width: 200px; max-height: 200px; border-radius: 8px;">
-                        </div>
-                    <?php endif; ?>
-                    <label for="new_image">Upload New Image (optional)</label>
-                    <input type="file" id="new_image" name="new_image" accept="image/*">
-                    <small>Leave empty to keep current image</small>
-                </div>
+                    <div class="form-group">
+                        <label for="image">Current Image</label>
+                        <?php if ($item['image']): ?>
+                            <div style="margin-bottom: 1rem;">
+                                <img src="<?php echo getImageUrl($item['image']); ?>"
+                                    alt="Current item image"
+                                    style="max-width: 200px; max-height: 200px; border-radius: 8px;">
+                            </div>
+                        <?php endif; ?>
+                        <label for="new_image">Upload New Image (optional)</label>
+                        <input type="file" id="new_image" name="new_image" accept="image/*">
+                        <small>Leave empty to keep current image</small>
+                    </div>
 
-                <div class="form-actions">
-                    <button type="submit" class="btn">Update Item</button>
-                    <a href="user_dashboard.php" class="btn btn-secondary">Cancel</a>
-                </div>
-            </form>
+                    <div class="form-actions">
+                        <button type="submit" class="btn">Update Item</button>
+                        <a href="user_dashboard.php" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
             <?php else: ?>
                 <div style="text-align: center; padding: 2rem;">
                     <p style="color: var(--text-secondary); margin-bottom: 1rem;">
@@ -257,7 +260,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <footer>
         <p>&copy; 2025University Lost and Found Portal. Built to help our campus community stay connected.</p>
     </footer>
-    
+
     <script src="assets/script.js"></script>
 </body>
+
 </html>
