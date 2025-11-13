@@ -291,7 +291,7 @@ try {
 
     <!-- Footer -->
     <footer>
-        <p>&copy; 2024 University Lost and Found Portal. Built to help our campus community stay connected.</p>
+        <p>&copy; 2025University Lost and Found Portal. Built to help our campus community stay connected.</p>
     </footer>
 
     <script src="assets/script.js"></script>
