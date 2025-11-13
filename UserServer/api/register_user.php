@@ -1,9 +1,7 @@
 <?php
 /**
- * ServerB API - Register User
- * 
- * Creates a new user account in the database
- * ServerB handles all user-related operations
+ * Register User API
+ * Creates a new user account
  */
 
 require_once '../config.php';

@@ -1,4 +1,4 @@
-# 🎨 Frontend Documentation - Lost & Found Portal
+# Frontend Documentation - Lost & Found Portal
 
 ## Table of Contents
 1. [Overview](#overview)
@@ -12,20 +12,17 @@
 
 ## Overview
 
-The Lost & Found Portal frontend is built using **vanilla HTML, CSS, and JavaScript** with a modern, clean, and professional design. The interface prioritizes user experience with responsive layouts, intuitive navigation, and accessibility features.
+The frontend is built using vanilla HTML, CSS, and JavaScript with a modern, clean design. It communicates with ItemsServer and UserServer via API calls only.
 
 ### Technology Stack
-- **HTML5**: Semantic markup for structure
-- **CSS3**: Modern styling with CSS variables, flexbox, and grid
-- **JavaScript (ES5)**: Client-side form validation and interactions
-- **PHP**: Server-side rendering and data integration
-
----
+- HTML5: Semantic markup
+- CSS3: Modern styling with CSS variables
+- JavaScript (ES5): Client-side validation
+- PHP: Server-side rendering and API integration
 
 ## HTML Structure
 
 ### Header Component
-All pages share a consistent header structure located in each PHP file:
 
 ```html
 <header>
@@ -50,18 +47,11 @@ All pages share a consistent header structure located in each PHP file:
 </header>
 ```
 
-**Purpose**: 
-- Provides consistent branding across all pages
-- Responsive hamburger menu for mobile devices
-- Dynamic navigation based on user authentication state
-- Accessibility-focused with ARIA labels
-
----
+**Purpose**: Consistent branding, responsive menu, dynamic navigation based on auth state
 
 ### Main Content Sections
 
 #### 1. Hero Section
-Used on the homepage and key landing pages:
 
 ```html
 <section class="hero">
@@ -74,16 +64,9 @@ Used on the homepage and key landing pages:
 </section>
 ```
 
-**Why This Design**:
-- **Gradient Background**: Eye-catching linear gradient (primary to primary-dark) creates visual interest
-- **Large Typography**: 2.5rem heading ensures immediate visibility
-- **Clear CTAs**: Primary action buttons guide users to main features
-- **Centered Layout**: Focuses user attention on key messaging
-
----
+**Design**: Gradient background, large typography, clear CTAs, centered layout
 
 #### 2. Form Container
-Standard form wrapper used across report and authentication pages:
 
 ```html
 <div class="form-container">
@@ -98,16 +81,9 @@ Standard form wrapper used across report and authentication pages:
 </div>
 ```
 
-**Design Rationale**:
-- **White Background with Shadow**: Creates depth and separation from background
-- **Rounded Corners (12px)**: Modern, friendly appearance
-- **Hover Effects**: Elevates box-shadow on hover for interactivity
-- **Consistent Spacing**: 2rem padding ensures comfortable reading
-
----
+**Design**: White background with shadow, rounded corners, hover effects, consistent spacing
 
 #### 3. Items Grid
-Displays lost/found items in a responsive card layout:
 
 ```html
 <div class="items-grid">
@@ -130,13 +106,7 @@ Displays lost/found items in a responsive card layout:
 </div>
 ```
 
-**Why This Structure**:
-- **Card-Based Layout**: Improves scannability and visual hierarchy
-- **Image Header**: 220px fixed height with object-fit: contain prevents distortion
-- **SVG Icons**: Scalable, crisp icons enhance visual communication
-- **Truncated Descriptions**: "Read more" functionality prevents overwhelming content
-
----
+**Design**: Card-based layout improves scannability, fixed image header prevents distortion, SVG icons are scalable
 
 ### Footer Component
 ```html
@@ -145,76 +115,47 @@ Displays lost/found items in a responsive card layout:
 </footer>
 ```
 
-**Simple and Clean**: Minimal footer focuses on copyright and mission statement.
-
----
-
 ## CSS Styling
 
-### CSS Variables (Design System)
-Located at the top of `style.css`:
-
+### CSS Variables
 ```css
 :root {
-    /* Primary Colors */
-    --primary: #2563eb;          /* Main brand color - vibrant blue */
-    --primary-dark: #1e40af;     /* Darker variant for gradients/hovers */
-    --primary-light: #3b82f6;    /* Lighter variant for accents */
-    
-    /* Neutral Colors */
-    --bg-primary: #ffffff;       /* Main background - pure white */
-    --bg-secondary: #f8fafc;     /* Secondary background - subtle gray */
-    --bg-dark: #0f172a;          /* Dark backgrounds */
-    --text-primary: #1e293b;     /* Primary text - dark slate */
-    --text-secondary: #64748b;   /* Secondary text - medium gray */
-    --text-light: #94a3b8;       /* Light text - for metadata */
-    
-    /* Accent Colors */
-    --success: #10b981;          /* Success states - green */
-    --error: #ef4444;            /* Error states - red */
-    --warning: #f59e0b;          /* Warning states - amber */
-    
-    /* Shadows */
+    --primary: #2563eb;
+    --primary-dark: #1e40af;
+    --primary-light: #3b82f6;
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8fafc;
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --success: #10b981;
+    --error: #ef4444;
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
     --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
     --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
 }
 ```
 
-**Why CSS Variables**:
-1. **Consistency**: Single source of truth for colors across the entire application
-2. **Maintainability**: Change one variable to update theme globally
-3. **Semantic Naming**: Variables describe purpose, not appearance
-4. **Future-Proofing**: Easy to implement dark mode or theme switching
-
----
+**Benefits**: Consistency, maintainability, semantic naming, easy theme switching
 
 ### Reset and Base Styles
-
 ```css
 * {
     margin: 0;
     padding: 0;
-    box-sizing: border-box;  /* Prevents width/padding issues */
+    box-sizing: border-box;
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    line-height: 1.7;  /* Improved readability */
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto;
+    line-height: 1.7;
     color: var(--text-primary);
     background: var(--bg-secondary);
     min-height: 100vh;
-    font-size: 16px;  /* Base font size for rem calculations */
+    font-size: 16px;
 }
 ```
 
-**Why This Approach**:
-- **System Font Stack**: Uses native fonts for optimal performance and familiar look
-- **Box-Sizing Border-Box**: Simplifies layout calculations
-- **Line Height 1.7**: Optimal for readability (not too tight, not too loose)
-- **Min-Height 100vh**: Ensures footer stays at bottom on short pages
-
----
+**Rationale**: System font stack for performance, box-sizing simplifies layouts, optimal line height for readability
 
 ### Header Styling
 

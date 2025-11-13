@@ -1,9 +1,7 @@
 <?php
 /**
- * ServerA API - Add Item
- * 
+ * Add Item API
  * Creates a new item in the database
- * ServerA is the only server with direct database access
  */
 
 require_once '../config.php';
@@ -35,7 +33,7 @@ if (!in_array($type, ['lost', 'found'])) {
 try {
     $conn = connectDB();
     
-    // Escape inputs to prevent SQL injection
+    // Escape inputs
     $user_id = mysqli_real_escape_string($conn, $user_id);
     $title = mysqli_real_escape_string($conn, $title);
     $description = mysqli_real_escape_string($conn, $description);

@@ -1,14 +1,7 @@
 <?php
 /**
- * API Client Class for Cross-Server Communication
- * 
- * Provides a robust, object-oriented interface for making API requests
- * between ServerA, ServerB, and ServerC with advanced features:
- * - Automatic retry logic with exponential backoff
- * - Request/response validation
- * - Detailed error handling and logging
- * - Built-in JSON support
- * - Request timeout management
+ * API Client Class
+ * Provides object-oriented interface for API requests with retry logic
  */
 
 class APIClient {

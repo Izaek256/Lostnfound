@@ -1,9 +1,7 @@
 <?php
 /**
- * ServerA API - Get All Items with Filtering
- * 
+ * Get All Items API
  * Returns items with optional filtering by type and search
- * This allows ServerC to retrieve items without direct database access
  */
 
 require_once '../config.php';

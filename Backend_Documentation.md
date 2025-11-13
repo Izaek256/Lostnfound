@@ -1,4 +1,4 @@
-# 🔧 Backend Documentation - Lost & Found Portal
+# Backend Documentation - Lost & Found Portal
 
 ## Table of Contents
 1. [Architecture Overview](#architecture-overview)
@@ -17,199 +17,94 @@
 
 ### Three-Tier Distributed Architecture
 
-The Lost & Found Portal uses a **distributed three-server architecture** with clear separation of concerns:
+The system uses three servers with clear separation of concerns:
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                         ServerC                              │
-│                    (Frontend / UI Layer)                     │
-│   - HTML/CSS/JavaScript presentation                         │
-│   - User interface rendering                                 │
-│   - Session management                                       │
-│   - NO direct database access                                │
-└───────────────────┬─────────────────┬───────────────────────┘
-                    │ HTTP/cURL       │ HTTP/cURL
-                    │                 │
-        ┌───────────▼──────────┐  ┌──▼─────────────────────┐
-        │      ServerA          │  │       ServerB          │
-        │  (Item Management)    │  │  (User Management)     │
-        │  - Item CRUD APIs     │  │  - User CRUD APIs      │
-        │  - Direct DB access   │  │  - Authentication      │
-        │  - Business logic     │  │  - Admin management    │
-        └───────────┬───────────┘  └──┬─────────────────────┘
-                    │                  │
-                    └────────┬─────────┘
-                             │
-                    ┌────────▼─────────┐
-                    │   MySQL Database │
-                    │   (Central Data)  │
-                    │  - users table    │
-                    │  - items table    │
-                    └───────────────────┘
-```
+- **Frontend**: User interface, API client only
+- **ItemsServer**: Item CRUD operations, direct database access
+- **UserServer**: User authentication, database hosting, file storage
 
-**Why This Architecture**:
-
-1. **Separation of Concerns**: Each server has a single, well-defined responsibility
-2. **Scalability**: Servers can be scaled independently based on load
-3. **Security**: Frontend cannot directly access database
-4. **Maintainability**: Changes to one layer don't affect others
-5. **Flexibility**: Easy to swap implementations (e.g., different frontend)
-
----
+All inter-server communication happens via HTTP REST APIs using cURL.
 
 ## Server Infrastructure
 
-### ServerC: Frontend & User Interface
+### Frontend (User Interface)
 
-**Location**: `c:\xampp\htdocs\Lostnfound\ServerC\`
-
-**Responsibilities**:
-- Render HTML pages with PHP
-- Handle user sessions
-- Make API calls to ServerA and ServerB
-- Display data from APIs
-- Client-side validation
+**Responsibilities**: Render pages, handle sessions, make API calls
 
 **Key Files**:
-```
-ServerC/
-├── index.php              # Homepage
-├── items.php              # Browse items
-├── report_lost.php        # Report lost items
-├── report_found.php       # Report found items
-├── user_login.php         # Login page
-├── user_register.php      # Registration page
-├── user_dashboard.php     # User dashboard
-├── admin_dashboard.php    # Admin panel
-├── edit_item.php          # Edit items
-├── config.php             # Configuration
-├── api_client.php         # API client class
-└── assets/
-    ├── style.css          # Styles
-    └── script.js          # JavaScript
-```
+- `index.php`, `items.php`, `report_lost.php`, `user_login.php`
+- `config.php` - Frontend configuration
+- `api_client.php` - OOP API client
+- `assets/` - CSS, JavaScript, images
 
-**Configuration** (`config.php`):
+**Configuration**:
 ```php
-// ServerC cannot connect directly to database
 function connectDB() {
-    die("ERROR: ServerC cannot connect directly to the database.\n
-         ServerC must use ServerA APIs for all database operations.\n
-         This ensures ServerA is the single point of database access.");
+    die("ERROR: Frontend cannot connect directly to the database. Use API calls.");
 }
 
-// API URLs configured from deployment_config.php
-define('SERVERA_URL', SERVERA_API_URL);  // Item operations
-define('SERVERB_URL', SERVERB_API_URL);  // User operations
+define('ITEMSSERVER_URL', ITEMSSERVER_API_URL);
+define('USERSERVER_URL', USERSERVER_API_URL);
 ```
 
-**Why ServerC Cannot Access Database**:
-1. **Security**: Prevents SQL injection through UI
-2. **Single Source of Truth**: All business logic in ServerA/B
-3. **Easier Auditing**: All DB operations logged in one place
-4. **Enforced Architecture**: Cannot bypass API layer
+### ItemsServer (Item Management)
 
----
-
-### ServerA: Item Management & Business Logic
-
-**Location**: `c:\xampp\htdocs\Lostnfound\ServerA\`
-
-**Responsibilities**:
-- Handle all item-related operations (CRUD)
-- Direct database access for items
-- Enforce business rules for items
-- Provide REST APIs for item data
-- Store uploaded item images in `/uploads/` directory
+**Responsibilities**: Handle item CRUD operations, direct database access
 
 **Key Files**:
 ```
-ServerA/
-├── config.php                  # Server configuration
-├── db_setup.php               # Database initialization
-├── deployment_config.php      # Auto-generated config
+ItemsServer/
+├── config.php
+├── db_setup.php
 └── api/
-    ├── add_item.php           # Create new item
-    ├── get_all_items.php      # Retrieve items (with filters)
-    ├── get_item.php           # Get single item
-    ├── get_user_items.php     # Get user's items
-    ├── update_item.php        # Update item
-    ├── delete_item.php        # Delete item
-    └── health.php             # Health check endpoint
+    ├── add_item.php
+    ├── get_all_items.php
+    ├── get_item.php
+    ├── get_user_items.php
+    ├── update_item.php
+    ├── delete_item.php
+    └── health.php
 ```
 
-**Database Connection** (`config.php`):
+**Database Connection**:
 ```php
-// Database credentials from deployment_config.php
-$db_host = DB_HOST;  
-$db_name = DB_NAME;  
-$db_user = DB_USER;  
-$db_pass = DB_PASS;
-
 function connectDB() {
     global $db_host, $db_name, $db_user, $db_pass;
-    
     $conn = mysqli_connect($db_host, $db_user, $db_pass, $db_name);
-    
     if (!$conn) {
         die("Database connection failed: " . mysqli_connect_error());
     }
-    
     return $conn;
 }
 ```
 
-**Why Direct Database Access**:
-1. **Performance**: No additional API layer overhead
-2. **Atomic Operations**: Database transactions for consistency
-3. **Centralized Logic**: All item business rules in one place
-4. **Easy Debugging**: Direct access to query logs
+### UserServer (User Management)
 
----
-
-### ServerB: User Management & Authentication
-
-**Location**: `c:\xampp\htdocs\Lostnfound\ServerB\`
-
-**Responsibilities**:
-- User registration and authentication
-- Password hashing and verification
-- Admin role management
-- User data CRUD operations
+**Responsibilities**: User registration, authentication, admin management
 
 **Key Files**:
 ```
-ServerB/
-├── config.php                 # Server configuration
-├── deployment_config.php      # Auto-generated config
+UserServer/
+├── config.php
 └── api/
-    ├── register_user.php      # User registration
-    ├── verify_user.php        # Login authentication
-    ├── get_all_users.php      # Admin: get all users
-    ├── get_user_items.php     # Get user's items
-    ├── toggle_admin.php       # Toggle admin status
-    └── health.php             # Health check
+    ├── register_user.php
+    ├── verify_user.php
+    ├── get_all_users.php
+    ├── get_user_items.php
+    ├── toggle_admin.php
+    └── health.php
 ```
 
 **Authentication Logic**:
 ```php
-// Password hashing during registration
+// Password hashing
 $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
-// Password verification during login
+// Password verification
 if (!password_verify($password, $user['password'])) {
     sendJSONResponse(['error' => 'Invalid password'], 401);
 }
 ```
-
-**Why Separate User Server**:
-1. **Security Isolation**: User credentials isolated from item data
-2. **Scalable Authentication**: Can add OAuth, JWT tokens later
-3. **Independent Scaling**: Auth server can scale separately
-4. **Clear Boundaries**: User management is self-contained
-
----
 
 ## Database Design
 

@@ -1,95 +1,75 @@
 # University Lost & Found Portal
 
-## Project Overview
+A web application to help students reunite lost items with their owners on campus. The system uses a distributed three-server architecture with clear separation of concerns.
 
-The **University Lost & Found Portal** is a comprehensive web application designed to help students reunite lost items with their owners on campus. The system employs a **distributed three-server architecture** where each server has a specific responsibility, ensuring modularity, scalability, and separation of concerns.
+## System Architecture
 
----
-
-## 🏗️ System Architecture
-
-This project follows a **three-tier distributed architecture** with clear separation of responsibilities:
+Three-tier distributed architecture:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    ServerC (Frontend/UI)                     │
+│                    Frontend (ServerC)                        │
 │                    http://172.24.14.184                      │
-│         - User Interface & Client-Side Rendering            │
-│         - NO direct database access                         │
-│         - Communicates via API calls only                   │
+│         - User Interface & Rendering                         │
+│         - API client only (no direct database access)        │
 └──────────────────┬──────────────────┬───────────────────────┘
                    │                   │
-                   │ API Calls         │ API Calls
-                   │                   │
         ┌──────────▼──────────┐       │
-        │   ServerA (Items)   │       │
-        │  172.24.194.6      │          
+        │   ItemsServer       │       │
+        │  172.24.194.6       │       │
         │  - Item CRUD ops    │       │
         │  - Direct DB access │       │
         └──────────┬──────────┘       │
                    │                   │
-                   │ DB Connection     │
-                   │                   │
         ┌──────────▼──────────────────▼──────────┐
-        │        ServerB (Users & DB)             │
-        │        http://172.24.194.6             │
+        │        UserServer (ServerB)             │
+        │        http://172.24.194.6              │
         │   - User authentication                 │
-        │   - User management                     │
         │   - Database hosting                    │
-        │   - File uploads storage                │
-        │   - Proxies item requests to ServerA    │
+        │   - File storage                        │
         └─────────────────────────────────────────┘
 ```
 
 ### Server Roles
 
-| Server | Role | Responsibilities | Database Access |
-|--------|------|-----------------|-----------------|
-| **ServerA** | **Item Logic Server** | Handle all item operations (CRUD) | ✅ Direct (remote) |
-| **ServerB** | **User Logic & Database Server** | User authentication, database hosting, file storage | ✅ Direct (local) |
-| **ServerC** | **User Interface Client** | Frontend, UI rendering, API client | ❌ API only |
+| Server | Responsibilities | Database Access |
+|--------|-----------------|---------------|
+| **ItemsServer** | Item operations (CRUD) | Direct |
+| **UserServer** | User auth, database hosting, file storage | Direct |
+| **Frontend** | UI rendering, API client | API only |
 
----
+## Network Configuration
 
-## 🌐 Network Configuration
-
-### Deployment Mode
-- **Mode**: Staging Deployment
-- **Configuration**: Auto-managed via `deploy.php`
-- **Database Location**: ServerB (172.24.194.6)
+**Deployment Mode**: Staging  
+**Database Location**: UserServer (172.24.194.6)
 
 ### Server URLs
-- **ServerA API**: `http://172.24.194.6/Lostnfound/ServerA/api`
-- **ServerB API**: `http://172.24.194.6/Lostnfound/ServerB/api`
-- **ServerC UI**: `http://172.24.14.184/Lostnfound/ServerC`
+- **ItemsServer API**: `http://172.24.194.6/Lostnfound/ItemsServer/api`
+- **UserServer API**: `http://172.24.194.6/Lostnfound/UserServer/api`
+- **Frontend UI**: `http://172.24.14.184/Lostnfound/Frontend`
 
-### Database Configuration
-- **Host**: `172.24.194.6` (ServerB)
-- **Database Name**: `lostfound_db`
-- **Access**: ServerA and ServerB have direct access; ServerC uses APIs only
+### Database
+- **Host**: 172.24.194.6
+- **Name**: lostfound_db
+- **Access**: ItemsServer and UserServer have direct access; Frontend uses APIs only
 
----
+## Core Features
 
-## 📋 Core Features
+### User Features
+- Report lost/found items with photos
+- Search and filter items
+- User dashboard to manage items
+- Email contact system
+- Secure authentication
 
-### For Users
-✅ **Report Lost Items** - Create detailed listings of lost items with photos  
-✅ **Report Found Items** - Post items you've found to help others  
-✅ **Search & Filter** - Search by keywords, filter by type (lost/found)  
-✅ **User Dashboard** - Manage your posted items, edit, and delete  
-✅ **Email Contact** - Direct contact between finders and owners  
-✅ **User Authentication** - Secure login and registration system  
+### Admin Features
+- Admin dashboard with system overview
+- User management
+- Item moderation
+- System statistics
+- Health monitoring
 
-### For Administrators
-✅ **Admin Dashboard** - Overview of all users and items  
-✅ **User Management** - Promote/demote admin privileges  
-✅ **Item Moderation** - View and delete any item  
-✅ **System Statistics** - Real-time stats on items and users  
-✅ **Health Monitoring** - Server status and connectivity checks  
-
----
-
-## 🗄️ Database Schema
+## Database Schema
 
 ### Tables
 
@@ -118,177 +98,138 @@ This project follows a **three-tier distributed architecture** with clear separa
 
 ---
 
-## 🔌 Inter-Server Communication
+## Inter-Server Communication
 
-### Communication Protocol
-All servers communicate via **HTTP REST API calls** using the centralized `makeAPIRequest()` function.
+All servers communicate via HTTP REST API using `makeAPIRequest()` function.
 
-### Key Features
-- **Automatic Retry Logic**: Up to 3 retries on failure with exponential backoff
-- **Timeout Management**: Configurable connection and request timeouts
-- **JSON Support**: Automatic JSON parsing for API responses
-- **Error Handling**: Comprehensive error logging and user-friendly messages
-- **CORS Headers**: Cross-origin requests fully supported
-- **cURL-Based**: Robust HTTP client implementation
+### Features
+- Automatic retry logic (up to 3 attempts)
+- Configurable timeouts
+- JSON response support
+- Comprehensive error handling
+- CORS headers for cross-origin requests
 
-### Example API Call Flow
+### API Call Flow Example
 ```
-User clicks "Report Lost Item" on ServerC
-    ↓
-ServerC uploads image to ../ServerB/uploads/
-    ↓
-ServerC calls ServerA API: POST /add_item.php
-    ↓
-ServerA inserts item into database
-    ↓
-ServerA returns JSON response
-    ↓
-ServerC displays success message to user
+User reports lost item on Frontend
+  ↓
+Frontend uploads image to UserServer/uploads/
+  ↓
+Frontend calls ItemsServer API: POST /add_item.php
+  ↓
+ItemsServer inserts item into database
+  ↓
+ItemsServer returns JSON response
+  ↓
+Frontend displays success message
 ```
 
----
-
-## 📁 Project Structure
+## Project Structure
 
 ```
 Lostnfound/
-├── ServerA/                      # Item Logic Server
-│   ├── api/                      # API Endpoints
-│   │   ├── add_item.php         # Create new item
-│   │   ├── update_item.php      # Update existing item
-│   │   ├── delete_item.php      # Delete item
-│   │   ├── get_all_items.php    # Retrieve all items with filters
-│   │   ├── get_item.php         # Get single item by ID
-│   │   ├── get_user_items.php   # Get items by user
-│   │   └── health.php           # Health check endpoint
-│   ├── config.php               # Server configuration
-│   ├── deployment_config.php    # Auto-generated deployment config
-│   └── db_setup.php             # Database initialization
+├── ItemsServer/
+│   ├── api/
+│   │   ├── add_item.php
+│   │   ├── update_item.php
+│   │   ├── delete_item.php
+│   │   ├── get_all_items.php
+│   │   ├── get_item.php
+│   │   ├── get_user_items.php
+│   │   └── health.php
+│   ├── config.php
+│   ├── deployment_config.php
+│   └── db_setup.php
 │
-├── ServerB/                      # User Logic & Database Server
-│   ├── api/                      # API Endpoints
-│   │   ├── register_user.php    # User registration
-│   │   ├── verify_user.php      # User authentication
-│   │   ├── get_all_users.php    # Get all users (admin)
-│   │   ├── get_user_items.php   # Proxy to ServerA
-│   │   ├── toggle_admin.php     # Toggle admin status
-│   │   └── health.php           # Health check endpoint
-│   ├── config.php               # Server configuration
-│   ├── deployment_config.php    # Auto-generated deployment config
-│   └── uploads/                 # Image storage directory
+├── UserServer/
+│   ├── api/
+│   │   ├── register_user.php
+│   │   ├── verify_user.php
+│   │   ├── get_all_users.php
+│   │   ├── get_user_items.php
+│   │   ├── toggle_admin.php
+│   │   └── health.php
+│   ├── config.php
+│   ├── deployment_config.php
+│   └── uploads/
 │
-├── ServerC/                      # User Interface Client
-│   ├── api/                      
-│   │   └── health.php           # Health check endpoint
-│   ├── assets/                   # Frontend assets
-│   │   ├── style.css            # Main stylesheet (2000+ lines)
-│   │   ├── script.js            # Client-side JavaScript
-│   │   ├── logo.webp            # Application logo
-│   │   └── favicon.svg          # Browser favicon
-│   ├── index.php                # Homepage
-│   ├── items.php                # Browse all items
-│   ├── report_lost.php          # Report lost item form
-│   ├── report_found.php         # Report found item form
-│   ├── user_login.php           # User login page
-│   ├── user_register.php        # User registration page
-│   ├── user_dashboard.php       # User dashboard
-│   ├── admin_dashboard.php      # Admin control panel
-│   ├── edit_item.php            # Edit item page
-│   ├── config.php               # Client configuration
-│   ├── api_client.php           # OOP API client class
-│   └── deployment_config.php    # Auto-generated deployment config
+├── Frontend/
+│   ├── api/
+│   │   └── health.php
+│   ├── assets/
+│   │   ├── style.css
+│   │   ├── script.js
+│   │   ├── logo.webp
+│   │   └── favicon.svg
+│   ├── index.php
+│   ├── items.php
+│   ├── report_lost.php
+│   ├── report_found.php
+│   ├── user_login.php
+│   ├── user_register.php
+│   ├── user_dashboard.php
+│   ├── admin_dashboard.php
+│   ├── edit_item.php
+│   ├── config.php
+│   ├── api_client.php
+│   └── deployment_config.php
 │
-├── server_status.php             # Overall system health check
-└── README.md                     # This file
+└── README.md
 ```
 
----
-
-## 🚀 Installation & Setup
+## Installation & Setup
 
 ### Prerequisites
-- **PHP**: 8.0 or higher
-- **MySQL/MariaDB**: 5.7 or higher
-- **Apache/Nginx**: Web server with PHP support
-- **cURL Extension**: For inter-server communication
-- **GD/Imagick**: For image handling (optional)
+- PHP 8.0+
+- MySQL/MariaDB 5.7+
+- Apache/Nginx with PHP support
+- cURL extension
+- GD/Imagick (optional)
 
-### Step 1: Database Setup
-```bash
-# On ServerB (Database Server)
-1. Import/run ServerA/db_setup.php
-2. Create uploads directory: mkdir ServerB/uploads && chmod 755 ServerB/uploads
-```
+### Setup Steps
 
-### Step 2: Configure Deployment
-```bash
-# Edit deploy.php with your server IPs
-php deploy.php
-```
+1. **Database Setup** (on UserServer)
+   ```bash
+   php ItemsServer/db_setup.php
+   mkdir UserServer/uploads && chmod 755 UserServer/uploads
+   ```
 
-### Step 3: Set Permissions
-```bash
-# Make upload directories writable
-chmod -R 755 ServerB/uploads/
-```
+2. **Configure Deployment**
+   ```bash
+   php deploy.php
+   ```
 
-### Step 4: Apache Configuration (ServerC - WAMP)
-```apache
-<Directory "c:/xampp/htdocs/Lostnfound/ServerC">
-    Options Indexes FollowSymLinks
-    AllowOverride All
-    Require all granted
-</Directory>
-```
+3. **Set Permissions**
+   ```bash
+   chmod -R 755 UserServer/uploads/
+   ```
 
-### Step 5: Test Health Endpoints
-- ServerA: `http://172.24.194.6/Lostnfound/ServerA/api/health.php`
-- ServerB: `http://172.24.194.6/Lostnfound/ServerB/api/health.php`
-- ServerC: `http://172.24.14.184/Lostnfound/ServerC/health.php`
+4. **Test Health Endpoints**
+   - ItemsServer: `http://172.24.194.6/Lostnfound/ItemsServer/api/health.php`
+   - UserServer: `http://172.24.194.6/Lostnfound/UserServer/api/health.php`
+   - Frontend: `http://172.24.14.184/Lostnfound/Frontend/health.php`
 
----
+## Security Features
 
-## 🔐 Security Features
-
-### Password Security
-- **Bcrypt Hashing**: All passwords use PHP's `password_hash()` with bcrypt
-- **No Plain Text**: Passwords never stored in plain text
-
-### Input Validation
+- **Password Security**: Bcrypt hashing via `password_hash()`
 - **SQL Injection Protection**: `mysqli_real_escape_string()` on all inputs
-- **XSS Prevention**: `htmlspecialchars()` on all outputs
+- **XSS Prevention**: `htmlspecialchars()` on outputs
 - **Email Validation**: `filter_var()` with FILTER_VALIDATE_EMAIL
-- **File Upload Validation**: File type and size checks
-
-### Session Management
-- **Secure Sessions**: Session-based authentication
-- **Session Hijacking Prevention**: Session regeneration on login
-- **Auto-logout**: Session destruction on logout
-
-### API Security
+- **File Upload Validation**: Type and size checks
+- **Session-Based Auth**: Secure server-side sessions
 - **CORS Headers**: Controlled cross-origin access
-- **Method Validation**: Strict HTTP method checking (GET, POST, DELETE)
-- **Error Handling**: No sensitive data in error messages
+- **Method Validation**: Strict HTTP method checking
 
----
+## API Documentation
 
-## 📊 API Documentation
-
-### ServerA Endpoints (Item Operations)
+### ItemsServer Endpoints
 
 #### POST `/api/add_item.php`
-Create a new item listing.
+Create a new item.
 
-**Parameters:**
-- `user_id` (required): User's ID
-- `title` (required): Item title
-- `description` (required): Item description
-- `type` (required): "lost" or "found"
-- `location` (required): Location details
-- `contact` (required): Contact information
-- `image_filename` (optional): Uploaded image filename
+**Parameters**: `user_id`, `title`, `description`, `type`, `location`, `contact`, `image_filename`
 
-**Response:**
+**Response**:
 ```json
 {
   "success": true,
@@ -298,13 +239,11 @@ Create a new item listing.
 ```
 
 #### GET `/api/get_all_items.php`
-Retrieve all items with optional filtering.
+Retrieve items with optional filtering.
 
-**Parameters:**
-- `type` (optional): Filter by "lost" or "found"
-- `search` (optional): Search in title, description, location
+**Parameters**: `type` (optional), `search` (optional)
 
-**Response:**
+**Response**:
 ```json
 {
   "success": true,
@@ -318,17 +257,14 @@ Retrieve all items with optional filtering.
 }
 ```
 
-### ServerB Endpoints (User Operations)
+### UserServer Endpoints
 
 #### POST `/api/register_user.php`
-Register a new user account.
+Register a new user.
 
-**Parameters:**
-- `username` (required): Unique username
-- `email` (required): Valid email address
-- `password` (required): User password
+**Parameters**: `username`, `email`, `password`
 
-**Response:**
+**Response**:
 ```json
 {
   "success": true,
@@ -340,13 +276,11 @@ Register a new user account.
 ```
 
 #### POST `/api/verify_user.php`
-Authenticate a user (login).
+Authenticate a user.
 
-**Parameters:**
-- `username` (required): Username
-- `password` (required): Password
+**Parameters**: `username`, `password`
 
-**Response:**
+**Response**:
 ```json
 {
   "success": true,
@@ -358,124 +292,109 @@ Authenticate a user (login).
 }
 ```
 
----
-
-## 🎨 Design & UI
+## Design & UI
 
 ### Design Philosophy
-- **Clean & Professional**: Modern, minimalist design
-- **User-Friendly**: Intuitive navigation and clear CTAs
-- **Responsive**: Mobile-first design, works on all devices
-- **Accessible**: High contrast, readable fonts, semantic HTML
+- Clean and professional modern design
+- User-friendly with intuitive navigation
+- Responsive mobile-first approach
+- Accessible with semantic HTML
 
 ### Color Scheme
-- **Primary**: `#2563eb` (Blue) - Trust, reliability
-- **Success**: `#10b981` (Green) - Found items, positive actions
-- **Error**: `#ef4444` (Red) - Lost items, warnings
-- **Neutral**: Grayscale palette for backgrounds and text
+- **Primary**: #2563eb (Blue)
+- **Success**: #10b981 (Green) 
+- **Error**: #ef4444 (Red)
+- **Neutral**: Grayscale palette
 
 ### Typography
-- **Font Family**: System fonts (-apple-system, Segoe UI, Roboto)
-- **Base Size**: 16px for optimal readability
-- **Line Height**: 1.7 for comfortable reading
+- **Font**: System fonts (-apple-system, Segoe UI, Roboto)
+- **Base Size**: 16px
+- **Line Height**: 1.7
 
 ### Responsive Breakpoints
-- **Desktop**: 1200px+ (Full layout)
-- **Tablet**: 768px - 1199px (Adapted layout)
-- **Mobile**: < 768px (Stacked layout, hamburger menu)
+- **Desktop**: 1200px+
+- **Tablet**: 768px - 1199px
+- **Mobile**: < 768px
 
----
-
-## 🔧 Maintenance & Troubleshooting
+## Troubleshooting
 
 ### Common Issues
 
-#### "ServerC cannot connect directly to the database"
-✅ **Expected Behavior**: ServerC is designed to use APIs only. Use `makeAPIRequest()` instead.
+**"Frontend cannot connect directly to the database"**  
+Expected behavior. Frontend must use API calls via `makeAPIRequest()`.
 
-#### "Image not displaying"
-- Check `ServerB/uploads/` directory exists and is writable
+**"Image not displaying"**  
+- Check `UserServer/uploads/` directory exists and is writable
 - Verify image path in database matches actual file
 - Check `UPLOADS_BASE_URL` in deployment_config.php
 
-#### "API request timeout"
+**"API request timeout"**  
 - Increase timeout in `makeAPIRequest()` options
 - Check server connectivity (firewall, network)
 - Verify target server is running
 
-#### "Session not persisting"
-- Check `session_start()` is called in config.php
+**"Session not persisting"**  
+- Ensure `session_start()` is called in config.php
 - Verify PHP session directory is writable
-- Check for `SameSite` cookie issues
+- Check for SameSite cookie issues
 
 ### Health Monitoring
-Visit these endpoints to check server status:
-- ServerA: `/api/health.php`
-- ServerB: `/api/health.php`
-- ServerC: `/health.php`
+- ItemsServer: `/api/health.php`
+- UserServer: `/api/health.php`
+- Frontend: `/health.php`
 
----
-
-## 👥 User Roles
+## User Roles
 
 ### Regular Users
 - Register and log in
 - Report lost/found items
 - Edit/delete own items
-- Search and browse all items
-- Contact other users via email
+- Search and browse items
+- Contact other users
 
 ### Administrators
 - All regular user permissions
-- View all users in system
+- View all users
 - Promote/demote admin status
-- Delete any item (moderation)
+- Delete any item
 - View system statistics
 - Access admin dashboard
 
----
+## License & Credits
 
-## 📝 License & Credits
+**Name**: University Lost & Found Portal  
+**Version**: 2.0  
+**Architecture**: Distributed Three-Server System  
 
-### Project Information
-- **Name**: University Lost & Found Portal
-- **Version**: 2.0
-- **Architecture**: Distributed Three-Server System
-- **Built With**: PHP, MySQL, JavaScript, HTML5, CSS3
+### Technologies
+- Backend: PHP 8+ with mysqli
+- Database: MySQL/MariaDB
+- Frontend: Vanilla JavaScript, Custom CSS
+- Communication: cURL for HTTP requests
+- Authentication: Session-based with bcrypt
+- File Handling: PHP file uploads
 
-### Technologies Used
-- **Backend**: PHP 8+ with mysqli
-- **Database**: MySQL/MariaDB
-- **Frontend**: Vanilla JavaScript, Custom CSS
-- **Communication**: cURL for HTTP requests
-- **Authentication**: Session-based with bcrypt
-- **File Handling**: PHP file uploads
+## Future Enhancements
 
----
+- Email notifications for matches
+- Image compression and optimization
+- Advanced search with filters
+- User reputation system
+- Mobile app (React Native)
+- Real-time notifications
+- Multi-language support
+- Dark mode
+- Export reports to PDF
+- University ID integration
 
-## 🚧 Future Enhancements
+## Support
 
-- [ ] Email notifications for matches
-- [ ] Image compression and optimization
-- [ ] Advanced search with filters (date range, category)
-- [ ] User reputation system
-- [ ] Mobile app (React Native)
-- [ ] Real-time notifications (WebSockets)
-- [ ] Multi-language support (i18n)
-- [ ] Dark mode toggle
-- [ ] Export reports to PDF
-- [ ] Integration with university ID system
-
----
-
-## 📞 Support
-
-For issues, questions, or contributions:
-1. Check the health endpoints first
-2. Review server logs (`error_log`)
+For issues or questions:
+1. Check health endpoints
+2. Review server logs
 3. Verify deployment configuration
 4. Check inter-server connectivity
 
 ---
 
-**Built with ❤️ for campus communities**
+**Built for campus communities**

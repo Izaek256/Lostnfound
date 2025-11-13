@@ -1,9 +1,7 @@
 <?php
 /**
- * ServerB API - Verify User
- * 
+ * Verify User API
  * Authenticates a user with username and password
- * ServerB handles all user-related operations including authentication
  */
 
 require_once '../config.php';
