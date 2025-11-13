@@ -29,9 +29,21 @@ $stats = [
 if (is_array($api_response) && isset($api_response['success']) && $api_response['success']) {
     $items = $api_response['items'] ?? [];
     $stats = $api_response['stats'] ?? $stats;
+} else if (is_array($api_response) && isset($api_response['success']) && !$api_response['success']) {
+    // Handle API error response
+    error_log('ItemsServer API error: ' . ($api_response['error'] ?? 'Unknown error'));
+} else if (is_array($api_response)) {
+    // Handle unexpected array response
+    error_log('Unexpected API response structure: ' . json_encode($api_response));
+    // Try to use the response directly if it looks like items data
+    if (isset($api_response['items'])) {
+        $items = $api_response['items'];
+    } else if (isset($api_response[0])) {
+        $items = $api_response;
+    }
 } else {
-    // Handle API error
-    error_log('ItemsServer API error: ' . json_encode($api_response));
+    // Handle non-array response (could be error string)
+    error_log('Non-array response from ItemsServer API: ' . print_r($api_response, true));
 }
 ?>
 

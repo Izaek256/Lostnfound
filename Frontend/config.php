@@ -69,6 +69,12 @@ function makeAPIRequest($url, $data = [], $method = 'POST', $options = []) {
                 throw new Exception("Invalid URL format: $url");
             }
             
+            // Add a custom header to identify API requests from frontend
+            $headers = [
+                'User-Agent: LostFound-Frontend/2.0',
+                'X-Requested-With: XMLHttpRequest'
+            ];
+            
             if ($method === 'POST') {
                 curl_setopt($ch, CURLOPT_URL, $url);
                 curl_setopt($ch, CURLOPT_POST, true);
@@ -76,18 +82,12 @@ function makeAPIRequest($url, $data = [], $method = 'POST', $options = []) {
                 $is_json = $options['send_json'] ?? false;
                 if ($is_json) {
                     $post_data = json_encode($data);
-                    curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                        'Content-Type: application/json',
-                        'Accept: application/json',
-                        'User-Agent: LostFound-Frontend/2.0'
-                    ]);
+                    $headers[] = 'Content-Type: application/json';
+                    $headers[] = 'Accept: application/json';
                 } else {
                     $post_data = http_build_query($data);
-                    curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                        'Content-Type: application/x-www-form-urlencoded',
-                        'Accept: */*',
-                        'User-Agent: LostFound-Frontend/2.0'
-                    ]);
+                    $headers[] = 'Content-Type: application/x-www-form-urlencoded';
+                    $headers[] = 'Accept: application/json';
                 }
                 curl_setopt($ch, CURLOPT_POSTFIELDS, $post_data);
                 
@@ -97,10 +97,7 @@ function makeAPIRequest($url, $data = [], $method = 'POST', $options = []) {
                 }
                 curl_setopt($ch, CURLOPT_URL, $url);
                 curl_setopt($ch, CURLOPT_HTTPGET, true);
-                curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                    'Accept: */*',
-                    'User-Agent: LostFound-Frontend/2.0'
-                ]);
+                $headers[] = 'Accept: application/json';
                 
             } elseif ($method === 'DELETE') {
                 curl_setopt($ch, CURLOPT_URL, $url);
@@ -108,24 +105,19 @@ function makeAPIRequest($url, $data = [], $method = 'POST', $options = []) {
                 if (!empty($data)) {
                     curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
                 }
-                curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                    'Content-Type: application/x-www-form-urlencoded',
-                    'Accept: */*',
-                    'User-Agent: LostFound-Frontend/2.0'
-                ]);
+                $headers[] = 'Content-Type: application/x-www-form-urlencoded';
+                $headers[] = 'Accept: application/json';
                 
             } elseif ($method === 'PUT') {
                 curl_setopt($ch, CURLOPT_URL, $url);
                 curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
                 $post_data = http_build_query($data);
                 curl_setopt($ch, CURLOPT_POSTFIELDS, $post_data);
-                curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                    'Content-Type: application/x-www-form-urlencoded',
-                    'Accept: */*',
-                    'User-Agent: LostFound-Frontend/2.0'
-                ]);
+                $headers[] = 'Content-Type: application/x-www-form-urlencoded';
+                $headers[] = 'Accept: application/json';
             }
             
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
             curl_setopt($ch, CURLOPT_MAXREDIRS, 5);
             curl_setopt($ch, CURLOPT_ENCODING, 'gzip, deflate, br');
             curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
@@ -164,13 +156,23 @@ function makeAPIRequest($url, $data = [], $method = 'POST', $options = []) {
             
             error_log("[APIRequest] Success: $method $url | HTTP $http_code | {$elapsed_time}ms");
             
-            if ($return_json && (strpos($content_type, 'application/json') !== false || $options['force_json'] ?? false)) {
-                $decoded = json_decode($response, true);
-                if ($decoded === null && json_last_error() !== JSON_ERROR_NONE) {
-                    error_log("[APIRequest] Warning: Failed to parse JSON. Returning raw response.");
-                    return $response;
+            if ($return_json) {
+                // Check if we should force JSON parsing regardless of content type
+                $should_parse_json = ($options['force_json'] ?? false) || 
+                                   (strpos($content_type, 'application/json') !== false);
+                                    
+                if ($should_parse_json) {
+                    $decoded = json_decode($response, true);
+                    if ($decoded === null && json_last_error() !== JSON_ERROR_NONE) {
+                        error_log("[APIRequest] Warning: Failed to parse JSON. Returning structured error.");
+                        return [
+                            'success' => false,
+                            'error' => 'Failed to parse JSON response',
+                            'raw_response' => $response
+                        ];
+                    }
+                    return $decoded;
                 }
-                return $decoded;
             }
             
             return $response;
@@ -203,7 +205,11 @@ function makeAPIRequest($url, $data = [], $method = 'POST', $options = []) {
         ];
     }
     
-    return "error|$error_message";
+    // Return structured error instead of raw error string
+    return [
+        'success' => false,
+        'error' => $error_message
+    ];
 }
 
 // API URLs
@@ -269,6 +275,11 @@ function testServerConnection($server_url, $timeout = 5) {
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, min($timeout, 3));
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+        // Add headers to identify this as an API request
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'User-Agent: LostFound-Frontend/2.0',
+            'X-Requested-With: XMLHttpRequest'
+        ]);
         
         $start_time = microtime(true);
         $response = curl_exec($ch);

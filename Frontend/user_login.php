@@ -28,7 +28,7 @@ if ($_POST) {
         $response = makeAPIRequest(USERSERVER_URL . '/verify_user.php', [
             'username' => $username,
             'password' => $password
-        ], 'POST', ['return_json' => true]);
+        ], 'POST', ['return_json' => true, 'force_json' => true]);
         
         // Parse JSON response
         if (is_array($response) && isset($response['success']) && $response['success']) {

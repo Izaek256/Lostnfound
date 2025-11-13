@@ -9,11 +9,19 @@ require_once '../config.php';
 // Check if request is from browser directly (not AJAX)
 $accept_header = $_SERVER['HTTP_ACCEPT'] ?? '';
 $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? '';
+$x_requested_with = $_SERVER['HTTP_X_REQUESTED_WITH'] ?? '';
 
-// If request appears to be from browser directly, show a simple HTML page
-if (strpos($accept_header, 'text/html') !== false && 
-    (strpos($user_agent, 'Mozilla') !== false || strpos($user_agent, 'Chrome') !== false || strpos($user_agent, 'Safari') !== false) &&
-    !isset($_SERVER['HTTP_X_REQUESTED_WITH'])) {
+// Enhanced browser detection - show HTML page if it looks like a direct browser request
+$is_browser_request = (
+    // Accept header contains text/html (browser requests HTML by default)
+    (strpos($accept_header, 'text/html') !== false && strpos($accept_header, 'application/json') === false) &&
+    // User agent indicates a browser
+    (strpos($user_agent, 'Mozilla') !== false || strpos($user_agent, 'Chrome') !== false || strpos($user_agent, 'Safari') !== false || strpos($user_agent, 'Firefox') !== false || strpos($user_agent, 'Edge') !== false) &&
+    // Not an AJAX request
+    (empty($x_requested_with) || stripos($x_requested_with, 'XMLHttpRequest') === false)
+);
+
+if ($is_browser_request) {
     // Show simple HTML page
     echo "<html><head><title>Frontend Health Check</title></head><body>";
     echo "<h1>Frontend Health Check</h1>";
@@ -32,33 +40,21 @@ $health_data = [
     'role' => 'User Interface Server - API',
     'status' => 'online',
     'timestamp' => date('Y-m-d H:i:s'),
-    'database' => 'connected',
+    'database' => 'not_applicable',  // Frontend doesn't connect to database directly
     'services' => []
 ];
 
-// Test database connection
-try {
-    $conn = connectDB();
-    if ($conn) {
-        $health_data['database'] = 'connected';
-        $health_data['services']['database_connection'] = 'active';
-        mysqli_close($conn);
-    } else {
-        $health_data['database'] = 'failed';
-        $health_data['services']['database_connection'] = 'failed';
-    }
-} catch (Exception $e) {
-    $health_data['database'] = 'error';
-    $health_data['services']['database_connection'] = 'error: ' . $e->getMessage();
-}
+// Note: Frontend is a client and does NOT connect directly to the database
+// It communicates with ItemsServer and UserServer through APIs
+// So we check API connectivity instead of database connectivity
 
 // Test ItemsServer connectivity
 $itemsserver_status = testServerConnection(ITEMSSERVER_URL);
-$health_data['services']['itemsserver_api'] = $itemsserver_status ? 'reachable' : 'unreachable';
+$health_data['services']['itemsserver_api'] = $itemsserver_status['success'] ? 'reachable' : 'unreachable';
 
 // Test UserServer connectivity  
 $userserver_status = testServerConnection(USERSERVER_URL);
-$health_data['services']['userserver_api'] = $userserver_status ? 'reachable' : 'unreachable';
+$health_data['services']['userserver_api'] = $userserver_status['success'] ? 'reachable' : 'unreachable';
 
 // Test uploads directory access
 $uploads_accessible = is_dir(UPLOADS_PATH) && is_readable(UPLOADS_PATH);
@@ -66,9 +62,8 @@ $health_data['services']['uploads_directory'] = $uploads_accessible ? 'accessibl
 
 // Overall health status
 $all_services_ok = (
-    $health_data['database'] === 'connected' &&
-    $itemsserver_status &&
-    $userserver_status
+    $itemsserver_status['success'] &&
+    $userserver_status['success']
 );
 
 if (!$all_services_ok) {

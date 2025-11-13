@@ -30,21 +30,19 @@ if ($_POST) {
             'username' => $username,
             'email' => $email,
             'password' => $password
-        ], 'POST');
+        ], 'POST', ['return_json' => true, 'force_json' => true]);
         
         // Parse JSON response
-        $decoded = json_decode($response, true);
-        
-        if ($decoded && isset($decoded['success']) && $decoded['success']) {
-            $_SESSION['user_id'] = $decoded['user_id'];
-            $_SESSION['username'] = $decoded['username'];
-            $_SESSION['user_email'] = $decoded['email'];
-            $_SESSION['is_admin'] = $decoded['is_admin'] ?? 0;
+        if (is_array($response) && isset($response['success']) && $response['success']) {
+            $_SESSION['user_id'] = $response['user_id'];
+            $_SESSION['username'] = $response['username'];
+            $_SESSION['user_email'] = $response['email'];
+            $_SESSION['is_admin'] = $response['is_admin'] ?? 0;
             
             header('Location: user_dashboard.php');
             exit();
         } else {
-            $error = $decoded['error'] ?? 'Registration failed';
+            $error = $response['error'] ?? 'Registration failed';
         }
     }
 }

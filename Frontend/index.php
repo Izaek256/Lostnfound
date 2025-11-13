@@ -22,21 +22,31 @@ try {
     $response = makeAPIRequest($api_url, [
         'limit' => 6,
         'sort' => 'recent'
-    ], 'GET');
-    
-    if ($response && strpos($response, 'error|') !== 0) {
-        $decoded = json_decode($response, true);
-        if (is_array($decoded)) {
-            // Check if response has 'items' key (API might return {"items": [...]})
-            if (isset($decoded['items']) && is_array($decoded['items'])) {
-                $recentItems = array_slice($decoded['items'], 0, 6);
-            } else if (isset($decoded['data']) && is_array($decoded['data'])) {
-                $recentItems = array_slice($decoded['data'], 0, 6);
-            } else if (isset($decoded[0]) || count($decoded) > 0) {
-                // It's already an array of items
-                $recentItems = array_slice($decoded, 0, 6);
-            }
+    ], 'GET', ['return_json' => true, 'force_json' => true]);
+        
+    if (is_array($response) && isset($response['success']) && $response['success']) {
+        // Check if response has 'items' key (API might return {"items": [...]})
+        if (isset($response['items']) && is_array($response['items'])) {
+            $recentItems = array_slice($response['items'], 0, 6);
+        } else if (isset($response['data']) && is_array($response['data'])) {
+            $recentItems = array_slice($response['data'], 0, 6);
+        } else if (isset($response[0]) || count($response) > 0) {
+            // It's already an array of items
+            $recentItems = array_slice($response, 0, 6);
         }
+    } else if (is_array($response) && isset($response['success']) && !$response['success']) {
+        // Handle API error response
+        error_log("API Error fetching recent items: " . ($response['error'] ?? 'Unknown error'));
+    } else if (is_array($response)) {
+        // Handle unexpected array response
+        error_log("Unexpected API response structure for recent items");
+        // Try to use the response directly if it looks like items data
+        if (isset($response[0]) || count($response) > 0) {
+            $recentItems = array_slice($response, 0, 6);
+        }
+    } else {
+        // Handle non-array response (could be error string)
+        error_log("Non-array response from API: " . print_r($response, true));
     }
 } catch (Exception $e) {
     error_log("Error fetching recent items: " . $e->getMessage());
@@ -44,17 +54,16 @@ try {
 
 // Get statistics from ItemsServer
 try {
-    $response = makeAPIRequest(ITEMSSERVER_URL . '/get_all_items.php', [], 'GET');
+    $response = makeAPIRequest(ITEMSSERVER_URL . '/get_all_items.php', [], 'GET', ['return_json' => true, 'force_json' => true]);
     
-    if ($response && strpos($response, 'error|') !== 0) {
-        $decoded = json_decode($response, true);
-        $items = $decoded;
+    if (is_array($response) && isset($response['success']) && $response['success']) {
+        $items = $response;
         
         // Extract items from API response structure
-        if (isset($decoded['items']) && is_array($decoded['items'])) {
-            $items = $decoded['items'];
-        } elseif (isset($decoded['data']) && is_array($decoded['data'])) {
-            $items = $decoded['data'];
+        if (isset($response['items']) && is_array($response['items'])) {
+            $items = $response['items'];
+        } elseif (isset($response['data']) && is_array($response['data'])) {
+            $items = $response['data'];
         }
         
         if (is_array($items) && count($items) > 0) {
@@ -66,6 +75,25 @@ try {
                 return is_array($item) && isset($item['type']) && $item['type'] === 'found'; 
             }));
         }
+    } else if (is_array($response) && isset($response['success']) && !$response['success']) {
+        // Handle API error response
+        error_log("API Error fetching statistics: " . ($response['error'] ?? 'Unknown error'));
+    } else if (is_array($response)) {
+        // Handle unexpected array response
+        error_log("Unexpected API response structure for statistics");
+        // Try to use the response directly if it looks like items data
+        if (isset($response[0]) || count($response) > 0) {
+            $stats['total'] = count($response);
+            $stats['lost_count'] = count(array_filter($response, function($item) { 
+                return is_array($item) && isset($item['type']) && $item['type'] === 'lost'; 
+            }));
+            $stats['found_count'] = count(array_filter($response, function($item) { 
+                return is_array($item) && isset($item['type']) && $item['type'] === 'found'; 
+            }));
+        }
+    } else {
+        // Handle non-array response (could be error string)
+        error_log("Non-array response from API: " . print_r($response, true));
     }
 } catch (Exception $e) {
     error_log("Error fetching statistics: " . $e->getMessage());

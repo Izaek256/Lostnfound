@@ -12,13 +12,21 @@ setCORSHeaders();
 // Check if request is from browser directly (not AJAX)
 $accept_header = $_SERVER['HTTP_ACCEPT'] ?? '';
 $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? '';
+$x_requested_with = $_SERVER['HTTP_X_REQUESTED_WITH'] ?? '';
 
-// If request appears to be from browser directly, redirect to frontend
-if (strpos($accept_header, 'text/html') !== false && 
-    (strpos($user_agent, 'Mozilla') !== false || strpos($user_agent, 'Chrome') !== false || strpos($user_agent, 'Safari') !== false) &&
-    !isset($_SERVER['HTTP_X_REQUESTED_WITH'])) {
+// Enhanced browser detection - redirect to frontend if it looks like a direct browser request
+$is_browser_request = (
+    // Accept header contains text/html (browser requests HTML by default)
+    (strpos($accept_header, 'text/html') !== false && strpos($accept_header, 'application/json') === false) &&
+    // User agent indicates a browser
+    (strpos($user_agent, 'Mozilla') !== false || strpos($user_agent, 'Chrome') !== false || strpos($user_agent, 'Safari') !== false || strpos($user_agent, 'Firefox') !== false || strpos($user_agent, 'Edge') !== false) &&
+    // Not an AJAX request
+    (empty($x_requested_with) || stripos($x_requested_with, 'XMLHttpRequest') === false)
+);
+
+if ($is_browser_request) {
     // Redirect to frontend items page
-    $frontend_url = 'http://' . $_SERVER['HTTP_HOST'] . '/Lostnfound/Frontend/items.php';
+    $frontend_url = 'http://' . $_SERVER['SERVER_ADDR'] . '/Lostnfound/Frontend/items.php';
     header("Location: $frontend_url");
     exit();
 }
