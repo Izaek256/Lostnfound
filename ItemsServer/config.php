@@ -1,6 +1,6 @@
 <?php
 /**
- * ServerA Configuration - Authentication Server
+ * ItemsServer Configuration - Item Logic Server
  * 
  * Unified configuration that works for localhost testing and production deployment
  * Configuration is automatically managed by deploy.php
@@ -15,7 +15,7 @@ session_start();
 // ============================================
 // SERVER-SPECIFIC CONFIGURATION
 // ============================================
-// ServerA handles item logic (add, update, delete, retrieve items)
+// ItemsServer handles item logic (add, update, delete, retrieve items)
 
 // Database connection (ServerA connects directly to the database)
 $db_host = DB_HOST;      // Automatically configured by deployment system
@@ -26,9 +26,9 @@ $db_pass = DB_PASS;
 // ============================================
 // DATABASE CONNECTION FUNCTIONS
 // ============================================
-// ALL servers connect to the centralized database on ServerB
+// ALL servers connect to the centralized database on UserServer
 
-// Main database connection - connects to ServerB's database
+// Main database connection - connects to UserServer's database
 function connectDB() {
     global $db_host, $db_name, $db_user, $db_pass;
     

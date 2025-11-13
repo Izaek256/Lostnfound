@@ -22,7 +22,7 @@ header('X-Accel-Buffering: no');
 $servers = [
     'ServerA' => [
         'name' => 'ServerA (Item Logic Server)',
-        'url' => SERVERA_URL,
+        'url' => ITEMSSERVER_URL,
         'health_url' => SERVERA_HEALTH_URL,
         'role' => 'Item operations, item database access',
         'status' => 'checking...',
@@ -34,7 +34,7 @@ $servers = [
     ],
     'ServerB' => [
         'name' => 'ServerB (User & Database Server)',
-        'url' => SERVERB_URL,
+        'url' => USERSERVER_URL,
         'health_url' => SERVERB_HEALTH_URL,
         'role' => 'User management, database host, file storage',
         'status' => 'checking...',

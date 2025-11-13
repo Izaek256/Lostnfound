@@ -28,7 +28,7 @@ if ($item_id <= 0) {
 $current_user_id = getCurrentUserId();
 
 // Get item from ServerA API instead of direct database connection
-$api_response = makeAPIRequest(SERVERA_URL . '/get_item.php', [
+$api_response = makeAPIRequest(ITEMSSERVER_URL . '/get_item.php', [
     'item_id' => $item_id
 ], 'GET', ['return_json' => true]);
 
@@ -110,7 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Update item via ServerA API if no errors
         if (!isset($message) || $messageType !== 'error') {
             // Call ServerA API to update item
-            $response = makeAPIRequest(SERVERA_URL . '/update_item.php', [
+            $response = makeAPIRequest(ITEMSSERVER_URL . '/update_item.php', [
                 'id' => $item_id,
                 'user_id' => $current_user_id,
                 'title' => $title,

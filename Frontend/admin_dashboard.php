@@ -28,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($target_user_id && $new_status !== null) {
             // Call API to toggle admin status
             $api_response = makeAPIRequest(
-                SERVERB_URL . '/toggle_admin.php',
+                USERSERVER_URL . '/toggle_admin.php',
                 [
                     'user_id' => $target_user_id,
                     'is_admin' => $new_status
@@ -54,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($item_id) {
             // Call API to delete item (admin can delete any item)
             $api_response = makeAPIRequest(
-                SERVERA_URL . '/delete_item.php',
+                ITEMSSERVER_URL . '/delete_item.php',
                 [
                     'id' => $item_id,
                     'is_admin' => 1  // Flag indicating admin deletion
@@ -80,16 +80,16 @@ $user_id = getCurrentUserId();
 $username = getCurrentUsername();
 
 
-// Get all items for admin overview via ServerA API (with timeout)
-$api_response = makeAPIRequest(SERVERA_URL . '/get_all_items.php', [], 'GET', ['return_json' => true, 'timeout' => 3, 'connect_timeout' => 2]);
+// Get all items for admin overview via ItemsServer API (with timeout)
+$api_response = makeAPIRequest(ITEMSSERVER_URL . '/get_all_items.php', [], 'GET', ['return_json' => true, 'timeout' => 3, 'connect_timeout' => 2]);
 $all_items = [];
 if (is_array($api_response) && isset($api_response['success']) && $api_response['success']) {
     $all_items = $api_response['items'] ?? [];
 }
 
-// Get all users via ServerB API (with timeout)
+// Get all users via UserServer API (with timeout)
 $users = [];
-$api_response = makeAPIRequest(SERVERB_URL . '/get_all_users.php', [], 'GET', ['return_json' => true, 'timeout' => 3, 'connect_timeout' => 2]);
+$api_response = makeAPIRequest(USERSERVER_URL . '/get_all_users.php', [], 'GET', ['return_json' => true, 'timeout' => 3, 'connect_timeout' => 2]);
 if (is_array($api_response) && isset($api_response['success']) && $api_response['success']) {
     $users = $api_response['users'] ?? [];
     $user_stats = $api_response['stats'] ?? [];
@@ -301,9 +301,9 @@ $stats = [
                 <div class="info-grid">
                     <div class="info-card">
                         <h4>🖥️ Server Configuration</h4>
-                        <p><strong>Server:</strong> ServerC (Frontend & Admin)</p>
-                        <p><strong>Database:</strong> ServerA (User Management)</p>
-                        <p><strong>Storage:</strong> ServerB (Item Management)</p>
+                        <p><strong>Server:</strong> Frontend (Frontend & Admin)</p>
+                        <p><strong>Database:</strong> ItemsServer (Item Management)</p>
+                        <p><strong>Storage:</strong> UserServer (User Management)</p>
                         <p><strong>Session:</strong> <?php echo session_id() ? 'Active' : 'Inactive'; ?></p>
                     </div>
                     

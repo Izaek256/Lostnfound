@@ -1,6 +1,6 @@
 <?php
 /**
- * Server C - Report Lost Item Page
+ * Server C - Report Found Item Page
  */
 
 require_once 'config.php';
@@ -22,11 +22,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     
     if (empty($title) || empty($description) || empty($location) || empty($contact)) {
         $message = 'Please fill in all required fields';
+    } elseif (!isset($_FILES['image']) || $_FILES['image']['error'] != 0) {
+        $message = 'Please upload an image of the found item';
     } else {
         $user_id = getCurrentUserId();
         $image_filename = null;
         
-        // Handle simple file upload
+        // Handle file upload
         if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
             $upload_dir = '../ServerA/uploads/';
             
@@ -42,11 +44,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
         
         // Call ServerA API to add item
-        $response = makeAPIRequest(SERVERA_URL . '/add_item.php', [
+        $response = makeAPIRequest(ITEMSSERVER_URL . '/add_item.php', [
             'user_id' => $user_id,
             'title' => $title,
             'description' => $description,
-            'type' => 'lost',
+            'type' => 'found',
             'location' => $location,
             'contact' => $contact,
             'image_filename' => $image_filename
@@ -54,11 +56,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         
         // Parse JSON response
         if (is_array($response) && isset($response['success']) && $response['success']) {
-            $message = '📢 Lost item reported successfully! Your listing is now live and people who find items can contact you directly.';
+            $message = '✅ Found item reported successfully! 
+            The item owner will be able to find your listing and contact you directly.';
             // Clear form data on success
             $title = $description = $location = $contact = '';
         } else {
-            $message = isset($response['error']) ? $response['error'] : 'Failed to report lost item';
+            $message = isset($response['error']) ? $response['error'] : 'Failed to report found item';
         }
     }
 }
@@ -69,7 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Report Lost Item - Lost & Found</title>
+    <title>Report Found Item - Lost & Found</title>
     <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="assets/style.css">
 </head>
@@ -89,8 +92,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <nav>
                 <ul>
                     <li><a href="index.php">Home</a></li>
-                    <li><a href="report_lost.php" class="active">Report Lost</a></li>
-                    <li><a href="report_found.php">Report Found</a></li>
+                    <li><a href="report_lost.php">Report Lost</a></li>
+                    <li><a href="report_found.php" class="active">Report Found</a></li>
                     <li><a href="items.php">View Items</a></li>
                     <?php if (isUserLoggedIn()): ?>
                         <li><a href="user_dashboard.php">My Dashboard</a></li>
@@ -116,14 +119,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             </div>
         <?php endif; ?>
 
-        <!-- Report Lost Item Form -->
+        <!-- Report Found Item Form -->
         <div class="form-container">
-            <h2>📢 Report a Lost Item</h2>
+            <h2>🔍 Report a Found Item</h2>
             <p style="text-align: center; color: var(--color-light); margin-bottom: 2rem;">
-                Lost something on campus? Create a detailed listing to help others identify and return your item. The more details you provide, the better your chances of recovery.
+                Found something on campus? Help reunite it with its owner by providing detailed information about the item and where you found it.
             </p>
             
-            <form method="POST" enctype="multipart/form-data" onsubmit="return validateLostForm();">
+            <form method="POST" enctype="multipart/form-data" onsubmit="return validateForm();">
                 <div class="form-group">
                     <label for="title">Item Title *</label>
                     <input type="text" 
@@ -138,16 +141,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     <label for="description">Detailed Description *</label>
                     <textarea id="description" 
                               name="description" 
-                              placeholder="Describe your item in detail: color, brand, size, unique features, scratches, stickers, or any identifying marks. Include any personal items inside (without revealing sensitive info)..."
+                              placeholder="Provide a detailed description including color, brand, size, unique features, or any identifying marks. Be specific but avoid sharing personal information found on the item..."
                               required><?php echo isset($description) ? htmlspecialchars($description) : ''; ?></textarea>
                 </div>
 
                 <div class="form-group">
-                    <label for="location">Last Known Location *</label>
+                    <label for="location">Where You Found It *</label>
                     <input type="text" 
                            id="location" 
                            name="location" 
-                           placeholder="e.g., Library 2nd Floor Study Area, Student Center Cafeteria, Engineering Building Room 205"
+                           placeholder="e.g., Library 2nd Floor Study Area, Student Center Lost & Found Desk, Engineering Building Hallway"
                            value="<?php echo isset($location) ? htmlspecialchars($location) : ''; ?>"
                            required>
                 </div>
@@ -161,23 +164,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                            value="<?php echo isset($contact) ? htmlspecialchars($contact) : htmlspecialchars(getCurrentUserEmail()); ?>"
                            required>
                     <small style="color: var(--color-medium-light); font-size: 0.875rem;">
-                        We recommend using your university email address. People who find items will use this to contact you.
+                        We recommend using your university email address. The item owner will use this to contact you for pickup arrangements.
                     </small>
                 </div>
 
                 <div class="form-group">
-                    <label for="image">Upload Image (Optional)</label>
+                    <label for="image">Upload Image *</label>
                     <input type="file" 
                            id="image" 
                            name="image" 
-                           accept="image/*">
+                           accept="image/*"
+                           required>
                     <small style="color: var(--color-medium-light); font-size: 0.875rem;">
-                        If you have a photo of the item (from before you lost it), it can help with identification. Accepted formats: JPG, JPEG, PNG, GIF
+                        A photo is required to help owners identify their items. Accepted formats: JPG, JPEG, PNG, GIF
                     </small>
                 </div>
 
                 <div style="text-align: center; margin-top: 2rem;">
-                    <button type="submit" class="btn btn-warning">📢 Submit Lost Item Report</button>
+                    <button type="submit" class="btn btn-success">🔍 Submit Found Item Report</button>
                     <a href="index.php" class="btn btn-secondary" style="margin-left: 1rem;">Cancel</a>
                 </div>
             </form>
@@ -185,65 +189,64 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         <!-- Tips Section -->
         <div class="form-container">
-            <h2>💡 Tips for Reporting Lost Items</h2>
+            <h2>💡 Tips for Reporting Found Items</h2>
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-top: 1.5rem;">
                 <div>
-                    <h4 style="color: var(--accent-warning); margin-bottom: 1rem;">🔍 Be Specific</h4>
+                    <h4 style="color: var(--accent-success); margin-bottom: 1rem;">🔒 Protect Privacy</h4>
                     <ul style="padding-left: 1.5rem; color: var(--color-light);">
-                        <li>Include brand names and model numbers</li>
-                        <li>Mention unique scratches, stickers, or wear</li>
-                        <li>Describe the case, cover, or accessories</li>
-                        <li>Note any personal items inside (wallet contents, etc.)</li>
+                        <li>Don't share personal info found on items</li>
+                        <li>Avoid showing ID cards, phone numbers, or addresses</li>
+                        <li>Describe the item without revealing sensitive details</li>
+                        <li>Let the owner prove ownership through description</li>
                     </ul>
                 </div>
                 
                 <div>
-                    <h4 style="color: var(--accent-warning); margin-bottom: 1rem;">📍 Location Details</h4>
+                    <h4 style="color: var(--accent-success); margin-bottom: 1rem;">📸 Photo Guidelines</h4>
                     <ul style="padding-left: 1.5rem; color: var(--color-light);">
-                        <li>Be as specific as possible about where you lost it</li>
-                        <li>Include the time and date if you remember</li>
-                        <li>Mention nearby landmarks or room numbers</li>
-                        <li>Consider retracing your steps</li>
+                        <li>Take clear, well-lit photos</li>
+                        <li>Show distinctive features or markings</li>
+                        <li>Cover or blur any personal information</li>
+                        <li>Multiple angles can be helpful</li>
                     </ul>
                 </div>
                 
                 <div>
-                    <h4 style="color: var(--accent-warning); margin-bottom: 1rem;">🔒 Stay Safe</h4>
+                    <h4 style="color: var(--accent-success); margin-bottom: 1rem;">🤝 Safe Handoff</h4>
                     <ul style="padding-left: 1.5rem; color: var(--color-light);">
-                        <li>Don't share sensitive personal information</li>
-                        <li>Meet in public places for item pickup</li>
-                        <li>Verify the person has your actual item</li>
-                        <li>Consider involving campus security</li>
+                        <li>Meet in public, well-lit areas</li>
+                        <li>Consider campus security or lost & found office</li>
+                        <li>Ask the owner to describe the item first</li>
+                        <li>Verify ownership before handing over</li>
                     </ul>
                 </div>
             </div>
         </div>
 
-        <!-- Recent Lost Items -->
+        <!-- Recent Found Items -->
         <div class="form-container">
-            <h2>📢 Recently Reported Lost Items</h2>
+            <h2>✅ Recently Reported Found Items</h2>
             <p style="text-align: center; color: var(--color-light); margin-bottom: 1.5rem;">
-                See what others have lost recently - maybe you've found one of these items!
+                See what others have found recently - maybe someone found your lost item!
             </p>
             
             <?php
-            // Get recent lost items from ServerA API
-            $api_response = makeAPIRequest(SERVERA_URL . '/get_all_items.php', [
-                'type' => 'lost'
-            ], 'GET', ['return_json' => true]);
-            
-            $recentLostItems = [];
-            if (is_array($api_response) && isset($api_response['success']) && $api_response['success']) {
-                $items = $api_response['items'] ?? [];
-                $recentLostItems = array_slice($items, 0, 3);
+            // Get recent found items from database for display
+            // This helps users see what others have found recently
+            if ($conn) {
+                $sql = "SELECT * FROM items WHERE type = 'found' ORDER BY created_at DESC LIMIT 3";
+                $result = mysqli_query($conn, $sql);
+                $recentFoundItems = $result ? mysqli_fetch_all($result, MYSQLI_ASSOC) : [];
+            } else {
+                $recentFoundItems = [];
             }
             ?>
             
-            <?php if (count($recentLostItems) > 0): ?>
+            <?php if (count($recentFoundItems) > 0): ?>
                 <div class="items-grid">
-                    <?php foreach ($recentLostItems as $item): ?>
+                    <?php foreach ($recentFoundItems as $item): ?>
                     <div class="item-card">
-                        <span class="item-type lost">📢 Lost</span>
+                        <span class="item-type found">✅ Found</span>
                         
                         <?php if ($item['image']): ?>
                             <img src="<?php echo getImageUrl($item['image']); ?>" 
@@ -253,7 +256,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         
                         <h3><?php echo htmlspecialchars($item['title']); ?></h3>
                         <p><strong>Description:</strong> <?php echo htmlspecialchars(substr($item['description'], 0, 80) . '...'); ?></p>
-                        <p><strong>📍 Last seen:</strong> <?php echo htmlspecialchars($item['location']); ?></p>
+                        <p><strong>📍 Found at:</strong> <?php echo htmlspecialchars($item['location']); ?></p>
                         
                         <div class="item-meta">
                             <p><strong>Posted:</strong> <?php echo date('M j, Y', strtotime($item['created_at'])); ?></p>
@@ -263,57 +266,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 </div>
                 
                 <div style="text-align: center; margin-top: 2rem;">
-                    <a href="items.php?filter=lost" class="btn btn-secondary">View All Lost Items</a>
+                    <a href="items.php?filter=found" class="btn btn-secondary">View All Found Items</a>
                 </div>
             <?php else: ?>
-                <p style="text-align: center; color: var(--color-light); font-style: italic;">No lost items reported yet.</p>
+                <p style="text-align: center; color: var(--color-light); font-style: italic;">No found items reported yet.</p>
             <?php endif; ?>
         </div>
 
         <!-- What to Do After Reporting -->
         <div class="form-container">
             <h2>📋 What Happens Next?</h2>
-            <div style="background: rgba(255, 152, 0, 0.2); padding: 1.5rem; border-radius: 10px; margin-top: 1.5rem;">
+            <div style="background: rgba(0, 77, 64, 0.3); padding: 1.5rem; border-radius: 10px; margin-top: 1.5rem;">
                 <ol style="padding-left: 1.5rem; color: var(--color-light); line-height: 1.8;">
-                    <li><strong>Your report is now live</strong> - People who find items can search and contact you</li>
-                    <li><strong>Check your email regularly</strong> - Finders will contact you directly</li>
-                    <li><strong>Keep looking</strong> - Check campus lost & found offices and retrace your steps</li>
-                    <li><strong>Verify ownership</strong> - Be prepared to describe your item in detail</li>
-                    <li><strong>Update us</strong> - Let us know when your item is found so we can remove the listing</li>
+                    <li><strong>Your report is now live</strong> - Item owners can search and find your listing</li>
+                    <li><strong>Check your email regularly</strong> - Potential owners will contact you directly</li>
+                    <li><strong>Verify ownership</strong> - Ask them to describe the item before meeting</li>
+                    <li><strong>Arrange safe pickup</strong> - Meet in public areas or use campus lost & found</li>
+                    <li><strong>Update the community</strong> - Let us know when the item is successfully returned</li>
                 </ol>
-            </div>
-        </div>
-
-        <!-- Additional Resources -->
-        <div class="form-container">
-            <h2>🏢 Campus Lost & Found Offices</h2>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
-                <div style="background: rgba(255, 255, 255, 0.1); padding: 1.5rem; border-radius: 10px;">
-                    <h4 style="color: var(--accent-primary); margin-bottom: 1rem;">📚 Library</h4>
-                    <p style="color: var(--color-light); font-size: 0.9rem;">
-                        Main Library Information Desk<br>
-                        <strong>Hours:</strong> Mon-Fri 8AM-10PM<br>
-                        <strong>Location:</strong> Ground Floor
-                    </p>
-                </div>
-                
-                <div style="background: rgba(255, 255, 255, 0.1); padding: 1.5rem; border-radius: 10px;">
-                    <h4 style="color: var(--accent-primary); margin-bottom: 1rem;">🏢 Student Center</h4>
-                    <p style="color: var(--color-light); font-size: 0.9rem;">
-                        Student Services Office<br>
-                        <strong>Hours:</strong> Mon-Fri 9AM-5PM<br>
-                        <strong>Location:</strong> 2nd Floor, Room 205
-                    </p>
-                </div>
-                
-                <div style="background: rgba(255, 255, 255, 0.1); padding: 1.5rem; border-radius: 10px;">
-                    <h4 style="color: var(--accent-primary); margin-bottom: 1rem;">🚔 Campus Security</h4>
-                    <p style="color: var(--color-light); font-size: 0.9rem;">
-                        Security Office<br>
-                        <strong>Hours:</strong> 24/7<br>
-                        <strong>Emergency:</strong> Call Campus Security
-                    </p>
-                </div>
             </div>
         </div>
     </main>
@@ -324,7 +294,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </footer>
     <script src="assets/script.js"></script>
     <script>
-    function validateLostForm() {
+    function validateForm() {
         const title = document.getElementById('title').value.trim();
         const description = document.getElementById('description').value.trim();
         const location = document.getElementById('location').value.trim();
@@ -336,6 +306,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             return false;
         }
         
+        if (!image) {
+            alert('Please upload an image of the found item.');
+            return false;
+        }
+        
         // Validate email format
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(contact)) {
@@ -343,20 +318,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             return false;
         }
         
-        // If image is provided, validate it
-        if (image) {
-            // Validate image file type
-            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
-            if (!allowedTypes.includes(image.type)) {
-                alert('Please upload a valid image file (JPG, JPEG, PNG, or GIF).');
-                return false;
-            }
-            
-            // Validate image file size (max 5MB)
-            if (image.size > 5 * 1024 * 1024) {
-                alert('Image file size must be less than 5MB.');
-                return false;
-            }
+        // Validate image file type
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+        if (!allowedTypes.includes(image.type)) {
+            alert('Please upload a valid image file (JPG, JPEG, PNG, or GIF).');
+            return false;
+        }
+        
+        // Validate image file size (max 5MB)
+        if (image.size > 5 * 1024 * 1024) {
+            alert('Image file size must be less than 5MB.');
+            return false;
         }
         
         return true;

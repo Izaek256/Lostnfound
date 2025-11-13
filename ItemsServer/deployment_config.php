@@ -1,6 +1,6 @@
 <?php
 /**
- * Auto-generated Deployment Configuration for ServerA
+ * Auto-generated Deployment Configuration for ItemsServer
  * Generated on: 2025-10-31 09:37:16
  * Deployment Mode: ngrok - Ngrok Tunnel Deployment
  * 
@@ -13,19 +13,19 @@
 // ============================================
 define('DEPLOYMENT_MODE', 'staging');
 define('DEPLOYMENT_NAME', 'Staging Deployment');
-define('CURRENT_SERVER', 'ServerA');
+define('CURRENT_SERVER', 'ItemsServer');
 
 // ============================================
 // SERVER IP ADDRESSES
 // ============================================
-define('SERVERA_IP', '172.24.194.6');
-define('SERVERB_IP', '172.24.194.6');
-define('SERVERC_IP', '172.24.14.184');
+define('ITEMSSERVER_IP', '172.24.194.6');
+define('USERSERVER_IP', '172.24.194.6');
+define('FRONTEND_IP', '172.24.14.184');
 
 // ============================================
 // DATABASE CONFIGURATION
 // ============================================
-define('DB_HOST', '172.24.194.6');  // Remote database on ServerB
+define('DB_HOST', '172.24.194.6');  // Remote database on UserServer
 define('DB_NAME', 'lostfound_db');
 define('DB_USER', 'root');
 define('DB_PASS', 'Isaac@1234');
@@ -33,25 +33,25 @@ define('DB_PASS', 'Isaac@1234');
 // ============================================
 // API AND SERVICE URLS
 // ============================================
-define('SERVERA_API_URL', 'http://172.24.194.6/Lostnfound/ServerA/api');
-define('SERVERB_API_URL', 'http://172.24.194.6/Lostnfound/ServerB/api');
-define('SERVERC_API_URL', 'http://172.24.14.184/Lostnfound/ServerC/api');
+define('ITEMSSERVER_API_URL', 'http://172.24.194.6/Lostnfound/ItemsServer/api');
+define('USERSERVER_API_URL', 'http://172.24.194.6/Lostnfound/UserServer/api');
+define('FRONTEND_API_URL', 'http://172.24.14.184/Lostnfound/Frontend/api');
 
-// Upload URLs (ServerA hosts uploads - Items Service)
-define('UPLOADS_BASE_URL', 'http://172.24.194.6/Lostnfound/ServerA/uploads/');
+// Upload URLs (ItemsServer hosts uploads - Items Service)
+define('UPLOADS_BASE_URL', 'http://172.24.194.6/Lostnfound/ItemsServer/uploads/');
 
 // Health check URLs
-define('SERVERA_HEALTH_URL', 'http://172.24.194.6/Lostnfound/ServerA/api/health.php');
-define('SERVERB_HEALTH_URL', 'http://172.24.194.6/Lostnfound/ServerB/api/health.php');
-define('SERVERC_HEALTH_URL', 'http://172.24.14.184/Lostnfound/ServerC/health.php');
+define('ITEMSSERVER_HEALTH_URL', 'http://172.24.194.6/Lostnfound/ItemsServer/api/health.php');
+define('USERSERVER_HEALTH_URL', 'http://172.24.194.6/Lostnfound/UserServer/api/health.php');
+define('FRONTEND_HEALTH_URL', 'http://172.24.14.184/Lostnfound/Frontend/health.php');
 
 // ============================================
 // SERVER ROLE DEFINITIONS
 // ============================================
 define('SERVER_ROLES', [
-    'ServerA' => 'Item Logic Server (with uploads)',
-    'ServerB' => 'User Logic & Database Server', 
-    'ServerC' => 'User Interface Client'
+    'ItemsServer' => 'Item Logic Server (with uploads)',
+    'UserServer' => 'User Logic & Database Server', 
+    'Frontend' => 'User Interface Client'
 ]);
 
 // ============================================
@@ -62,7 +62,7 @@ function validateDeploymentConfig() {
     $errors = [];
     
     // Check required constants
-    $required = ['SERVERA_IP', 'SERVERB_IP', 'SERVERC_IP', 'DB_HOST', 'DB_NAME'];
+    $required = ['ITEMSSERVER_IP', 'USERSERVER_IP', 'FRONTEND_IP', 'DB_HOST', 'DB_NAME'];
     foreach ($required as $constant) {
         if (!defined($constant)) {
             $errors[] = "Missing required constant: $constant";
@@ -70,7 +70,7 @@ function validateDeploymentConfig() {
     }
     
     // Validate IP addresses and hostnames
-    $hosts = [SERVERA_IP, SERVERB_IP, SERVERC_IP];
+    $hosts = [ITEMSSERVER_IP, USERSERVER_IP, FRONTEND_IP];
     foreach ($hosts as $host) {
         if ($host !== 'localhost' && !filter_var($host, FILTER_VALIDATE_IP) && !filter_var($host, FILTER_VALIDATE_DOMAIN)) {
             $errors[] = "Invalid IP address or hostname: $host";
@@ -97,9 +97,9 @@ function getDeploymentInfo() {
         'name' => DEPLOYMENT_NAME,
         'server' => CURRENT_SERVER,
         'server_role' => getCurrentServerRole(),
-        'servera_ip' => SERVERA_IP,
-        'serverb_ip' => SERVERB_IP,
-        'serverc_ip' => SERVERC_IP,
+        'itemsserver_ip' => ITEMSSERVER_IP,
+        'userserver_ip' => USERSERVER_IP,
+        'frontend_ip' => FRONTEND_IP,
         'database_host' => DB_HOST,
         'validation_errors' => validateDeploymentConfig(),
         'generated_at' => '2025-10-31 09:37:16'
@@ -122,9 +122,9 @@ function isProductionDeployment() {
 // Auto-validate configuration
 $validation_errors = validateDeploymentConfig();
 if (!empty($validation_errors)) {
-    error_log("Deployment Configuration Errors for ServerA: " . implode(', ', $validation_errors));
+    error_log("Deployment Configuration Errors for ItemsServer: " . implode(', ', $validation_errors));
 }
 
 // Log deployment info
-error_log("ServerA loaded deployment config: " . DEPLOYMENT_MODE . " mode");
+error_log("ItemsServer loaded deployment config: " . DEPLOYMENT_MODE . " mode");
 ?>

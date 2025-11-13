@@ -11,7 +11,7 @@ header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 
 $health_data = [
-    'server' => 'ServerC',
+    'server' => 'Frontend',
     'role' => 'User Interface Server - API',
     'status' => 'online',
     'timestamp' => date('Y-m-d H:i:s'),
@@ -35,12 +35,12 @@ try {
     $health_data['services']['database_connection'] = 'error: ' . $e->getMessage();
 }
 
-// Test ServerA connectivity
-$servera_status = testServerConnection(SERVERA_URL);
+// Test ItemsServer connectivity
+$servera_status = testServerConnection(ITEMSSERVER_URL);
 $health_data['services']['servera_api'] = $servera_status ? 'reachable' : 'unreachable';
 
-// Test ServerB connectivity  
-$serverb_status = testServerConnection(SERVERB_URL);
+// Test UserServer connectivity  
+$serverb_status = testServerConnection(USERSERVER_URL);
 $health_data['services']['serverb_api'] = $serverb_status ? 'reachable' : 'unreachable';
 
 // Test uploads directory access

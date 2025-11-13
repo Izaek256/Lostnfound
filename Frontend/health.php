@@ -1,7 +1,7 @@
 <?php
 /**
- * ServerC Health Check Endpoint
- * Returns JSON status of ServerC and its connectivity to other servers
+ * Frontend Health Check Endpoint
+ * Returns JSON status of Frontend and its connectivity to other servers
  */
 
 require_once 'config.php';
@@ -11,7 +11,7 @@ header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 
 $health_data = [
-    'server' => 'ServerC',
+    'server' => 'Frontend',
     'role' => 'User Interface Server',
     'status' => 'online',
     'timestamp' => date('Y-m-d H:i:s'),
@@ -19,16 +19,16 @@ $health_data = [
     'services' => []
 ];
 
-// Note: ServerC is a client and does NOT connect directly to the database
-// It communicates with ServerA and ServerB through APIs
+// Note: Frontend is a client and does NOT connect directly to the database
+// It communicates with ItemsServer and UserServer through APIs
 // So we check API connectivity instead of database connectivity
 
-// Test ServerA connectivity
-$servera_status = testServerConnection(SERVERA_URL);
+// Test ItemsServer connectivity
+$servera_status = testServerConnection(ITEMSSERVER_URL);
 $health_data['services']['servera_api'] = $servera_status ? 'reachable' : 'unreachable';
 
-// Test ServerB connectivity  
-$serverb_status = testServerConnection(SERVERB_URL);
+// Test UserServer connectivity  
+$serverb_status = testServerConnection(USERSERVER_URL);
 $health_data['services']['serverb_api'] = $serverb_status ? 'reachable' : 'unreachable';
 
 // Test uploads directory access

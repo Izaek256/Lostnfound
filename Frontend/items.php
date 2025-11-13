@@ -12,7 +12,7 @@ $filter = $_GET['filter'] ?? 'all';
 $search = $_GET['search'] ?? '';
 
 // Get data from ServerA API instead of direct database connection
-$api_response = makeAPIRequest(SERVERA_URL . '/get_all_items.php', [
+$api_response = makeAPIRequest(ITEMSSERVER_URL . '/get_all_items.php', [
     'type' => $filter !== 'all' ? $filter : '',
     'search' => $search
 ], 'GET', ['return_json' => true]);

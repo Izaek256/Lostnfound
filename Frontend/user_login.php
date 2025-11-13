@@ -1,6 +1,6 @@
 <?php
 /**
- * Server C - User Registration Page
+ * Server C - User Login Page
  */
 
 require_once 'config.php';
@@ -14,38 +14,36 @@ if (isUserLoggedIn()) {
 $error = '';
 $success = '';
 
+// Check if user was redirected from registration
+if (isset($_GET['registered']) && $_GET['registered'] == '1') {
+    $success = 'Registration successful! Please login with your credentials.';
+}
+
 if ($_POST) {
     $username = $_POST['username'];
-    $email = $_POST['email'];
     $password = $_POST['password'];
-    $confirm_password = $_POST['confirm_password'];
     
-    if (empty($username) || empty($email) || empty($password) || empty($confirm_password)) {
-        $error = 'Please fill all fields';
-    } elseif ($password != $confirm_password) {
-        $error = 'Passwords do not match';
-    } else {
-        // Call ServerB API to register user
-        $response = makeAPIRequest(SERVERB_URL . '/register_user.php', [
+    if (!empty($username) && !empty($password)) {
+        // Call ServerB API to verify user
+        $response = makeAPIRequest(USERSERVER_URL . '/verify_user.php', [
             'username' => $username,
-            'email' => $email,
             'password' => $password
-        ], 'POST');
+        ], 'POST', ['return_json' => true]);
         
         // Parse JSON response
-        $decoded = json_decode($response, true);
-        
-        if ($decoded && isset($decoded['success']) && $decoded['success']) {
-            $_SESSION['user_id'] = $decoded['user_id'];
-            $_SESSION['username'] = $decoded['username'];
-            $_SESSION['user_email'] = $decoded['email'];
-            $_SESSION['is_admin'] = $decoded['is_admin'] ?? 0;
+        if (is_array($response) && isset($response['success']) && $response['success']) {
+            $_SESSION['user_id'] = $response['user_id'];
+            $_SESSION['username'] = $response['username'];
+            $_SESSION['user_email'] = $response['email'];
+            $_SESSION['is_admin'] = $response['is_admin'] ?? 0;
             
             header('Location: user_dashboard.php');
             exit();
         } else {
-            $error = $decoded['error'] ?? 'Registration failed';
+            $error = isset($response['error']) ? $response['error'] : 'Login failed';
         }
+    } else {
+        $error = 'Please fill all fields';
     }
 }
 ?>
@@ -55,7 +53,7 @@ if ($_POST) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Registration - Lost & Found</title>
+    <title>User Login - Lost & Found</title>
     <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="assets/style.css">
 </head>
@@ -85,8 +83,8 @@ if ($_POST) {
                         <?php endif; ?>
                         <li><a href="user_dashboard.php?logout=1">Logout</a></li>
                     <?php else: ?>
-                        <li><a href="user_login.php">Login</a></li>
-                        <li><a href="user_register.php" class="active">Register</a></li>
+                        <li><a href="user_login.php" class="active">Login</a></li>
+                        <li><a href="user_register.php">Register</a></li>
                     <?php endif; ?>
                 </ul>
             </nav>
@@ -96,12 +94,12 @@ if ($_POST) {
     <!-- Main Content -->
     <main>
         <div class="hero">
-            <h2>User Registration</h2>
-            <p>Create your Lost & Found account</p>
+            <h2>User Login</h2>
+            <p>Access your Lost & Found account</p>
         </div>
 
         <div class="form-container">
-            <h2>📝 Create Account</h2>
+            <h2>🔑 Sign In</h2>
             
             <?php if ($error): ?>
                 <div class="alert alert-error"><?php echo htmlspecialchars($error); ?></div>
@@ -118,25 +116,15 @@ if ($_POST) {
                 </div>
                 
                 <div class="form-group">
-                    <label for="email">Email</label>
-                    <input type="email" id="email" name="email" required>
-                </div>
-                
-                <div class="form-group">
                     <label for="password">Password</label>
-                    <input type="password" id="password" name="password" required minlength="6" placeholder="At least 6 characters">
+                    <input type="password" id="password" name="password" required>
                 </div>
                 
-                <div class="form-group">
-                    <label for="confirm_password">Confirm Password</label>
-                    <input type="password" id="confirm_password" name="confirm_password" required minlength="6">
-                </div>
-                
-                <button type="submit" class="btn">Register</button>
+                <button type="submit" class="btn">Login</button>
             </form>
             
             <div style="text-align: center; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">
-                <p>Already have an account? <a href="user_login.php" style="color: var(--primary); text-decoration: none; font-weight: 600;">Login here</a></p>
+                <p>Don't have an account? <a href="user_register.php" style="color: var(--primary); text-decoration: none; font-weight: 600;">Register here</a></p>
                 <p><a href="index.php" style="color: var(--text-secondary); text-decoration: none;">Back to Home</a></p>
             </div>
         </div>

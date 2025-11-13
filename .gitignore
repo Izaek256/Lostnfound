@@ -43,3 +43,4 @@ error_log
 # Local development
 *.local
 
+server_status.php

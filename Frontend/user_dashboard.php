@@ -23,7 +23,7 @@ if (isset($_POST['delete_item'])) {
     $current_user_id = getCurrentUserId();
     
     // First get item from ServerA API to verify ownership
-    $api_response = makeAPIRequest(SERVERA_URL . '/get_item.php', [
+    $api_response = makeAPIRequest(ITEMSSERVER_URL . '/get_item.php', [
         'item_id' => $item_id
     ], 'GET', ['return_json' => true]);
     
@@ -37,7 +37,7 @@ if (isset($_POST['delete_item'])) {
     }
     
     // Call ServerA API to delete item
-    $response = makeAPIRequest(SERVERA_URL . '/delete_item.php', [
+    $response = makeAPIRequest(ITEMSSERVER_URL . '/delete_item.php', [
         'id' => $item_id,
         'user_id' => $current_user_id
     ], 'POST', ['return_json' => true]);
@@ -65,7 +65,7 @@ $username = getCurrentUsername();
 $userEmail = getCurrentUserEmail();
 
 // Get user's items from ServerA API instead of direct database connection
-$api_response = makeAPIRequest(SERVERA_URL . '/get_user_items.php', [
+$api_response = makeAPIRequest(ITEMSSERVER_URL . '/get_user_items.php', [
     'user_id' => $user_id
 ], 'GET', ['return_json' => true]);
 

@@ -1,6 +1,6 @@
 <?php
 /**
- * ServerC Configuration - User Interface Server
+ * Frontend Configuration - User Interface Server
  * 
  * Unified configuration that works for localhost testing and production deployment
  * Configuration is automatically managed by deploy.php
@@ -15,35 +15,35 @@ session_start();
 // ============================================
 // SERVER-SPECIFIC CONFIGURATION
 // ============================================
-// ServerC is the user interface client
-// It communicates with ServerA (item operations) and ServerB (user operations)
-// ServerC CANNOT access the database directly
+// Frontend is the user interface client
+// It communicates with ItemsServer (item operations) and UserServer (user operations)
+// Frontend CANNOT access the database directly
 
 // ============================================
 // DATABASE CONNECTION FUNCTIONS
 // ============================================
-// ServerC is a client and DOES NOT connect directly to the database
-// All operations must go through ServerA and ServerB APIs
-// ServerA: Handles item logic (add, update, delete, get items)
-// ServerB: Handles user logic (register, verify, authentication)
+// Frontend is a client and DOES NOT connect directly to the database
+// All operations must go through ItemsServer and UserServer APIs
+// ItemsServer: Handles item logic (add, update, delete, get items)
+// UserServer: Handles user logic (register, verify, authentication)
 
-// Placeholder function - NOT USED in ServerC
-// ServerC must use ServerA APIs for all database operations
+// Placeholder function - NOT USED in Frontend
+// Frontend must use ItemsServer APIs for all database operations
 function connectDB() {
-    die("ERROR: ServerC cannot connect directly to the database.\nServerC must use ServerA APIs for all database operations.\nThis ensures ServerA is the single point of database access.");
+    die("ERROR: Frontend cannot connect directly to the database.\nFrontend must use ItemsServer APIs for all database operations.\nThis ensures ItemsServer is the single point of database access.");
 }
 
 // Legacy function names - also disabled
 function connectServerA() {
-    die("ERROR: ServerC cannot connect directly to the database.");
+    die("ERROR: Frontend cannot connect directly to the database.");
 }
 
 function connectServerB() {
-    die("ERROR: ServerC cannot connect directly to the database.");
+    die("ERROR: Frontend cannot connect directly to the database.");
 }
 
 function connectServerC() {
-    die("ERROR: ServerC cannot connect directly to the database.");
+    die("ERROR: Frontend cannot connect directly to the database.");
 }
 
 // ============================================
@@ -118,14 +118,14 @@ function makeAPIRequest($url, $data = [], $method = 'POST', $options = []) {
                     curl_setopt($ch, CURLOPT_HTTPHEADER, [
                         'Content-Type: application/json',
                         'Accept: application/json',
-                        'User-Agent: LostFound-ServerC/2.0'
+                        'User-Agent: LostFound-Frontend/2.0'
                     ]);
                 } else {
                     $post_data = http_build_query($data);
                     curl_setopt($ch, CURLOPT_HTTPHEADER, [
                         'Content-Type: application/x-www-form-urlencoded',
                         'Accept: */*',
-                        'User-Agent: LostFound-ServerC/2.0'
+                        'User-Agent: LostFound-Frontend/2.0'
                     ]);
                 }
                 curl_setopt($ch, CURLOPT_POSTFIELDS, $post_data);
@@ -138,7 +138,7 @@ function makeAPIRequest($url, $data = [], $method = 'POST', $options = []) {
                 curl_setopt($ch, CURLOPT_HTTPGET, true);
                 curl_setopt($ch, CURLOPT_HTTPHEADER, [
                     'Accept: */*',
-                    'User-Agent: LostFound-ServerC/2.0'
+                    'User-Agent: LostFound-Frontend/2.0'
                 ]);
                 
             } elseif ($method === 'DELETE') {
@@ -150,7 +150,7 @@ function makeAPIRequest($url, $data = [], $method = 'POST', $options = []) {
                 curl_setopt($ch, CURLOPT_HTTPHEADER, [
                     'Content-Type: application/x-www-form-urlencoded',
                     'Accept: */*',
-                    'User-Agent: LostFound-ServerC/2.0'
+                    'User-Agent: LostFound-Frontend/2.0'
                 ]);
                 
             } elseif ($method === 'PUT') {
@@ -161,7 +161,7 @@ function makeAPIRequest($url, $data = [], $method = 'POST', $options = []) {
                 curl_setopt($ch, CURLOPT_HTTPHEADER, [
                     'Content-Type: application/x-www-form-urlencoded',
                     'Accept: */*',
-                    'User-Agent: LostFound-ServerC/2.0'
+                    'User-Agent: LostFound-Frontend/2.0'
                 ]);
             }
             
@@ -263,12 +263,12 @@ function makeAPIRequest($url, $data = [], $method = 'POST', $options = []) {
 }
 
 // API URLs - Automatically configured from deployment_config.php
-define('SERVERA_URL', SERVERA_API_URL);  // Item operations
-define('SERVERB_URL', SERVERB_API_URL);  // User operations
+define('ITEMSSERVER_URL', ITEMSSERVER_API_URL);  // Item operations
+define('USERSERVER_URL', USERSERVER_API_URL);  // User operations
 
 // Upload paths - supports both network mount and HTTP access
-define('UPLOADS_PATH', __DIR__ . '/../ServerA/uploads/');  // Local/mounted path for file operations (if servers share filesystem)
-define('UPLOADS_URL', '../ServerA/uploads/');   // Browser path (works if mounted locally)
+define('UPLOADS_PATH', __DIR__ . '/../ItemsServer/uploads/');  // Local/mounted path for file operations (if servers share filesystem)
+define('UPLOADS_URL', '../ItemsServer/uploads/');   // Browser path (works if mounted locally)
 define('UPLOADS_HTTP_URL', UPLOADS_BASE_URL);   // Automatically configured from deployment_config.php
 
 // Simple user check functions
@@ -381,9 +381,9 @@ function getServerStatus($server_url, $server_name, $timeout = 5) {
 
 // Check if all critical servers are reachable
 function areAllServersOnline() {
-    $servera_check = testServerConnection(SERVERA_URL, 3);
-    $serverb_check = testServerConnection(SERVERB_URL, 3);
+    $itemsserver_check = testServerConnection(ITEMSSERVER_URL, 3);
+    $userserver_check = testServerConnection(USERSERVER_URL, 3);
     
-    return $servera_check['success'] && $serverb_check['success'];
+    return $itemsserver_check['success'] && $userserver_check['success'];
 }
 ?>

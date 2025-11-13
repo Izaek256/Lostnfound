@@ -1,6 +1,6 @@
 <?php
 /**
- * ServerB Configuration - Database & File Server
+ * UserServer Configuration - User & Database Server
  * 
  * Unified configuration that works for localhost testing and production deployment
  * Configuration is automatically managed by deploy.php
@@ -15,10 +15,10 @@ session_start();
 // ============================================
 // SERVER-SPECIFIC CONFIGURATION  
 // ============================================
-// ServerB handles user logic (registration, authentication, user management)
-// ServerB connects to ServerA for item-related operations
+// UserServer handles user logic (registration, authentication, user management)
+// UserServer connects to ItemsServer for item-related operations
 
-// Database connection (ServerB connects to the database for user management)
+// Database connection (UserServer connects to the database for user management)
 $db_host = DB_HOST;      // Automatically configured by deployment system
 $db_name = DB_NAME;      
 $db_user = DB_USER;      
@@ -27,15 +27,15 @@ $db_pass = DB_PASS;
 // ============================================
 // SERVER CONNECTIVITY
 // ============================================
-// ServerB URL for connecting to ServerA APIs (for item operations)
-if (!defined('SERVERA_API_URL')) {
-    define('SERVERA_API_URL', SERVERA_API_URL);
+// ItemsServer URL for connecting to ItemsServer APIs (for item operations)
+if (!defined('ITEMSSERVER_API_URL')) {
+    define('ITEMSSERVER_API_URL', ITEMSSERVER_API_URL);
 }
 
 // ============================================
 // DATABASE CONNECTION FUNCTIONS
 // ============================================
-// This server (ServerB) hosts the centralized database
+// This server (UserServer) hosts the centralized database
 
 // Main database connection - local database on this server
 function connectDB() {
@@ -101,7 +101,7 @@ function logoutUser() {
 // API HELPER FUNCTIONS
 // ============================================
 
-// Enhanced function to make API calls to ServerA for item operations
+// Enhanced function to make API calls to ItemsServer for item operations
 function makeAPIRequest($url, $data = [], $method = 'POST', $options = []) {
     // Default options
     $retry_count = $options['retry_count'] ?? 3;
@@ -134,14 +134,14 @@ function makeAPIRequest($url, $data = [], $method = 'POST', $options = []) {
                     curl_setopt($ch, CURLOPT_HTTPHEADER, [
                         'Content-Type: application/json',
                         'Accept: application/json',
-                        'User-Agent: LostFound-ServerB/2.0'
+                        'User-Agent: LostFound-UserServer/2.0'
                     ]);
                 } else {
                     $post_data = http_build_query($data);
                     curl_setopt($ch, CURLOPT_HTTPHEADER, [
                         'Content-Type: application/x-www-form-urlencoded',
                         'Accept: */*',
-                        'User-Agent: LostFound-ServerB/2.0'
+                        'User-Agent: LostFound-UserServer/2.0'
                     ]);
                 }
                 curl_setopt($ch, CURLOPT_POSTFIELDS, $post_data);
@@ -154,7 +154,7 @@ function makeAPIRequest($url, $data = [], $method = 'POST', $options = []) {
                 curl_setopt($ch, CURLOPT_HTTPGET, true);
                 curl_setopt($ch, CURLOPT_HTTPHEADER, [
                     'Accept: */*',
-                    'User-Agent: LostFound-ServerB/2.0'
+                    'User-Agent: LostFound-UserServer/2.0'
                 ]);
             }
             

@@ -17,7 +17,7 @@ $stats = [
 
 // Get recent items from ServerA
 try {
-    $api_url = SERVERA_URL . '/get_all_items.php';
+    $api_url = ITEMSSERVER_URL . '/get_all_items.php';
     error_log("[DEBUG] Calling API: $api_url");
     $response = makeAPIRequest($api_url, [
         'limit' => 6,
@@ -44,7 +44,7 @@ try {
 
 // Get statistics from ServerA
 try {
-    $response = makeAPIRequest(SERVERA_URL . '/get_all_items.php', [], 'GET');
+    $response = makeAPIRequest(ITEMSSERVER_URL . '/get_all_items.php', [], 'GET');
     
     if ($response && strpos($response, 'error|') !== 0) {
         $decoded = json_decode($response, true);
