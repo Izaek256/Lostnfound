@@ -211,40 +211,6 @@ function makeAPIRequest($url, $data = [], $method = 'POST', $options = []) {
     return "error|$error_message";
 }
 
-// User session helpers
-function isUserLoggedIn() {
-    return isset($_SESSION['user_id']);
-}
-
-function getCurrentUserId() {
-    return $_SESSION['user_id'] ?? null;
-}
-
-function getCurrentUsername() {
-    return $_SESSION['username'] ?? null;
-}
-
-function getCurrentUserEmail() {
-    return $_SESSION['user_email'] ?? null;
-}
-
-function isCurrentUserAdmin() {
-    return isset($_SESSION['is_admin']) && $_SESSION['is_admin'] == 1;
-}
-
-function requireUser() {
-    if (!isUserLoggedIn()) {
-        header('Location: user_login.php');
-        exit();
-    }
-}
-
-function logoutUser() {
-    session_destroy();
-    header('Location: index.php');
-    exit();
-}
-
 // API response helpers
 function sendJSONResponse($data, $status_code = 200) {
     http_response_code($status_code);
