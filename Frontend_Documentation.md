@@ -681,7 +681,7 @@ document.addEventListener('keydown', function(event) {
 - "Tips for Success" section
 
 **Key Features**:
-- PHP data fetching from ServerA API
+- PHP data fetching from ItemsServer API
 - Dynamic statistics display
 - Conditional rendering based on login state
 - Emoji icons for visual interest
@@ -797,7 +797,7 @@ $response = makeAPIRequest(ITEMSSERVER_URL . '/add_item.php', [
 // Toggle admin status
 if ($action === 'toggle_user_status') {
     $api_response = makeAPIRequest(
-        SERVERB_URL . '/toggle_admin.php',
+        USERSERVER_URL . '/toggle_admin.php',
         ['user_id' => $target_user_id, 'is_admin' => $new_status],
         'POST',
         ['return_json' => true]
@@ -807,7 +807,7 @@ if ($action === 'toggle_user_status') {
 // Delete any item
 if ($action === 'delete_item') {
     $api_response = makeAPIRequest(
-        SERVERA_URL . '/delete_item.php',
+        ITEMSSERVER_URL . '/delete_item.php',
         ['id' => $item_id, 'is_admin' => 1],
         'POST',
         ['return_json' => true]

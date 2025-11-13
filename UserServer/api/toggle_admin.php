@@ -1,6 +1,6 @@
 <?php
 /**
- * ServerB API - Toggle User Admin Status
+ * UserServer API - Toggle User Admin Status
  * 
  * Changes a user's admin status (make admin or remove admin)
  * Admin only operation

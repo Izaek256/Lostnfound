@@ -25,7 +25,7 @@ if ($_POST) {
     } elseif ($password != $confirm_password) {
         $error = 'Passwords do not match';
     } else {
-        // Call ServerB API to register user
+        // Call UserServer API to register user
         $response = makeAPIRequest(USERSERVER_URL . '/register_user.php', [
             'username' => $username,
             'email' => $email,

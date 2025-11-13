@@ -7,7 +7,7 @@
 
 require_once 'config.php';
 
-// Get data from ServerA API instead of direct database connection
+// Get data from ItemsServer API instead of direct database connection
 $recentItems = [];
 $stats = [
     'total' => 0,
@@ -15,7 +15,7 @@ $stats = [
     'found_count' => 0
 ];
 
-// Get recent items from ServerA
+// Get recent items from ItemsServer
 try {
     $api_url = ITEMSSERVER_URL . '/get_all_items.php';
     error_log("[DEBUG] Calling API: $api_url");
@@ -42,7 +42,7 @@ try {
     error_log("Error fetching recent items: " . $e->getMessage());
 }
 
-// Get statistics from ServerA
+// Get statistics from ItemsServer
 try {
     $response = makeAPIRequest(ITEMSSERVER_URL . '/get_all_items.php', [], 'GET');
     

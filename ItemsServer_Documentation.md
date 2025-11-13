@@ -2,7 +2,7 @@
 
 ## 🎯 Server Role & Responsibility
 
-**ItemsServer** (formerly ServerA) is the **Item Logic Server** in the Lost & Found distributed system. It serves as the **sole authority** for all item-related operations, including creating, reading, updating, and deleting items in the database.
+**ItemsServer** is the **Item Logic Server** in the Lost & Found distributed system. It serves as the **sole authority** for all item-related operations, including creating, reading, updating, and deleting items in the database.
 
 **Directory**: `ItemsServer/`  
 **IP Address**: `172.24.194.6`  
@@ -79,7 +79,7 @@ ItemsServer/
 ## 🔧 Core Configuration (`config.php`)
 
 ### Purpose
-The `config.php` file serves as the **central configuration hub** for ServerA, providing:
+The `config.php` file serves as the **central configuration hub** for ItemsServer, providing:
 - Database connection functions
 - Session management
 - CORS header handling
@@ -92,7 +92,7 @@ The `config.php` file serves as the **central configuration hub** for ServerA, p
 ```php
 function connectDB()
 ```
-- **Purpose**: Establish connection to the centralized database on ServerB
+- **Purpose**: Establish connection to the centralized database on UserServer
 - **Returns**: mysqli connection object
 - **Error Handling**: Dies with error message if connection fails
 - **Usage**: Used by all API endpoints to access the database
@@ -602,7 +602,7 @@ GET /api/health.php
 
 ## 🗄️ Database Schema (Items Table)
 
-ServerA directly interacts with the `items` table:
+ItemsServer directly interacts with the `items` table:
 
 ```sql
 CREATE TABLE items (
@@ -627,7 +627,7 @@ CREATE TABLE items (
 - **`type`**: ENUM restricting values to 'lost' or 'found'
 - **location**: Where item was lost/found
 - **contact**: Email or phone for contact
-- **image**: Filename of uploaded image (stored in ServerA/uploads/)
+- **image**: Filename of uploaded image (stored in ItemsServer/uploads/)
 - **created_at**: Automatic timestamp on creation
 
 ---
@@ -648,7 +648,7 @@ $description = mysqli_real_escape_string($conn, $description);
 - **Ownership verification**: Users can only modify their own items
 
 ### CORS Security
-- **Cross-Origin Headers**: Allows API access from ServerC
+- **Cross-Origin Headers**: Allows API access from Frontend
 - **Preflight Handling**: OPTIONS requests handled automatically
 - **Method Restrictions**: Only specified HTTP methods allowed
 

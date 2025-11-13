@@ -1,9 +1,9 @@
 <?php
 /**
- * ServerA API - Delete Item
+ * ItemsServer API - Delete Item
  * 
  * Deletes an item from the database (only if user owns it)
- * ServerA is the only server with direct database access
+ * ItemsServer is the only server with direct database access
  */
 
 require_once '../config.php';
@@ -57,7 +57,7 @@ try {
     if (mysqli_query($conn, $delete_sql)) {
         mysqli_close($conn);
         
-        // Return item details including image for ServerC to clean up locally
+        // Return item details including image for Frontend to clean up locally
         sendJSONResponse([
             'success' => true,
             'message' => 'Item deleted successfully',

@@ -1,7 +1,7 @@
 <?php
 /**
- * ServerB Health Check Endpoint
- * Returns JSON status of ServerB (Database & File Server)
+ * UserServer Health Check Endpoint
+ * Returns JSON status of UserServer (User Logic & Database Server)
  */
 
 require_once 'deployment_config.php';
@@ -11,7 +11,7 @@ header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 
 $health_data = [
-    'server' => 'ServerB',
+    'server' => 'UserServer',
     'role' => 'User Logic & Database Server',
     'status' => 'online',
     'timestamp' => date('Y-m-d H:i:s'),
@@ -19,7 +19,7 @@ $health_data = [
     'services' => []
 ];
 
-// Test database connection (ServerB hosts the database)
+// Test database connection (UserServer hosts the database)
 try {
     $conn = mysqli_connect('localhost', DB_USER, DB_PASS, DB_NAME);
     if ($conn) {
@@ -42,7 +42,7 @@ try {
 }
 
 // Test API endpoint
-$api_health_url = SERVERB_API_URL . '/health.php';
+$api_health_url = USERSERVER_API_URL . '/health.php';
 $ch = curl_init();
 curl_setopt($ch, CURLOPT_URL, $api_health_url);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);

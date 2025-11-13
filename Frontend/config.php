@@ -12,15 +12,15 @@ function connectDB() {
     die("ERROR: Frontend cannot connect directly to the database. Use API calls.");
 }
 
-function connectServerA() {
+function connectItemsServer() {
     die("ERROR: Frontend cannot connect directly to the database.");
 }
 
-function connectServerB() {
+function connectUserServer() {
     die("ERROR: Frontend cannot connect directly to the database.");
 }
 
-function connectServerC() {
+function connectFrontend() {
     die("ERROR: Frontend cannot connect directly to the database.");
 }
 

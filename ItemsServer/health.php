@@ -1,7 +1,7 @@
 <?php
 /**
- * ServerA Health Check Endpoint
- * Returns JSON status of ServerA (Authentication Server)
+ * ItemsServer Health Check Endpoint
+ * Returns JSON status of ItemsServer (Item Logic Server)
  */
 
 require_once 'deployment_config.php';
@@ -11,8 +11,8 @@ header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 
 $health_data = [
-    'server' => 'ServerA',
-    'role' => 'Authentication Server',
+    'server' => 'ItemsServer',
+    'role' => 'Item Logic Server (with uploads)',
     'status' => 'online',
     'timestamp' => date('Y-m-d H:i:s'),
     'deployment_mode' => DEPLOYMENT_MODE,
@@ -37,7 +37,7 @@ try {
 }
 
 // Test API endpoint
-$api_health_url = SERVERA_API_URL . '/health.php';
+$api_health_url = ITEMSSERVER_API_URL . '/health.php';
 $ch = curl_init();
 curl_setopt($ch, CURLOPT_URL, $api_health_url);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);

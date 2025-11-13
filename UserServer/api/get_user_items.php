@@ -1,9 +1,9 @@
 <?php
 /**
- * ServerB API - Get User Items (Proxy to ServerA)
+ * UserServer API - Get User Items (Proxy to ItemsServer)
  * 
- * Proxies requests to ServerA to get items for a specific user
- * ServerB handles user-related operations and proxies item queries to ServerA
+ * Proxies requests to ItemsServer to get items for a specific user
+ * UserServer handles user-related operations and proxies item queries to ItemsServer
  */
 
 require_once '../config.php';
@@ -27,20 +27,20 @@ if (!is_numeric($user_id)) {
 }
 
 try {
-    // Proxy the request to ServerA's item endpoint
-    $servera_url = SERVERA_API_URL . '/get_user_items.php';
+    // Proxy the request to ItemsServer's item endpoint
+    $itemsserver_url = ITEMSSERVER_API_URL . '/get_user_items.php';
     $response = makeAPIRequest(
-        $servera_url,
+        $itemsserver_url,
         ['user_id' => $user_id],
         'GET',
         ['return_json' => true, 'force_json' => true]
     );
     
     if (is_array($response) && isset($response['success'])) {
-        // Forward the response from ServerA
+        // Forward the response from ItemsServer
         sendJSONResponse($response);
     } else {
-        sendJSONResponse(['error' => 'Unexpected response from ServerA'], 500);
+        sendJSONResponse(['error' => 'Unexpected response from ItemsServer'], 500);
     }
     
 } catch (Exception $e) {

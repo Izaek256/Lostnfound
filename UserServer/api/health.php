@@ -1,7 +1,7 @@
 <?php
 /**
- * ServerB Health Check Endpoint
- * Returns status of item management server and database
+ * UserServer Health Check Endpoint
+ * Returns status of user management server and database
  */
 header('Content-Type: application/json');
 
@@ -14,7 +14,7 @@ $db_pass = "Isaac@1234";
 $conn = mysqli_connect($db_host, $db_user, $db_pass, $db_name);
 
 $health = [
-    'server' => 'ServerB',
+    'server' => 'UserServer',
     'status' => 'online',
     'database' => 'disconnected',
     'timestamp' => date('Y-m-d H:i:s'),

@@ -24,7 +24,7 @@ if ($_POST) {
     $password = $_POST['password'];
     
     if (!empty($username) && !empty($password)) {
-        // Call ServerB API to verify user
+        // Call UserServer API to verify user
         $response = makeAPIRequest(USERSERVER_URL . '/verify_user.php', [
             'username' => $username,
             'password' => $password

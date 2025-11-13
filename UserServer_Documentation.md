@@ -2,7 +2,7 @@
 
 ## 🎯 Server Role & Responsibility
 
-**UserServer** (formerly ServerB) is the **User Logic & Database Server** in the Lost & Found distributed system. It serves as the **central hub** for user authentication, database hosting, and acts as a proxy for item-related operations.
+**UserServer** is the **User Logic & Database Server** in the Lost & Found distributed system. It serves as the **central hub** for user authentication, database hosting, and acts as a proxy for item-related operations.
 
 **Directory**: `UserServer/`  
 **IP Address**: `172.24.194.6`  
@@ -32,7 +32,6 @@
 - **IP Address**: `172.24.194.6`
 - **Base URL**: `http://172.24.194.6/Lostnfound/UserServer`
 - **API Base URL**: `http://172.24.194.6/Lostnfound/UserServer/api`
-- **Location**: Same machine as ItemsServer
 - **Role**: User Logic & Database Server
 - **Operating System**: Typically Linux/Windows with XAMPP
 
@@ -40,21 +39,21 @@
 - **Host**: `localhost` or `172.24.194.6` (local database)
 - **Database**: `lostfound_db`
 - **User**: `root`
-- **Access**: Direct local access + remote access for ServerA
+- **Access**: Direct local access + remote access for ItemsServer
 - **Tables**: `users`, `items`
 
 ### Database Hosting
 - **Host**: `localhost` or `172.24.194.6` (local database)
 - **Database**: `lostfound_db`
 - **User**: `root`
-- **Access**: Direct local access + remote access for ServerA
+- **Access**: Direct local access + remote access for ItemsServer
 - **Tables**: `users`, `items`
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
 | `/api/register_user.php` | POST | Create new user account |
 | `/api/verify_user.php` | POST | Authenticate user (login) |
 | `/api/get_all_users.php` | GET | Get all users (admin only) |
-| `/api/get_user_items.php` | GET | Proxy to ServerA for user items |
+| `/api/get_user_items.php` | GET | Proxy to ItemsServer for user items |
 | `/api/toggle_admin.php` | POST | Toggle user admin status |
 | `/api/health.php` | GET | Server health check |
 
@@ -113,7 +112,7 @@ return $conn;
 
 **`makeAPIRequest($url, $data, $method, $options)`**
 
-This is the **most critical function** in ServerB, enabling robust inter-server communication.
+This is the **most critical function** in UserServer, enabling robust inter-server communication.
 
 **Parameters:**
 - `$url` (string): Target API endpoint URL
@@ -140,7 +139,7 @@ This is the **most critical function** in ServerB, enabling robust inter-server 
 ✅ **Comprehensive error logging**  
 ✅ **HTTP status code validation**  
 ✅ **SSL support** (configurable)  
-✅ **User-Agent identification** (`LostFound-ServerB/2.0`)  
+✅ **User-Agent identification** (`LostFound-UserServer/2.0`)  
 ✅ **Smart error handling** (don't retry 4xx errors)  
 
 **Usage Example:**
@@ -201,7 +200,7 @@ function logoutUser()             // Destroy session and redirect
 **`setCORSHeaders()`**
 - Sets Cross-Origin Resource Sharing headers
 - Handles OPTIONS preflight requests
-- Enables ServerC to call ServerB APIs
+- Enables Frontend to call UserServer APIs
 
 ---
 
@@ -511,7 +510,7 @@ GET /api/get_user_items.php?user_id=5
   "error": "Invalid user_id"
 }
 
-// ServerA API error (500)
+// ItemsServer API error (500)
 {
   "error": "Unexpected response from ItemsServer"
 }
@@ -674,7 +673,7 @@ $health['services']['verify_user_api'] = file_exists(__DIR__ . '/verify_user.php
 
 ## 🗄️ Database Schema (Users Table)
 
-ServerB manages the `users` table:
+UserServer manages the `users` table:
 
 ```sql
 CREATE TABLE users (

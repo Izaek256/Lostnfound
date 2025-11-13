@@ -8,7 +8,7 @@ Three-tier distributed architecture:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    Frontend (ServerC)                        │
+│                    Frontend                                  │
 │                    http://172.24.14.184                      │
 │         - User Interface & Rendering                         │
 │         - API client only (no direct database access)        │
@@ -22,7 +22,7 @@ Three-tier distributed architecture:
         └──────────┬──────────┘       │
                    │                   │
         ┌──────────▼──────────────────▼──────────┐
-        │        UserServer (ServerB)             │
+        │        UserServer                       │
         │        http://172.24.194.6              │
         │   - User authentication                 │
         │   - Database hosting                    │
@@ -113,7 +113,7 @@ All servers communicate via HTTP REST API using `makeAPIRequest()` function.
 ```
 User reports lost item on Frontend
   ↓
-Frontend uploads image to UserServer/uploads/
+Frontend uploads image to ItemsServer/uploads/
   ↓
 Frontend calls ItemsServer API: POST /add_item.php
   ↓
@@ -191,7 +191,7 @@ Lostnfound/
 1. **Database Setup** (on UserServer)
    ```bash
    php ItemsServer/db_setup.php
-   mkdir UserServer/uploads && chmod 755 UserServer/uploads
+   mkdir ItemsServer/uploads && chmod 755 ItemsServer/uploads
    ```
 
 2. **Configure Deployment**
@@ -201,7 +201,7 @@ Lostnfound/
 
 3. **Set Permissions**
    ```bash
-   chmod -R 755 UserServer/uploads/
+   chmod -R 755 ItemsServer/uploads/
    ```
 
 4. **Test Health Endpoints**
@@ -324,7 +324,7 @@ Authenticate a user.
 Expected behavior. Frontend must use API calls via `makeAPIRequest()`.
 
 **"Image not displaying"**  
-- Check `UserServer/uploads/` directory exists and is writable
+- Check `ItemsServer/uploads/` directory exists and is writable
 - Verify image path in database matches actual file
 - Check `UPLOADS_BASE_URL` in deployment_config.php
 

@@ -24,12 +24,12 @@ $health_data = [
 // So we check API connectivity instead of database connectivity
 
 // Test ItemsServer connectivity
-$servera_status = testServerConnection(ITEMSSERVER_URL);
-$health_data['services']['servera_api'] = $servera_status ? 'reachable' : 'unreachable';
+$itemsserver_status = testServerConnection(ITEMSSERVER_URL);
+$health_data['services']['itemsserver_api'] = $itemsserver_status ? 'reachable' : 'unreachable';
 
 // Test UserServer connectivity  
-$serverb_status = testServerConnection(USERSERVER_URL);
-$health_data['services']['serverb_api'] = $serverb_status ? 'reachable' : 'unreachable';
+$userserver_status = testServerConnection(USERSERVER_URL);
+$health_data['services']['userserver_api'] = $userserver_status ? 'reachable' : 'unreachable';
 
 // Test uploads directory access
 $uploads_accessible = is_dir(UPLOADS_PATH) && is_readable(UPLOADS_PATH);
@@ -37,8 +37,8 @@ $health_data['services']['uploads_directory'] = $uploads_accessible ? 'accessibl
 
 // Overall health status
 $all_services_ok = (
-    $servera_status &&
-    $serverb_status
+    $itemsserver_status &&
+    $userserver_status
 );
 
 if (!$all_services_ok) {

@@ -1,7 +1,7 @@
 <?php
 /**
- * ServerA Health Check Endpoint
- * Returns status of authentication server and database
+ * ItemsServer Health Check Endpoint
+ * Returns status of item management server and database
  */
 header('Content-Type: application/json');
 
@@ -14,7 +14,7 @@ $db_pass = "Isaac@1234";
 $conn = mysqli_connect($db_host, $db_user, $db_pass, $db_name);
 
 $health = [
-    'server' => 'ServerA',
+    'server' => 'ItemsServer',
     'status' => 'online',
     'database' => 'disconnected',
     'timestamp' => date('Y-m-d H:i:s'),
@@ -35,7 +35,7 @@ if ($conn && !$conn->connect_error) {
     }
 }
 
-// Check uploads directory (ServerA is the Items Service)
+// Check uploads directory (ItemsServer is the Items Service)
 $upload_dir = __DIR__ . '/../uploads';
 if (is_dir($upload_dir) && is_writable($upload_dir)) {
     $health['services']['uploads_directory'] = 'writable';

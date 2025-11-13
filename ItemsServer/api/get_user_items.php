@@ -1,9 +1,9 @@
 <?php
 /**
- * ServerA API - Get User's Items
+ * ItemsServer API - Get User's Items
  * 
  * Returns all items posted by a specific user
- * This allows ServerC to retrieve user items without direct database access
+ * This allows Frontend to retrieve user items without direct database access
  */
 
 require_once '../config.php';

@@ -1,9 +1,9 @@
 <?php
 /**
- * ServerA API - Update Item
+ * ItemsServer API - Update Item
  * 
  * Updates an item in the database (only if user owns it)
- * ServerA is the only server with direct database access
+ * ItemsServer is the only server with direct database access
  */
 
 require_once '../config.php';

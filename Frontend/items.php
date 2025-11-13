@@ -11,7 +11,7 @@ require_once 'config.php';
 $filter = $_GET['filter'] ?? 'all';
 $search = $_GET['search'] ?? '';
 
-// Get data from ServerA API instead of direct database connection
+// Get data from ItemsServer API instead of direct database connection
 $api_response = makeAPIRequest(ITEMSSERVER_URL . '/get_all_items.php', [
     'type' => $filter !== 'all' ? $filter : '',
     'search' => $search
@@ -31,7 +31,7 @@ if (is_array($api_response) && isset($api_response['success']) && $api_response[
     $stats = $api_response['stats'] ?? $stats;
 } else {
     // Handle API error
-    error_log('ServerA API error: ' . json_encode($api_response));
+    error_log('ItemsServer API error: ' . json_encode($api_response));
 }
 ?>
 

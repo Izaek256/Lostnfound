@@ -27,7 +27,7 @@ if ($item_id <= 0) {
 // Get current user ID
 $current_user_id = getCurrentUserId();
 
-// Get item from ServerA API instead of direct database connection
+// Get item from ItemsServer API instead of direct database connection
 $api_response = makeAPIRequest(ITEMSSERVER_URL . '/get_item.php', [
     'item_id' => $item_id
 ], 'GET', ['return_json' => true]);
@@ -75,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $image_filename = $item['image']; // Keep existing image by default
         
         if (isset($_FILES['new_image']) && $_FILES['new_image']['error'] === UPLOAD_ERR_OK) {
-            $upload_dir = '../ServerA/uploads/';
+            $upload_dir = '../ItemsServer/uploads/';
             $allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
             $max_size = 5 * 1024 * 1024; // 5MB
             
@@ -98,7 +98,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 } else {
                     // Delete old image if it exists and is not default
                     if ($item['image'] && $item['image'] !== 'default_item.jpg') {
-                        $old_image_path = '../ServerA/uploads/' . $item['image'];
+                        $old_image_path = '../ItemsServer/uploads/' . $item['image'];
                         if (file_exists($old_image_path)) {
                             unlink($old_image_path);
                         }
@@ -107,9 +107,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
         
-        // Update item via ServerA API if no errors
+        // Update item via ItemsServer API if no errors
         if (!isset($message) || $messageType !== 'error') {
-            // Call ServerA API to update item
+            // Call ItemsServer API to update item
             $response = makeAPIRequest(ITEMSSERVER_URL . '/update_item.php', [
                 'id' => $item_id,
                 'user_id' => $current_user_id,
@@ -121,7 +121,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'image_filename' => $image_filename
             ], 'POST', ['return_json' => true]);
             
-            // Handle JSON response from ServerA
+            // Handle JSON response from ItemsServer
             if (is_array($response) && isset($response['success']) && $response['success']) {
                 $message = 'Item updated successfully!';
                 $messageType = 'success';

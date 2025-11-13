@@ -1,9 +1,9 @@
 <?php
 /**
- * ServerA API - Get Item by ID
+ * ItemsServer API - Get Item by ID
  * 
  * Returns a specific item's details
- * This allows ServerC to retrieve item data without direct database access
+ * This allows Frontend to retrieve item data without direct database access
  */
 
 require_once '../config.php';

@@ -28,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         
         // Handle simple file upload
         if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
-            $upload_dir = '../ServerA/uploads/';
+            $upload_dir = '../ItemsServer/uploads/';
             
             if (!is_dir($upload_dir)) {
                 mkdir($upload_dir, 0755, true);
@@ -41,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             move_uploaded_file($_FILES['image']['tmp_name'], $upload_path);
         }
         
-        // Call ServerA API to add item
+        // Call ItemsServer API to add item
         $response = makeAPIRequest(ITEMSSERVER_URL . '/add_item.php', [
             'user_id' => $user_id,
             'title' => $title,
@@ -227,7 +227,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             </p>
             
             <?php
-            // Get recent lost items from ServerA API
+            // Get recent lost items from ItemsServer API
             $api_response = makeAPIRequest(ITEMSSERVER_URL . '/get_all_items.php', [
                 'type' => 'lost'
             ], 'GET', ['return_json' => true]);

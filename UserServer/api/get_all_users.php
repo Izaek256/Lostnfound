@@ -1,9 +1,9 @@
 <?php
 /**
- * ServerB API - Get All Users
+ * UserServer API - Get All Users
  * 
  * Returns a list of all registered users (admin only)
- * This allows ServerC admin dashboard to display user management
+ * This allows Frontend admin dashboard to display user management
  */
 
 require_once '../config.php';

@@ -22,7 +22,7 @@ if (isset($_POST['delete_item'])) {
     $item_id = $_POST['item_id'];
     $current_user_id = getCurrentUserId();
     
-    // First get item from ServerA API to verify ownership
+    // First get item from ItemsServer API to verify ownership
     $api_response = makeAPIRequest(ITEMSSERVER_URL . '/get_item.php', [
         'item_id' => $item_id
     ], 'GET', ['return_json' => true]);
@@ -36,7 +36,7 @@ if (isset($_POST['delete_item'])) {
         }
     }
     
-    // Call ServerA API to delete item
+    // Call ItemsServer API to delete item
     $response = makeAPIRequest(ITEMSSERVER_URL . '/delete_item.php', [
         'id' => $item_id,
         'user_id' => $current_user_id
@@ -46,7 +46,7 @@ if (isset($_POST['delete_item'])) {
     if (is_array($response) && isset($response['success']) && $response['success']) {
         // Delete image file locally if exists
         if ($item && $item['image']) {
-            $image_path = '../ServerA/uploads/' . $item['image'];
+            $image_path = '../ItemsServer/uploads/' . $item['image'];
             if (file_exists($image_path)) {
                 unlink($image_path);
             }
@@ -64,7 +64,7 @@ $user_id = getCurrentUserId();
 $username = getCurrentUsername();
 $userEmail = getCurrentUserEmail();
 
-// Get user's items from ServerA API instead of direct database connection
+// Get user's items from ItemsServer API instead of direct database connection
 $api_response = makeAPIRequest(ITEMSSERVER_URL . '/get_user_items.php', [
     'user_id' => $user_id
 ], 'GET', ['return_json' => true]);
