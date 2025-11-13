@@ -2,17 +2,43 @@
 
 ## Table of Contents
 1. [Overview](#overview)
-2. [HTML Structure](#html-structure)
-3. [CSS Styling](#css-styling)
-4. [JavaScript Functionality](#javascript-functionality)
-5. [Responsive Design](#responsive-design)
-6. [Page-by-Page Breakdown](#page-by-page-breakdown)
+2. [Server Role](#server-role)
+3. [HTML Structure](#html-structure)
+4. [CSS Styling](#css-styling)
+5. [JavaScript Functionality](#javascript-functionality)
+6. [Responsive Design](#responsive-design)
+7. [Page-by-Page Breakdown](#page-by-page-breakdown)
 
 ---
 
 ## Overview
 
-The frontend is built using vanilla HTML, CSS, and JavaScript with a modern, clean design. It communicates with ItemsServer and UserServer via API calls only.
+The Frontend is built using vanilla HTML, CSS, and JavaScript with a modern, clean design. It communicates with ItemsServer and UserServer via API calls only.
+
+**Directory**: `Frontend/`  
+**Role**: User Interface Client  
+**IP Address**: `172.24.14.184`  
+**Base URL**: `http://172.24.14.184/Lostnfound/Frontend`
+
+## Server Role
+
+**Frontend** is the **User Interface Client** in the Lost & Found distributed system. It serves as the presentation layer, rendering all HTML pages and communicating with backend servers.
+
+### Core Responsibilities
+✅ Render all frontend pages (HTML/CSS/JavaScript)  
+✅ Handle user interactions and form submissions  
+✅ Make API calls to ItemsServer (items) and UserServer (users)  
+✅ Manage user sessions and authentication state  
+✅ Upload files to ItemsServer's storage directory  
+✅ Display dynamic data from backend APIs  
+✅ Provide responsive mobile-friendly UI  
+
+### What Frontend Does NOT Do
+❌ **Connect directly to the database** (all data via APIs)  
+❌ Hash passwords (UserServer handles this)  
+❌ Store user data permanently (session-based only)  
+❌ Process SQL queries  
+❌ Implement business logic (delegates to ItemsServer/UserServer)
 
 ### Technology Stack
 - HTML5: Semantic markup
@@ -682,7 +708,7 @@ document.addEventListener('keydown', function(event) {
 $filter = $_GET['filter'] ?? 'all';
 $search = $_GET['search'] ?? '';
 
-$api_response = makeAPIRequest(SERVERA_URL . '/get_all_items.php', [
+$api_response = makeAPIRequest(ITEMSSERVER_URL . '/get_all_items.php', [
     'type' => $filter !== 'all' ? $filter : '',
     'search' => $search
 ], 'GET', ['return_json' => true]);
@@ -707,7 +733,7 @@ $api_response = makeAPIRequest(SERVERA_URL . '/get_all_items.php', [
 ```php
 // Image upload handling
 if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
-    $upload_dir = '../ServerB/uploads/';
+    $upload_dir = '../ItemsServer/uploads/';
     $extension = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
     $image_filename = uniqid() . '.' . $extension;
     $upload_path = $upload_dir . $image_filename;
@@ -715,7 +741,7 @@ if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
 }
 
 // API submission
-$response = makeAPIRequest(SERVERA_URL . '/add_item.php', [
+$response = makeAPIRequest(ITEMSSERVER_URL . '/add_item.php', [
     'user_id' => $user_id,
     'title' => $title,
     // ... more fields

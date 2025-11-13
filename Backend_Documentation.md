@@ -19,9 +19,9 @@
 
 The system uses three servers with clear separation of concerns:
 
-- **Frontend**: User interface, API client only
-- **ItemsServer**: Item CRUD operations, direct database access
-- **UserServer**: User authentication, database hosting, file storage
+- **Frontend** (172.24.14.184): User interface, API client only
+- **ItemsServer** (172.24.194.6): Item CRUD operations, direct database access
+- **UserServer** (172.24.194.6): User authentication, database hosting
 
 All inter-server communication happens via HTTP REST APIs using cURL.
 
@@ -185,7 +185,7 @@ CREATE TABLE items (
 
 ---
 
-### Database Initialization (`ServerA/db_setup.php`)
+### Database Initialization (`ItemsServer/db_setup.php`)
 
 ```php
 // Create database if not exists
@@ -221,7 +221,7 @@ mysqli_query($conn, $sql);
 
 ## API Endpoints
 
-### ServerA API Endpoints (Item Management)
+### ItemsServer API Endpoints (Item Management)
 
 #### 1. Add Item
 **Endpoint**: `POST /api/add_item.php`
@@ -513,7 +513,7 @@ if (mysqli_query($conn, $sql)) {
 
 ---
 
-### ServerB API Endpoints (User Management)
+### UserServer API Endpoints (User Management)
 
 #### 1. Register User
 **Endpoint**: `POST /api/register_user.php`
@@ -738,8 +738,8 @@ session_start();
 $username = $_POST['username'];
 $password = $_POST['password'];
 
-// 2. Call ServerB API to verify credentials
-$response = makeAPIRequest(SERVERB_URL . '/verify_user.php', [
+// 2. Call UserServer API to verify credentials
+$response = makeAPIRequest(USERSERVER_URL . '/verify_user.php', [
     'username' => $username,
     'password' => $password
 ], 'POST', ['return_json' => true]);
@@ -887,26 +887,26 @@ define('UPLOADS_BASE_URL', 'http://localhost/Lostnfound/ServerB/uploads/');
 
 ### Server-Specific Configuration
 
-**ServerC config.php**:
+**Frontend config.php**:
 ```php
 require_once __DIR__ . '/deployment_config.php';
 
 // API URLs
-define('SERVERA_URL', SERVERA_API_URL);  
-define('SERVERB_URL', SERVERB_API_URL);
+define('ITEMSSERVER_URL', ITEMSSERVER_API_URL);  
+define('USERSERVER_URL', USERSERVER_API_URL);
 
 // Upload paths
-define('UPLOADS_PATH', __DIR__ . '/../ServerB/uploads/');
-define('UPLOADS_URL', '../ServerB/uploads/');
+define('UPLOADS_PATH', __DIR__ . '/../ItemsServer/uploads/');
+define('UPLOADS_URL', '../ItemsServer/uploads/');
 define('UPLOADS_HTTP_URL', UPLOADS_BASE_URL);
 
 // Prevent direct database access
 function connectDB() {
-    die("ERROR: ServerC cannot connect directly to the database.");
+    die("ERROR: Frontend cannot connect directly to the database.");
 }
 ```
 
-**ServerA/B config.php**:
+**ItemsServer/UserServer config.php**:
 ```php
 require_once __DIR__ . '/deployment_config.php';
 
