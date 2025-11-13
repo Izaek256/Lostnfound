@@ -9,6 +9,20 @@ require_once '../config.php';
 // Set CORS headers for API
 setCORSHeaders();
 
+// Check if request is from browser directly (not AJAX)
+$accept_header = $_SERVER['HTTP_ACCEPT'] ?? '';
+$user_agent = $_SERVER['HTTP_USER_AGENT'] ?? '';
+
+// If request appears to be from browser directly, redirect to frontend
+if (strpos($accept_header, 'text/html') !== false && 
+    (strpos($user_agent, 'Mozilla') !== false || strpos($user_agent, 'Chrome') !== false || strpos($user_agent, 'Safari') !== false) &&
+    !isset($_SERVER['HTTP_X_REQUESTED_WITH'])) {
+    // Redirect to frontend report lost page
+    $frontend_url = 'http://' . $_SERVER['HTTP_HOST'] . '/Lostnfound/Frontend/report_lost.php';
+    header("Location: $frontend_url");
+    exit();
+}
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     sendJSONResponse(['error' => 'Only POST method is allowed'], 405);
 }

@@ -6,6 +6,23 @@
 
 require_once '../config.php';
 
+// Check if request is from browser directly (not AJAX)
+$accept_header = $_SERVER['HTTP_ACCEPT'] ?? '';
+$user_agent = $_SERVER['HTTP_USER_AGENT'] ?? '';
+
+// If request appears to be from browser directly, show a simple HTML page
+if (strpos($accept_header, 'text/html') !== false && 
+    (strpos($user_agent, 'Mozilla') !== false || strpos($user_agent, 'Chrome') !== false || strpos($user_agent, 'Safari') !== false) &&
+    !isset($_SERVER['HTTP_X_REQUESTED_WITH'])) {
+    // Show simple HTML page
+    echo "<html><head><title>Frontend Health Check</title></head><body>";
+    echo "<h1>Frontend Health Check</h1>";
+    echo "<p>The Frontend is running and accessible.</p>";
+    echo "<p>For detailed API health information, API clients should access this endpoint directly.</p>";
+    echo "</body></html>";
+    exit();
+}
+
 // Set JSON headers
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');

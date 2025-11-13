@@ -109,6 +109,7 @@ try {
                     <li><a href="report_lost.php">Report Lost</a></li>
                     <li><a href="report_found.php">Report Found</a></li>
                     <li><a href="items.php">View Items</a></li>
+                    <li><a href="server_status.php">Server Status</a></li>
                     <?php if (isUserLoggedIn()): ?>
                         <li><a href="user_dashboard.php">My Dashboard</a></li>
                         <?php if (isCurrentUserAdmin()): ?>

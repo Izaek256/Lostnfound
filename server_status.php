@@ -6,8 +6,7 @@
  * Shows health status, database connectivity, and live event logs
  */
 
-require_once 'ServerC/config.php';
-require_once 'ServerC/deployment_config.php';
+require_once 'Frontend/config.php';
 
 // Disable output buffering for real-time streaming
 // This allows sending data to browser progressively
@@ -23,7 +22,7 @@ $servers = [
     'ServerA' => [
         'name' => 'ServerA (Item Logic Server)',
         'url' => ITEMSSERVER_URL,
-        'health_url' => SERVERA_HEALTH_URL,
+        'health_url' => ITEMSSERVER_HEALTH_URL,
         'role' => 'Item operations, item database access',
         'status' => 'checking...',
         'database' => 'checking...',
@@ -35,7 +34,7 @@ $servers = [
     'ServerB' => [
         'name' => 'ServerB (User & Database Server)',
         'url' => USERSERVER_URL,
-        'health_url' => SERVERB_HEALTH_URL,
+        'health_url' => USERSERVER_HEALTH_URL,
         'role' => 'User management, database host, file storage',
         'status' => 'checking...',
         'database' => 'checking...',
@@ -46,8 +45,8 @@ $servers = [
     ],
     'ServerC' => [
         'name' => 'ServerC (User Interface Server)',
-        'url' => SERVERC_API_URL,
-        'health_url' => SERVERC_HEALTH_URL,
+        'url' => FRONTEND_API_URL,
+        'health_url' => FRONTEND_HEALTH_URL,
         'role' => 'Web interface, no database access',
         'status' => 'checking...',
         'database' => 'N/A',
