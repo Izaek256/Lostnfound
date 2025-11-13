@@ -6,9 +6,28 @@
  * Run this once to initialize the database
  */
 
-require_once 'config.php';
+require_once 'deployment_config.php';
 
-$conn = connectDB();
+// Connect to MySQL server without selecting a database
+$conn = mysqli_connect(DB_HOST, DB_USER, DB_PASS);
+
+if (!$conn) {
+    die("MySQL connection failed: " . mysqli_connect_error());
+}
+
+// Create database if it doesn't exist
+$db_name = DB_NAME;
+$sql = "CREATE DATABASE IF NOT EXISTS `$db_name`";
+if ($conn->query($sql) === TRUE) {
+    echo "Database '$db_name' created successfully or already exists<br>";
+} else {
+    echo "Error creating database: " . $conn->error . "<br>";
+}
+
+// Select the database
+if (!$conn->select_db($db_name)) {
+    die("Error selecting database: " . $conn->error);
+}
 
 // Create users table
 $sql = "CREATE TABLE IF NOT EXISTS users (
