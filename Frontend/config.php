@@ -121,6 +121,10 @@ function makeAPIRequest($url, $data = [], $method = 'POST', $options = []) {
             curl_setopt($ch, CURLOPT_MAXREDIRS, 5);
             curl_setopt($ch, CURLOPT_ENCODING, 'gzip, deflate, br');
             curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $connect_timeout);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
             
             if (!$verify_ssl) {
                 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
