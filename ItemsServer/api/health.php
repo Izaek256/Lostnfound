@@ -33,7 +33,7 @@ header('Content-Type: application/json');
 
 // Direct database connection (avoid session_start from config.php)
 $db_host = "localhost";
-$db_name = "lostfound_db";
+$db_name = "lostfound";
 $db_user = "root";
 $db_pass = "Isaac@1234";
 

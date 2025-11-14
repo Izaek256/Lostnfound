@@ -50,7 +50,7 @@ Three-tier distributed architecture:
 
 ### Database
 - **Host**: 172.24.194.6
-- **Name**: lostfound_db
+- **Name**: lostfound
 - **Access**: ItemsServer and UserServer have direct access; Frontend uses APIs only
 
 ## Core Features

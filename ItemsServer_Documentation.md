@@ -37,7 +37,7 @@
 
 ### Database Connection
 - **Host**: `172.24.194.6` (Remote connection to UserServer's database)
-- **Database**: `lostfound_db`
+- **Database**: `lostfound`
 - **User**: `root`
 - **Connection Type**: Remote MySQL connection
 - **Access**: Direct database access via `connectDB()`
@@ -719,7 +719,7 @@ define('ITEMSSERVER_IP', '172.24.194.6');
 define('USERSERVER_IP', '172.24.194.6');
 define('FRONTEND_IP', '172.24.14.184');
 define('DB_HOST', '172.24.194.6');
-define('DB_NAME', 'lostfound_db');
+define('DB_NAME', 'lostfound');
 define('DB_USER', 'root');
 define('DB_PASS', 'Isaac@1234');
 ```

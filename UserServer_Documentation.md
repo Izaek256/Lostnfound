@@ -10,7 +10,7 @@
 **API Base URL**: `http://172.24.194.6/Lostnfound/UserServer/api`
 
 ### Core Responsibilities
-✅ Host the centralized MySQL database (`lostfound_db`)  
+✅ Host the centralized MySQL database (`lostfound`)  
 ✅ Handle all user authentication (login/registration)  
 ✅ Manage user accounts and admin privileges  
 ✅ Proxy item requests to ItemsServer via API calls  
@@ -37,14 +37,14 @@
 
 ### Database Hosting
 - **Host**: `localhost` or `172.24.194.6` (local database)
-- **Database**: `lostfound_db`
+- **Database**: `lostfound`
 - **User**: `root`
 - **Access**: Direct local access + remote access for ItemsServer
 - **Tables**: `users`, `items`
 
 ### Database Hosting
 - **Host**: `localhost` or `172.24.194.6` (local database)
-- **Database**: `lostfound_db`
+- **Database**: `lostfound`
 - **User**: `root`
 - **Access**: Direct local access + remote access for ItemsServer
 - **Tables**: `users`, `items`
@@ -96,7 +96,7 @@ function connectDB()
 - **Purpose**: Connect to the **local** database hosted on this server
 - **Returns**: mysqli connection object
 - **Host**: `localhost` or `172.24.194.6`
-- **Database**: `lostfound_db`
+- **Database**: `lostfound`
 - **Error Handling**: Dies with error message if connection fails
 
 **Implementation:**
@@ -855,7 +855,7 @@ define('ITEMSSERVER_IP', '172.24.194.6');
 define('USERSERVER_IP', '172.24.194.6');
 define('FRONTEND_IP', '172.24.14.184');
 define('DB_HOST', '172.24.194.6');  // Local database
-define('DB_NAME', 'lostfound_db');
+define('DB_NAME', 'lostfound');
 define('DB_USER', 'root');
 define('DB_PASS', 'Isaac@1234');
 define('ITEMSSERVER_API_URL', 'http://172.24.194.6/Lostnfound/ItemsServer/api');
