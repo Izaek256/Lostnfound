@@ -19,7 +19,7 @@ define('CURRENT_SERVER', 'Frontend');
 // SERVER IP ADDRESSES
 // ============================================
 define('ITEMSSERVER_IP', '172.24.194.6');
-define('USERSERVER_IP', '172.24.58.54');
+define('USERSERVER_IP', '172.24.194.6');
 define('FRONTEND_IP', '172.24.14.184');
 
 // ============================================
@@ -34,7 +34,7 @@ define('DB_PASS', 'Isaac@1234');
 // API AND SERVICE URLS
 // ============================================
 define('ITEMSSERVER_API_URL', 'http://172.24.194.6/Lostnfound/ItemsServer/api');
-define('USERSERVER_API_URL', 'http://172.24.58.54/Lostnfound/UserServer/api');
+define('USERSERVER_API_URL', 'http://172.24.194.6/Lostnfound/UserServer/api');
 define('FRONTEND_API_URL', 'http://172.24.14.184/Lostnfound/Frontend/api');
 
 // Upload URLs (ItemsServer hosts uploads - Items Service)
@@ -42,7 +42,7 @@ define('UPLOADS_BASE_URL', 'http://172.24.194.6/Lostnfound/ItemsServer/uploads/'
 
 // Health check URLs
 define('ITEMSSERVER_HEALTH_URL', 'http://172.24.194.6/Lostnfound/ItemsServer/api/health.php');
-define('USERSERVER_HEALTH_URL', 'http://172.24.58.54/Lostnfound/UserServer/api/health.php');
+define('USERSERVER_HEALTH_URL', 'http://172.24.194.6/Lostnfound/UserServer/api/health.php');
 define('FRONTEND_HEALTH_URL', 'http://172.24.14.184/Lostnfound/Frontend/health.php');
 
 // ============================================
