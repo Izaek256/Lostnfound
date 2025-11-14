@@ -17,13 +17,13 @@ header('Content-Type: text/html; charset=UTF-8');
 header('Connection: Keep-Alive');
 header('X-Accel-Buffering: no');
 
-// Initialize status arrays
+// Initialize status arrays with updated server names and roles
 $servers = [
-    'ServerA' => [
-        'name' => 'ServerA (Item Logic Server)',
+    'ItemsServer' => [
+        'name' => 'ItemsServer (Item Logic Server)',
         'url' => ITEMSSERVER_URL,
         'health_url' => ITEMSSERVER_HEALTH_URL,
-        'role' => 'Item operations, item database access',
+        'role' => 'Item operations, item database access, file storage',
         'status' => 'checking...',
         'database' => 'checking...',
         'response_time' => 0,
@@ -31,11 +31,11 @@ $servers = [
         'error' => '',
         'services' => []
     ],
-    'ServerB' => [
-        'name' => 'ServerB (User & Database Server)',
+    'UserServer' => [
+        'name' => 'UserServer (User & Database Server)',
         'url' => USERSERVER_URL,
         'health_url' => USERSERVER_HEALTH_URL,
-        'role' => 'User management, database host, file storage',
+        'role' => 'User management, database host',
         'status' => 'checking...',
         'database' => 'checking...',
         'response_time' => 0,
@@ -43,11 +43,11 @@ $servers = [
         'error' => '',
         'services' => []
     ],
-    'ServerC' => [
-        'name' => 'ServerC (User Interface Server)',
+    'Frontend' => [
+        'name' => 'Frontend (User Interface Server)',
         'url' => FRONTEND_API_URL,
         'health_url' => FRONTEND_HEALTH_URL,
-        'role' => 'Web interface, no database access',
+        'role' => 'Web interface, API client',
         'status' => 'checking...',
         'database' => 'N/A',
         'response_time' => 0,
@@ -57,7 +57,7 @@ $servers = [
     ]
 ];
 
-// Function to check server health
+// Function to check server health with improved error handling
 function checkServerHealth($health_url, $timeout = 5) {
     $start_time = microtime(true);
     
@@ -68,6 +68,12 @@ function checkServerHealth($health_url, $timeout = 5) {
     curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, min($timeout, 3));
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
     curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+    // Add headers to identify this as an API request
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'User-Agent: LostFound-Monitor/2.0',
+        'X-Requested-With: XMLHttpRequest',
+        'Accept: application/json'
+    ]);
     
     $response = curl_exec($ch);
     $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -76,18 +82,26 @@ function checkServerHealth($health_url, $timeout = 5) {
     
     $elapsed_time = round((microtime(true) - $start_time) * 1000, 2);
     
+    // Parse JSON response if available
+    $data = null;
+    if ($response && $http_code === 200) {
+        $data = json_decode($response, true);
+    }
+    
     return [
         'success' => ($http_code === 200 && !$error),
         'http_code' => $http_code,
         'response_time' => $elapsed_time,
         'error' => $error,
-        'data' => $response ? json_decode($response, true) : null
+        'data' => $data
     ];
 }
 
 // Function to get database stats
+// Note: In the new architecture, only UserServer connects directly to the database
 function getDatabaseStats() {
     try {
+        // Connect to database hosted on UserServer
         $conn = mysqli_connect(DB_HOST, DB_USER, DB_PASS, DB_NAME);
         
         if (!$conn || $conn->connect_error) {
@@ -158,7 +172,7 @@ foreach ($servers as $key => $server) {
     
     if ($health['success'] && $health['data']) {
         $data = $health['data'];
-        $servers[$key]['database'] = $data['database'] ?? 'unknown';
+        $servers[$key]['database'] = isset($data['database']) ? $data['database'] : ($key === 'Frontend' ? 'N/A' : 'unknown');
         $servers[$key]['services'] = $data['services'] ?? [];
     }
 }
@@ -573,6 +587,7 @@ $server_info = getServerInfo();
             <h1>🖥️ Server Status Monitor</h1>
             <p>Lost & Found Portal - Real-time Server Health Dashboard</p>
             <p>Deployment Mode: <strong><?php echo DEPLOYMENT_MODE; ?></strong> | Last Updated: <strong><?php echo date('Y-m-d H:i:s'); ?></strong></p>
+            <p>Architecture: <strong>Microservices with Centralized Database</strong></p>
         </header>
 
         <!-- Server Status Cards -->
@@ -592,6 +607,11 @@ $server_info = getServerInfo();
                     <span class="info-label">Role:</span>
                     <span class="info-value"><?php echo $server['role']; ?></span>
                 </div>
+                
+                <div class="info-row">
+                    <span class="info-label">URL:</span>
+                    <span class="info-value"><?php echo $server['url']; ?></span>
+                </div>
 
                 <div class="info-row">
                     <span class="info-label">Response Time:</span>
@@ -607,6 +627,17 @@ $server_info = getServerInfo();
                     <span class="info-label">Database:</span>
                     <span class="info-value"><?php echo ucfirst($server['database']); ?></span>
                 </div>
+                
+                <?php if ($server['database'] !== 'N/A' && $server['status'] === 'ONLINE'): ?>
+                <div class="database-status">
+                    <div class="info-row">
+                        <span class="info-label">Status:</span>
+                        <span class="info-value" style="color: <?php echo $server['database'] === 'connected' ? '#10b981' : '#ef4444'; ?>;">
+                            <?php echo $server['database'] === 'connected' ? '✓ Connected' : '✗ Disconnected'; ?>
+                        </span>
+                    </div>
+                </div>
+                <?php endif; ?>
 
                 <?php if (!empty($server['services'])): ?>
                 <div class="services-list">
@@ -631,6 +662,7 @@ $server_info = getServerInfo();
         <!-- Database Statistics -->
         <div class="database-section">
             <h3>📊 Database Statistics</h3>
+            <p style="margin-bottom: 15px; color: #94a3b8;">Managed by UserServer - Centralized Database Architecture</p>
             
             <?php if ($db_stats['connected']): ?>
             <div class="database-grid">
@@ -653,7 +685,7 @@ $server_info = getServerInfo();
             </div>
             <div class="info-row">
                 <span class="info-label">Status:</span>
-                <span class="info-value" style="color: #10b981;">✓ Connected to MySQL</span>
+                <span class="info-value" style="color: #10b981;">✓ Connected to MySQL (UserServer)</span>
             </div>
             <?php else: ?>
             <div class="error-message">
