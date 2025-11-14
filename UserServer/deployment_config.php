@@ -25,8 +25,8 @@ define('FRONTEND_IP', '172.24.14.184');
 // ============================================
 // DATABASE CONFIGURATION
 // ============================================
-define('DB_HOST', '172.24.194.6');  // Local database on this server
-define('DB_NAME', 'lostfound_db');
+define('DB_HOST', '172.24.58.54');  // Local database on this server
+define('DB_NAME', 'lostfound');
 define('DB_USER', 'root');
 define('DB_PASS', 'Isaac@1234');
 
