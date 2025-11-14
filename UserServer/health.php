@@ -19,9 +19,9 @@ $health_data = [
     'services' => []
 ];
 
-// Test database connection (UserServer hosts the database)
+// Test database connection (UserServer connects to database on ItemsServer)
 try {
-    $conn = mysqli_connect('localhost', DB_USER, DB_PASS, DB_NAME);
+    $conn = mysqli_connect(DB_HOST, DB_USER, DB_PASS, DB_NAME);
     if ($conn) {
         $health_data['services']['database_connection'] = 'active';
         

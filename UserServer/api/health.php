@@ -4,6 +4,9 @@
  * Returns status of user management server and database
  */
 
+// Load deployment configuration
+require_once __DIR__ . '/../deployment_config.php';
+
 // Check if request is from browser directly (not AJAX)
 $accept_header = $_SERVER['HTTP_ACCEPT'] ?? '';
 $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? '';
@@ -31,11 +34,11 @@ if ($is_browser_request) {
 
 header('Content-Type: application/json');
 
-// Direct database connection (avoid session_start from config.php)
-$db_host = "localhost";
-$db_name = "lostfound";
-$db_user = "root";
-$db_pass = "Isaac@1234";
+// Use database configuration from deployment_config.php
+$db_host = DB_HOST;
+$db_name = DB_NAME;
+$db_user = DB_USER;
+$db_pass = DB_PASS;
 
 $conn = mysqli_connect($db_host, $db_user, $db_pass, $db_name);
 
@@ -67,3 +70,4 @@ $health['services']['verify_user_api'] = file_exists(__DIR__ . '/verify_user.php
 $health['services']['get_all_users_api'] = file_exists(__DIR__ . '/get_all_users.php') ? 'active' : 'missing';
 
 echo json_encode($health);
+?>
