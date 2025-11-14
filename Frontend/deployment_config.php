@@ -25,7 +25,7 @@ define('FRONTEND_IP', '172.24.14.184');
 // ============================================
 // DATABASE CONFIGURATION
 // ============================================
-define('DB_HOST', '172.24.58.54');  // Connect to remote database on UserServer
+define('DB_HOST', '172.24.194.6');  // Connect to remote database on UserServer
 define('DB_NAME', 'lostfound');
 define('DB_USER', 'root');
 define('DB_PASS', 'Isaac@1234');
