@@ -101,11 +101,6 @@ if (is_array($api_response) && isset($api_response['success']) && $api_response[
 
     <!-- Main Content -->
     <main>
-        <div class="server-info">
-            <h3>🖥️ Server B - Browse Items</h3>
-            <p>Data synchronized from Server A (Main Backend)</p>
-        </div>
-
         <!-- Search and Filter Section -->
         <section class="form-container">
             <h2>🔍 Search & Filter Items</h2>
