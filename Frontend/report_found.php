@@ -231,14 +231,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             </p>
             
             <?php
-            // Get recent found items from database for display
-            // This helps users see what others have found recently
-            if ($conn) {
-                $sql = "SELECT * FROM items WHERE type = 'found' ORDER BY created_at DESC LIMIT 3";
-                $result = mysqli_query($conn, $sql);
-                $recentFoundItems = $result ? mysqli_fetch_all($result, MYSQLI_ASSOC) : [];
-            } else {
-                $recentFoundItems = [];
+            // Get recent found items via ItemsServer API
+            // This maintains the service-oriented architecture - Frontend never accesses DB directly
+            $api_response = makeAPIRequest(ITEMSSERVER_URL . '/get_all_items.php', [
+                'type' => 'found'
+            ], 'GET', ['return_json' => true]);
+            
+            $recentFoundItems = [];
+            if (is_array($api_response) && isset($api_response['items'])) {
+                // Get only the 3 most recent items
+                $recentFoundItems = array_slice($api_response['items'], 0, 3);
             }
             ?>
             
