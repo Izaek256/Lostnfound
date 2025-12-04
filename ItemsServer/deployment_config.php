@@ -28,7 +28,7 @@ define('FRONTEND_IP', '172.24.14.184');
 define('DB_HOST', '172.24.194.6');  // Remote database on UserServer
 define('DB_NAME', 'lostfound');
 define('DB_USER', 'root');
-define('DB_PASS', 'Isaac@1234');
+define('DB_PASS', '');
 
 // ============================================
 // API AND SERVICE URLS
