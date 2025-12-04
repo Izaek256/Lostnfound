@@ -18,7 +18,7 @@ try {
         'limit' => 6,
         'sort' => 'recent'
     ], 'GET', ['return_json' => true, 'force_json' => true]);
-        
+
     if (is_array($response) && isset($response['success']) && $response['success']) {
         // Check if response has 'items' key (API might return {"items": [...]})
         if (isset($response['items']) && is_array($response['items'])) {
@@ -50,24 +50,24 @@ try {
 // Get statistics from ItemsServer
 try {
     $response = makeAPIRequest(ITEMSSERVER_URL . '/get_all_items.php', [], 'GET', ['return_json' => true, 'force_json' => true]);
-    
+
     if (is_array($response) && isset($response['success']) && $response['success']) {
         $items = $response;
-        
+
         // Extract items from API response structure
         if (isset($response['items']) && is_array($response['items'])) {
             $items = $response['items'];
         } elseif (isset($response['data']) && is_array($response['data'])) {
             $items = $response['data'];
         }
-        
+
         if (is_array($items) && count($items) > 0) {
             $stats['total'] = count($items);
-            $stats['lost_count'] = count(array_filter($items, function($item) { 
-                return is_array($item) && isset($item['type']) && $item['type'] === 'lost'; 
+            $stats['lost_count'] = count(array_filter($items, function ($item) {
+                return is_array($item) && isset($item['type']) && $item['type'] === 'lost';
             }));
-            $stats['found_count'] = count(array_filter($items, function($item) { 
-                return is_array($item) && isset($item['type']) && $item['type'] === 'found'; 
+            $stats['found_count'] = count(array_filter($items, function ($item) {
+                return is_array($item) && isset($item['type']) && $item['type'] === 'found';
             }));
         }
     } else if (is_array($response) && isset($response['success']) && !$response['success']) {
@@ -79,11 +79,11 @@ try {
         // Try to use the response directly if it looks like items data
         if (isset($response[0]) || count($response) > 0) {
             $stats['total'] = count($response);
-            $stats['lost_count'] = count(array_filter($response, function($item) { 
-                return is_array($item) && isset($item['type']) && $item['type'] === 'lost'; 
+            $stats['lost_count'] = count(array_filter($response, function ($item) {
+                return is_array($item) && isset($item['type']) && $item['type'] === 'lost';
             }));
-            $stats['found_count'] = count(array_filter($response, function($item) { 
-                return is_array($item) && isset($item['type']) && $item['type'] === 'found'; 
+            $stats['found_count'] = count(array_filter($response, function ($item) {
+                return is_array($item) && isset($item['type']) && $item['type'] === 'found';
             }));
         }
     } else {
@@ -97,6 +97,7 @@ try {
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -113,6 +114,7 @@ try {
         }
     </style>
 </head>
+
 <body>
     <!-- Header -->
     <header>
@@ -153,7 +155,7 @@ try {
         <section class="hero">
             <h2>University Lost and Found Portal</h2>
             <p>Help reunite lost items with their owners. Report lost items, browse found items, and help build a stronger campus community.</p>
-            
+
             <!-- Quick Action Buttons -->
             <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
                 <a href="report_lost.php" class="btn">📢 Report Lost Item</a>
@@ -183,82 +185,82 @@ try {
 
         <!-- Recent Items Section -->
         <?php if (count($recentItems) > 0): ?>
-        <section class="items-container">
-            <div class="items-header">
-                <h2>🕒 Recent Items</h2>
-                <a href="items.php" class="btn btn-secondary">View All Items</a>
-            </div>
-            
-            <div class="items-grid">
-                <?php foreach ($recentItems as $item): ?>
-                <?php if (is_array($item)): ?>
-                <div class="item-card">
-                    <div class="item-card-header">
-                        <span class="item-type <?php echo $item['type']; ?>">
-                            <?php echo $item['type'] === 'lost' ? '🔴 Lost' : '🟢 Found'; ?>
-                        </span>
-                        
-                        <?php if ($item['image']): ?>
-                            <img src="<?php echo getImageUrl($item['image']); ?>" 
-                                 alt="<?php echo htmlspecialchars($item['title']); ?>" 
-                                 class="item-image">
-                        <?php else: ?>
-                            <div class="no-image-placeholder">
-                                <span>📷</span>
+            <section class="items-container">
+                <div class="items-header">
+                    <h2>🕒 Recent Items</h2>
+                    <a href="items.php" class="btn btn-secondary">View All Items</a>
+                </div>
+
+                <div class="items-grid">
+                    <?php foreach ($recentItems as $item): ?>
+                        <?php if (is_array($item)): ?>
+                            <div class="item-card">
+                                <div class="item-card-header">
+                                    <span class="item-type <?php echo $item['type']; ?>">
+                                        <?php echo $item['type'] === 'lost' ? '🔴 Lost' : '🟢 Found'; ?>
+                                    </span>
+
+                                    <?php if ($item['image']): ?>
+                                        <img src="<?php echo getImageUrl($item['image']); ?>"
+                                            alt="<?php echo htmlspecialchars($item['title']); ?>"
+                                            class="item-image">
+                                    <?php else: ?>
+                                        <div class="no-image-placeholder">
+                                            <span>📷</span>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+
+                                <div class="item-card-body">
+                                    <h3>
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                            <line x1="9" y1="3" x2="9" y2="21"></line>
+                                        </svg>
+                                        <?php echo htmlspecialchars($item['title']); ?>
+                                    </h3>
+
+                                    <div class="item-card-section">
+                                        <div class="item-description"><?php echo htmlspecialchars($item['description']); ?></div>
+                                    </div>
+
+                                    <div class="item-card-section">
+                                        <div class="item-detail">
+                                            <svg class="item-detail-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                                <circle cx="12" cy="10" r="3"></circle>
+                                            </svg>
+                                            <div class="item-detail-content">
+                                                <strong>Location:</strong> <?php echo htmlspecialchars($item['location']); ?>
+                                            </div>
+                                        </div>
+
+                                        <div class="item-detail">
+                                            <svg class="item-detail-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                                                <polyline points="22,6 12,13 2,6"></polyline>
+                                            </svg>
+                                            <div class="item-detail-content">
+                                                <strong>Contact:</strong> <a href="mailto:<?php echo htmlspecialchars($item['contact']); ?>" style="color: var(--primary);"><?php echo htmlspecialchars($item['contact']); ?></a>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="item-meta">
+                                        <p>
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;">
+                                                <circle cx="12" cy="12" r="10"></circle>
+                                                <polyline points="12 6 12 12 16 14"></polyline>
+                                            </svg>
+                                            <?php echo date('M j, Y g:i A', strtotime($item['created_at'])); ?>
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
                         <?php endif; ?>
-                    </div>
-                    
-                    <div class="item-card-body">
-                        <h3>
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                                <line x1="9" y1="3" x2="9" y2="21"></line>
-                            </svg>
-                            <?php echo htmlspecialchars($item['title']); ?>
-                        </h3>
-                        
-                        <div class="item-card-section">
-                            <div class="item-description"><?php echo htmlspecialchars($item['description']); ?></div>
-                        </div>
-                        
-                        <div class="item-card-section">
-                            <div class="item-detail">
-                                <svg class="item-detail-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                                    <circle cx="12" cy="10" r="3"></circle>
-                                </svg>
-                                <div class="item-detail-content">
-                                    <strong>Location:</strong> <?php echo htmlspecialchars($item['location']); ?>
-                                </div>
-                            </div>
-                            
-                            <div class="item-detail">
-                                <svg class="item-detail-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                                    <polyline points="22,6 12,13 2,6"></polyline>
-                                </svg>
-                                <div class="item-detail-content">
-                                    <strong>Contact:</strong> <a href="mailto:<?php echo htmlspecialchars($item['contact']); ?>" style="color: var(--primary);"><?php echo htmlspecialchars($item['contact']); ?></a>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="item-meta">
-                            <p>
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;">
-                                    <circle cx="12" cy="12" r="10"></circle>
-                                    <polyline points="12 6 12 12 16 14"></polyline>
-                                </svg>
-                                <?php echo date('M j, Y g:i A', strtotime($item['created_at'])); ?>
-                            </p>
-                        </div>
-                    </div>
+                    <?php endforeach; ?>
                 </div>
-                <?php endif; ?>
-                <?php endforeach; ?>
-            </div>
-        </section>
+            </section>
         <?php endif; ?>
 
         <!-- How It Works Section -->
@@ -270,13 +272,13 @@ try {
                     <h3 style="color: #667eea; margin-bottom: 1rem;">Report Lost Items</h3>
                     <p>Lost something on campus? Create a detailed report with description, location, and contact information to help others identify and return your item.</p>
                 </div>
-                
+
                 <div style="text-align: center; padding: 1rem;">
                     <div style="font-size: 3rem; margin-bottom: 1rem;">🔍</div>
                     <h3 style="color: #667eea; margin-bottom: 1rem;">Report Found Items</h3>
                     <p>Found an item? Help reunite it with its owner by posting details about what you found and where you found it.</p>
                 </div>
-                
+
                 <div style="text-align: center; padding: 1rem;">
                     <div style="font-size: 3rem; margin-bottom: 1rem;">🤝</div>
                     <h3 style="color: #667eea; margin-bottom: 1rem;">Connect & Reunite</h3>
@@ -298,7 +300,7 @@ try {
                         <li>Upload a clear photo if possible</li>
                     </ul>
                 </div>
-                
+
                 <div>
                     <h4 style="color: #667eea; margin-bottom: 1rem;">⚡ Act Quickly</h4>
                     <ul style="padding-left: 1.5rem; color: #666;">
@@ -319,4 +321,5 @@ try {
 
     <script src="assets/script.js"></script>
 </body>
+
 </html>

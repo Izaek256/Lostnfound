@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Server B - View Items Page
  * 
@@ -49,6 +50,7 @@ if (is_array($api_response) && isset($api_response['success']) && $api_response[
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -65,6 +67,7 @@ if (is_array($api_response) && isset($api_response['success']) && $api_response[
         }
     </style>
 </head>
+
 <body>
     <!-- Header -->
     <header>
@@ -104,26 +107,26 @@ if (is_array($api_response) && isset($api_response['success']) && $api_response[
         <!-- Search and Filter Section -->
         <section class="form-container">
             <h2>🔍 Search & Filter Items</h2>
-            
+
             <form method="GET" style="display: flex; gap: 1rem; align-items: end; flex-wrap: wrap;">
                 <div class="form-group" style="flex: 1; min-width: 200px;">
                     <label for="search">Search Items</label>
-                    <input type="text" 
-                           id="search" 
-                           name="search" 
-                           value="<?php echo htmlspecialchars($search); ?>" 
-                           placeholder="🔍 Search by title, description, or location...">
+                    <input type="text"
+                        id="search"
+                        name="search"
+                        value="<?php echo htmlspecialchars($search); ?>"
+                        placeholder="🔍 Search by title, description, or location...">
                 </div>
-                
+
                 <div class="form-group" style="min-width: 150px;">
                     <label for="filter">Filter by Type</label>
                     <select id="filter" name="filter">
-                        <option value="all" <?php if($filter == 'all') echo 'selected'; ?>>All Items</option>
-                        <option value="lost" <?php if($filter == 'lost') echo 'selected'; ?>>Lost Items</option>
-                        <option value="found" <?php if($filter == 'found') echo 'selected'; ?>>Found Items</option>
+                        <option value="all" <?php if ($filter == 'all') echo 'selected'; ?>>All Items</option>
+                        <option value="lost" <?php if ($filter == 'lost') echo 'selected'; ?>>Lost Items</option>
+                        <option value="found" <?php if ($filter == 'found') echo 'selected'; ?>>Found Items</option>
                     </select>
                 </div>
-                
+
                 <button type="submit" class="btn">Apply Filters</button>
             </form>
         </section>
@@ -153,7 +156,7 @@ if (is_array($api_response) && isset($api_response['success']) && $api_response[
                 <h2>📋 All Items</h2>
                 <div>Showing <?php echo count($items); ?> of <?php echo $stats['total']; ?> items</div>
             </div>
-            
+
             <?php if (count($items) > 0): ?>
                 <div class="items-grid">
                     <?php foreach ($items as $item): ?>
@@ -162,19 +165,19 @@ if (is_array($api_response) && isset($api_response['success']) && $api_response[
                                 <span class="item-type <?php echo $item['type']; ?>">
                                     <?php echo $item['type'] === 'lost' ? '🔴 Lost' : '🟢 Found'; ?>
                                 </span>
-                                
+
                                 <?php if ($item['image']): ?>
-                                    <img src="<?php echo getImageUrl($item['image']); ?>" 
-                                         alt="<?php echo htmlspecialchars($item['title']); ?>" 
-                                         class="item-image"
-                                         onclick="openImageModal('<?php echo getImageUrl($item['image']); ?>', '<?php echo htmlspecialchars($item['title']); ?>')">
+                                    <img src="<?php echo getImageUrl($item['image']); ?>"
+                                        alt="<?php echo htmlspecialchars($item['title']); ?>"
+                                        class="item-image"
+                                        onclick="openImageModal('<?php echo getImageUrl($item['image']); ?>', '<?php echo htmlspecialchars($item['title']); ?>')">
                                 <?php else: ?>
                                     <div class="no-image-placeholder">
                                         <span>📷</span>
                                     </div>
                                 <?php endif; ?>
                             </div>
-                            
+
                             <div class="item-card-body">
                                 <h3>
                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -183,11 +186,11 @@ if (is_array($api_response) && isset($api_response['success']) && $api_response[
                                     </svg>
                                     <?php echo htmlspecialchars($item['title']); ?>
                                 </h3>
-                                
+
                                 <div class="item-card-section">
                                     <div class="item-description"><?php echo htmlspecialchars($item['description']); ?></div>
                                 </div>
-                                
+
                                 <div class="item-card-section">
                                     <div class="item-detail">
                                         <svg class="item-detail-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -198,7 +201,7 @@ if (is_array($api_response) && isset($api_response['success']) && $api_response[
                                             <strong>Location:</strong> <?php echo htmlspecialchars($item['location']); ?>
                                         </div>
                                     </div>
-                                    
+
                                     <div class="item-detail">
                                         <svg class="item-detail-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                             <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
@@ -209,7 +212,7 @@ if (is_array($api_response) && isset($api_response['success']) && $api_response[
                                         </div>
                                     </div>
                                 </div>
-                                
+
                                 <div class="item-meta">
                                     <p>
                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;">
@@ -270,4 +273,5 @@ if (is_array($api_response) && isset($api_response['success']) && $api_response[
         });
     </script>
 </body>
+
 </html>

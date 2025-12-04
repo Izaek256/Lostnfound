@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Server C - Admin Dashboard Page
  */
@@ -20,11 +21,11 @@ if (isset($_GET['logout'])) {
 $action_message = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
-    
+
     if ($action === 'toggle_user_status') {
         $target_user_id = $_POST['user_id'] ?? null;
         $new_status = $_POST['new_status'] ?? null;
-        
+
         if ($target_user_id && $new_status !== null) {
             // Call API to toggle admin status
             $api_response = makeAPIRequest(
@@ -36,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'POST',
                 ['return_json' => true]
             );
-            
+
             if (is_array($api_response) && isset($api_response['success']) && $api_response['success']) {
                 $status_text = $new_status == 1 ? 'promoted to admin' : 'removed from admin';
                 $action_message = '<div class="alert alert-success">✓ User successfully ' . htmlspecialchars($status_text) . '</div>';
@@ -44,13 +45,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $error = isset($api_response['error']) ? $api_response['error'] : 'Failed to update user status';
                 $action_message = '<div class="alert alert-error">✗ Error: ' . htmlspecialchars($error) . '</div>';
             }
-            
+
             // Refresh the page to show updated data
             header('Refresh: 2; url=admin_dashboard.php');
         }
     } elseif ($action === 'delete_item') {
         $item_id = $_POST['item_id'] ?? null;
-        
+
         if ($item_id) {
             // Call API to delete item (admin can delete any item)
             $api_response = makeAPIRequest(
@@ -62,14 +63,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'POST',
                 ['return_json' => true]
             );
-            
+
             if (is_array($api_response) && isset($api_response['success']) && $api_response['success']) {
                 $action_message = '<div class="alert alert-success">✓ Item deleted successfully</div>';
             } else {
                 $error = isset($api_response['error']) ? $api_response['error'] : 'Failed to delete item';
                 $action_message = '<div class="alert alert-error">✗ Error: ' . htmlspecialchars($error) . '</div>';
             }
-            
+
             // Refresh the page to show updated data
             header('Refresh: 2; url=admin_dashboard.php');
         }
@@ -107,13 +108,18 @@ $stats = [
     'admin_users' => $user_stats['admin_users'] ?? 0,
     'regular_users' => $user_stats['regular_users'] ?? 0,
     'total_items' => count($all_items),
-    'lost_items' => count(array_filter($all_items, function($item) { return is_array($item) && isset($item['type']) && $item['type'] === 'lost'; })),
-    'found_items' => count(array_filter($all_items, function($item) { return is_array($item) && isset($item['type']) && $item['type'] === 'found'; }))
+    'lost_items' => count(array_filter($all_items, function ($item) {
+        return is_array($item) && isset($item['type']) && $item['type'] === 'lost';
+    })),
+    'found_items' => count(array_filter($all_items, function ($item) {
+        return is_array($item) && isset($item['type']) && $item['type'] === 'found';
+    }))
 ];
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -121,6 +127,7 @@ $stats = [
     <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="assets/style.css">
 </head>
+
 <body>
     <!-- Header -->
     <header>
@@ -164,33 +171,33 @@ $stats = [
 
         <div class="dashboard">
             <?php echo $action_message; ?>
-            
+
             <!-- Statistics Overview -->
             <div class="dashboard-stats">
                 <div class="stat-card">
                     <h3>👥 Total Users</h3>
                     <p class="stat-number"><?php echo $stats['total_users']; ?></p>
                     <p class="stat-detail">
-                        <?php echo $stats['admin_users']; ?> admins, 
+                        <?php echo $stats['admin_users']; ?> admins,
                         <?php echo $stats['regular_users']; ?> users
                     </p>
                 </div>
-                
+
                 <div class="stat-card">
                     <h3>📦 Total Items</h3>
                     <p class="stat-number"><?php echo $stats['total_items']; ?></p>
                     <p class="stat-detail">
-                        <?php echo $stats['lost_items']; ?> lost, 
+                        <?php echo $stats['lost_items']; ?> lost,
                         <?php echo $stats['found_items']; ?> found
                     </p>
                 </div>
-                
+
                 <div class="stat-card">
                     <h3>🔍 Lost Items</h3>
                     <p class="stat-number"><?php echo $stats['lost_items']; ?></p>
                     <p class="stat-detail">Items waiting to be found</p>
                 </div>
-                
+
                 <div class="stat-card">
                     <h3>✅ Found Items</h3>
                     <p class="stat-number"><?php echo $stats['found_items']; ?></p>
@@ -208,91 +215,91 @@ $stats = [
 
             <!-- All Items Management -->
             <?php if (!empty($all_items)): ?>
-            <div class="admin-section">
-                <h3>📦 All Items (<?php echo count($all_items); ?>)</h3>
-                <div class="admin-table">
-                    <div class="table-header">
-                        <h3>Complete Items List</h3>
-                    </div>
-                    <div class="table-content">
-                        <?php foreach ($all_items as $item): ?>
-                        <div class="item-row">
-                            <div class="item-image-container">
-                                <img src="<?php echo getImageUrl($item['image']); ?>" 
-                                     alt="<?php echo htmlspecialchars($item['title']); ?>"
-                                     onerror="this.src='assets/default-item.jpg'">
-                            </div>
-                            <div class="item-info">
-                                <h4><?php echo htmlspecialchars($item['title']); ?></h4>
-                                <span class="item-type-badge <?php echo $item['type']; ?>">
-                                    <?php echo strtoupper($item['type']); ?>
-                                </span>
-                                <p class="item-user">👤 <?php echo htmlspecialchars($item['username'] ? $item['username'] : 'User ID: ' . $item['user_id']); ?></p>
-                                <p class="item-date">📅 <?php echo date('M j, Y', strtotime($item['created_at'])); ?></p>
-                            </div>
-                            <div class="item-actions">
-                                <form method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this item?');">
-                                    <input type="hidden" name="action" value="delete_item">
-                                    <input type="hidden" name="item_id" value="<?php echo $item['id']; ?>">
-                                    <button type="submit" class="delete-btn">🗑️ Delete</button>
-                                </form>
-                            </div>
+                <div class="admin-section">
+                    <h3>📦 All Items (<?php echo count($all_items); ?>)</h3>
+                    <div class="admin-table">
+                        <div class="table-header">
+                            <h3>Complete Items List</h3>
                         </div>
-                        <?php endforeach; ?>
+                        <div class="table-content">
+                            <?php foreach ($all_items as $item): ?>
+                                <div class="item-row">
+                                    <div class="item-image-container">
+                                        <img src="<?php echo getImageUrl($item['image']); ?>"
+                                            alt="<?php echo htmlspecialchars($item['title']); ?>"
+                                            onerror="this.src='assets/default-item.jpg'">
+                                    </div>
+                                    <div class="item-info">
+                                        <h4><?php echo htmlspecialchars($item['title']); ?></h4>
+                                        <span class="item-type-badge <?php echo $item['type']; ?>">
+                                            <?php echo strtoupper($item['type']); ?>
+                                        </span>
+                                        <p class="item-user">👤 <?php echo htmlspecialchars($item['username'] ? $item['username'] : 'User ID: ' . $item['user_id']); ?></p>
+                                        <p class="item-date">📅 <?php echo date('M j, Y', strtotime($item['created_at'])); ?></p>
+                                    </div>
+                                    <div class="item-actions">
+                                        <form method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this item?');">
+                                            <input type="hidden" name="action" value="delete_item">
+                                            <input type="hidden" name="item_id" value="<?php echo $item['id']; ?>">
+                                            <button type="submit" class="delete-btn">🗑️ Delete</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
                     </div>
                 </div>
-            </div>
             <?php endif; ?>
 
             <!-- User Management -->
             <?php if (!empty($users)): ?>
-            <div class="admin-section" id="users-section">
-                <h3>👥 User Management</h3>
-                <div class="users-table-container">
-                    <table class="admin-table">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Username</th>
-                                <th>Email</th>
-                                <th>Status</th>
-                                <th>Joined</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($users as $user): ?>
-                            <tr>
-                                <td><?php echo $user['id']; ?></td>
-                                <td><?php echo htmlspecialchars($user['username']); ?></td>
-                                <td><?php echo htmlspecialchars($user['email']); ?></td>
-                                <td>
-                                    <span class="status-badge <?php echo $user['is_admin'] ? 'admin' : 'user'; ?>">
-                                        <?php echo $user['is_admin'] ? '👑 Admin' : '👤 User'; ?>
-                                    </span>
-                                </td>
-                                <td><?php echo date('M j, Y', strtotime($user['created_at'])); ?></td>
-                                <td>
-                                    <?php if ($user['id'] != getCurrentUserId()): ?>
-                                    <form method="POST" style="display: inline;">
-                                        <input type="hidden" name="action" value="toggle_user_status">
-                                        <input type="hidden" name="user_id" value="<?php echo $user['id']; ?>">
-                                        <input type="hidden" name="new_status" value="<?php echo $user['is_admin'] ? 0 : 1; ?>">
-                                        <button type="submit" class="btn btn-sm <?php echo $user['is_admin'] ? 'btn-warning' : 'btn-success'; ?>" 
-                                                onclick="return confirm('Are you sure you want to change this user\'s status?');">
-                                            <?php echo $user['is_admin'] ? '⬇️ Remove Admin' : '⬆️ Make Admin'; ?>
-                                        </button>
-                                    </form>
-                                    <?php else: ?>
-                                    <span class="text-muted">Current User</span>
-                                    <?php endif; ?>
-                                </td>
-                            </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
+                <div class="admin-section" id="users-section">
+                    <h3>👥 User Management</h3>
+                    <div class="users-table-container">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Username</th>
+                                    <th>Email</th>
+                                    <th>Status</th>
+                                    <th>Joined</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($users as $user): ?>
+                                    <tr>
+                                        <td><?php echo $user['id']; ?></td>
+                                        <td><?php echo htmlspecialchars($user['username']); ?></td>
+                                        <td><?php echo htmlspecialchars($user['email']); ?></td>
+                                        <td>
+                                            <span class="status-badge <?php echo $user['is_admin'] ? 'admin' : 'user'; ?>">
+                                                <?php echo $user['is_admin'] ? '👑 Admin' : '👤 User'; ?>
+                                            </span>
+                                        </td>
+                                        <td><?php echo date('M j, Y', strtotime($user['created_at'])); ?></td>
+                                        <td>
+                                            <?php if ($user['id'] != getCurrentUserId()): ?>
+                                                <form method="POST" style="display: inline;">
+                                                    <input type="hidden" name="action" value="toggle_user_status">
+                                                    <input type="hidden" name="user_id" value="<?php echo $user['id']; ?>">
+                                                    <input type="hidden" name="new_status" value="<?php echo $user['is_admin'] ? 0 : 1; ?>">
+                                                    <button type="submit" class="btn btn-sm <?php echo $user['is_admin'] ? 'btn-warning' : 'btn-success'; ?>"
+                                                        onclick="return confirm('Are you sure you want to change this user\'s status?');">
+                                                        <?php echo $user['is_admin'] ? '⬇️ Remove Admin' : '⬆️ Make Admin'; ?>
+                                                    </button>
+                                                </form>
+                                            <?php else: ?>
+                                                <span class="text-muted">Current User</span>
+                                            <?php endif; ?>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            </div>
             <?php endif; ?>
 
             <!-- System Information & Server Status -->
@@ -306,7 +313,7 @@ $stats = [
                         <p><strong>Storage:</strong> UserServer (User Management)</p>
                         <p><strong>Session:</strong> <?php echo session_id() ? 'Active' : 'Inactive'; ?></p>
                     </div>
-                    
+
                     <div class="info-card">
                         <h4>📊 Quick Stats</h4>
                         <p><strong>Your Role:</strong> Administrator</p>
@@ -324,7 +331,7 @@ $stats = [
     <script>
         // Smooth scrolling for anchor links
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
+            anchor.addEventListener('click', function(e) {
                 e.preventDefault();
                 const target = document.querySelector(this.getAttribute('href'));
                 if (target) {
@@ -351,4 +358,5 @@ $stats = [
         // }, 30000); // 30 seconds
     </script>
 </body>
+
 </html>

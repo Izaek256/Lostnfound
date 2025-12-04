@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Server C - Report Lost Item Page
  */
@@ -19,28 +20,28 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $description = $_POST['description'] ?? '';
     $location = $_POST['location'] ?? '';
     $contact = $_POST['contact'] ?? '';
-    
+
     if (empty($title) || empty($description) || empty($location) || empty($contact)) {
         $message = 'Please fill in all required fields';
     } else {
         $user_id = getCurrentUserId();
         $image_filename = null;
-        
+
         // Handle simple file upload
         if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
             $upload_dir = '../ItemsServer/uploads/';
-            
+
             if (!is_dir($upload_dir)) {
                 mkdir($upload_dir, 0755, true);
             }
-            
+
             $extension = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
             $image_filename = uniqid() . '.' . $extension;
             $upload_path = $upload_dir . $image_filename;
-            
+
             move_uploaded_file($_FILES['image']['tmp_name'], $upload_path);
         }
-        
+
         // Call ItemsServer API to add item
         $response = makeAPIRequest(ITEMSSERVER_URL . '/add_item.php', [
             'user_id' => $user_id,
@@ -51,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             'contact' => $contact,
             'image_filename' => $image_filename
         ], 'POST', ['return_json' => true]);
-        
+
         // Parse JSON response
         if (is_array($response) && isset($response['success']) && $response['success']) {
             $message = '📢 Lost item reported successfully! Your listing is now live and people who find items can contact you directly.';
@@ -66,6 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -73,6 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="assets/style.css">
 </head>
+
 <body>
     <!-- Header -->
     <header>
@@ -122,44 +125,44 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <p style="text-align: center; color: var(--color-light); margin-bottom: 2rem;">
                 Lost something on campus? Create a detailed listing to help others identify and return your item. The more details you provide, the better your chances of recovery.
             </p>
-            
+
             <form method="POST" enctype="multipart/form-data" onsubmit="return validateLostForm();">
                 <div class="form-group">
                     <label for="title">Item Title *</label>
-                    <input type="text" 
-                           id="title" 
-                           name="title" 
-                           placeholder="e.g., Black iPhone 13, Blue Backpack, Silver Watch"
-                           value="<?php echo isset($title) ? htmlspecialchars($title) : ''; ?>"
-                           required>
+                    <input type="text"
+                        id="title"
+                        name="title"
+                        placeholder="e.g., Black iPhone 13, Blue Backpack, Silver Watch"
+                        value="<?php echo isset($title) ? htmlspecialchars($title) : ''; ?>"
+                        required>
                 </div>
 
                 <div class="form-group">
                     <label for="description">Detailed Description *</label>
-                    <textarea id="description" 
-                              name="description" 
-                              placeholder="Describe your item in detail: color, brand, size, unique features, scratches, stickers, or any identifying marks. Include any personal items inside (without revealing sensitive info)..."
-                              required><?php echo isset($description) ? htmlspecialchars($description) : ''; ?></textarea>
+                    <textarea id="description"
+                        name="description"
+                        placeholder="Describe your item in detail: color, brand, size, unique features, scratches, stickers, or any identifying marks. Include any personal items inside (without revealing sensitive info)..."
+                        required><?php echo isset($description) ? htmlspecialchars($description) : ''; ?></textarea>
                 </div>
 
                 <div class="form-group">
                     <label for="location">Last Known Location *</label>
-                    <input type="text" 
-                           id="location" 
-                           name="location" 
-                           placeholder="e.g., Library 2nd Floor Study Area, Student Center Cafeteria, Engineering Building Room 205"
-                           value="<?php echo isset($location) ? htmlspecialchars($location) : ''; ?>"
-                           required>
+                    <input type="text"
+                        id="location"
+                        name="location"
+                        placeholder="e.g., Library 2nd Floor Study Area, Student Center Cafeteria, Engineering Building Room 205"
+                        value="<?php echo isset($location) ? htmlspecialchars($location) : ''; ?>"
+                        required>
                 </div>
 
                 <div class="form-group">
                     <label for="contact">Your Contact Information *</label>
-                    <input type="email" 
-                           id="contact" 
-                           name="contact" 
-                           placeholder="your.email@university.edu"
-                           value="<?php echo isset($contact) ? htmlspecialchars($contact) : htmlspecialchars(getCurrentUserEmail()); ?>"
-                           required>
+                    <input type="email"
+                        id="contact"
+                        name="contact"
+                        placeholder="your.email@university.edu"
+                        value="<?php echo isset($contact) ? htmlspecialchars($contact) : htmlspecialchars(getCurrentUserEmail()); ?>"
+                        required>
                     <small style="color: var(--color-medium-light); font-size: 0.875rem;">
                         We recommend using your university email address. People who find items will use this to contact you.
                     </small>
@@ -167,10 +170,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
                 <div class="form-group">
                     <label for="image">Upload Image (Optional)</label>
-                    <input type="file" 
-                           id="image" 
-                           name="image" 
-                           accept="image/*">
+                    <input type="file"
+                        id="image"
+                        name="image"
+                        accept="image/*">
                     <small style="color: var(--color-medium-light); font-size: 0.875rem;">
                         If you have a photo of the item (from before you lost it), it can help with identification. Accepted formats: JPG, JPEG, PNG, GIF
                     </small>
@@ -196,7 +199,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         <li>Note any personal items inside (wallet contents, etc.)</li>
                     </ul>
                 </div>
-                
+
                 <div>
                     <h4 style="color: var(--accent-warning); margin-bottom: 1rem;">📍 Location Details</h4>
                     <ul style="padding-left: 1.5rem; color: var(--color-light);">
@@ -206,7 +209,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         <li>Consider retracing your steps</li>
                     </ul>
                 </div>
-                
+
                 <div>
                     <h4 style="color: var(--accent-warning); margin-bottom: 1rem;">🔒 Stay Safe</h4>
                     <ul style="padding-left: 1.5rem; color: var(--color-light);">
@@ -225,43 +228,43 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <p style="text-align: center; color: var(--color-light); margin-bottom: 1.5rem;">
                 See what others have lost recently - maybe you've found one of these items!
             </p>
-            
+
             <?php
             // Get recent lost items from ItemsServer API
             $api_response = makeAPIRequest(ITEMSSERVER_URL . '/get_all_items.php', [
                 'type' => 'lost'
             ], 'GET', ['return_json' => true]);
-            
+
             $recentLostItems = [];
             if (is_array($api_response) && isset($api_response['success']) && $api_response['success']) {
                 $items = $api_response['items'] ?? [];
                 $recentLostItems = array_slice($items, 0, 3);
             }
             ?>
-            
+
             <?php if (count($recentLostItems) > 0): ?>
                 <div class="items-grid">
                     <?php foreach ($recentLostItems as $item): ?>
-                    <div class="item-card">
-                        <span class="item-type lost">📢 Lost</span>
-                        
-                        <?php if ($item['image']): ?>
-                            <img src="<?php echo getImageUrl($item['image']); ?>" 
-                                 alt="<?php echo htmlspecialchars($item['title']); ?>" 
-                                 class="item-image">
-                        <?php endif; ?>
-                        
-                        <h3><?php echo htmlspecialchars($item['title']); ?></h3>
-                        <p><strong>Description:</strong> <?php echo htmlspecialchars(substr($item['description'], 0, 80) . '...'); ?></p>
-                        <p><strong>📍 Last seen:</strong> <?php echo htmlspecialchars($item['location']); ?></p>
-                        
-                        <div class="item-meta">
-                            <p><strong>Posted:</strong> <?php echo date('M j, Y', strtotime($item['created_at'])); ?></p>
+                        <div class="item-card">
+                            <span class="item-type lost">📢 Lost</span>
+
+                            <?php if ($item['image']): ?>
+                                <img src="<?php echo getImageUrl($item['image']); ?>"
+                                    alt="<?php echo htmlspecialchars($item['title']); ?>"
+                                    class="item-image">
+                            <?php endif; ?>
+
+                            <h3><?php echo htmlspecialchars($item['title']); ?></h3>
+                            <p><strong>Description:</strong> <?php echo htmlspecialchars(substr($item['description'], 0, 80) . '...'); ?></p>
+                            <p><strong>📍 Last seen:</strong> <?php echo htmlspecialchars($item['location']); ?></p>
+
+                            <div class="item-meta">
+                                <p><strong>Posted:</strong> <?php echo date('M j, Y', strtotime($item['created_at'])); ?></p>
+                            </div>
                         </div>
-                    </div>
                     <?php endforeach; ?>
                 </div>
-                
+
                 <div style="text-align: center; margin-top: 2rem;">
                     <a href="items.php?filter=lost" class="btn btn-secondary">View All Lost Items</a>
                 </div>
@@ -296,7 +299,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         <strong>Location:</strong> Ground Floor
                     </p>
                 </div>
-                
+
                 <div style="background: rgba(255, 255, 255, 0.1); padding: 1.5rem; border-radius: 10px;">
                     <h4 style="color: var(--accent-primary); margin-bottom: 1rem;">🏢 Student Center</h4>
                     <p style="color: var(--color-light); font-size: 0.9rem;">
@@ -305,7 +308,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         <strong>Location:</strong> 2nd Floor, Room 205
                     </p>
                 </div>
-                
+
                 <div style="background: rgba(255, 255, 255, 0.1); padding: 1.5rem; border-radius: 10px;">
                     <h4 style="color: var(--accent-primary); margin-bottom: 1rem;">🚔 Campus Security</h4>
                     <p style="color: var(--color-light); font-size: 0.9rem;">
@@ -324,43 +327,44 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </footer>
     <script src="assets/script.js"></script>
     <script>
-    function validateLostForm() {
-        const title = document.getElementById('title').value.trim();
-        const description = document.getElementById('description').value.trim();
-        const location = document.getElementById('location').value.trim();
-        const contact = document.getElementById('contact').value.trim();
-        const image = document.getElementById('image').files[0];
-        
-        if (!title || !description || !location || !contact) {
-            alert('Please fill in all required fields.');
-            return false;
-        }
-        
-        // Validate email format
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(contact)) {
-            alert('Please enter a valid email address.');
-            return false;
-        }
-        
-        // If image is provided, validate it
-        if (image) {
-            // Validate image file type
-            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
-            if (!allowedTypes.includes(image.type)) {
-                alert('Please upload a valid image file (JPG, JPEG, PNG, or GIF).');
+        function validateLostForm() {
+            const title = document.getElementById('title').value.trim();
+            const description = document.getElementById('description').value.trim();
+            const location = document.getElementById('location').value.trim();
+            const contact = document.getElementById('contact').value.trim();
+            const image = document.getElementById('image').files[0];
+
+            if (!title || !description || !location || !contact) {
+                alert('Please fill in all required fields.');
                 return false;
             }
-            
-            // Validate image file size (max 5MB)
-            if (image.size > 5 * 1024 * 1024) {
-                alert('Image file size must be less than 5MB.');
+
+            // Validate email format
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(contact)) {
+                alert('Please enter a valid email address.');
                 return false;
             }
+
+            // If image is provided, validate it
+            if (image) {
+                // Validate image file type
+                const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+                if (!allowedTypes.includes(image.type)) {
+                    alert('Please upload a valid image file (JPG, JPEG, PNG, or GIF).');
+                    return false;
+                }
+
+                // Validate image file size (max 5MB)
+                if (image.size > 5 * 1024 * 1024) {
+                    alert('Image file size must be less than 5MB.');
+                    return false;
+                }
+            }
+
+            return true;
         }
-        
-        return true;
-    }
     </script>
 </body>
+
 </html>

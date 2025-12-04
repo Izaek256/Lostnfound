@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Server C - Report Found Item Page
  */
@@ -19,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $description = $_POST['description'] ?? '';
     $location = $_POST['location'] ?? '';
     $contact = $_POST['contact'] ?? '';
-    
+
     if (empty($title) || empty($description) || empty($location) || empty($contact)) {
         $message = 'Please fill in all required fields';
     } elseif (!isset($_FILES['image']) || $_FILES['image']['error'] != 0) {
@@ -27,22 +28,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     } else {
         $user_id = getCurrentUserId();
         $image_filename = null;
-        
+
         // Handle file upload
         if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
             $upload_dir = '../ItemsServer/uploads/';
-            
+
             if (!is_dir($upload_dir)) {
                 mkdir($upload_dir, 0755, true);
             }
-            
+
             $extension = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
             $image_filename = uniqid() . '.' . $extension;
             $upload_path = $upload_dir . $image_filename;
-            
+
             move_uploaded_file($_FILES['image']['tmp_name'], $upload_path);
         }
-        
+
         // Call ItemsServer API to add item
         $response = makeAPIRequest(ITEMSSERVER_URL . '/add_item.php', [
             'user_id' => $user_id,
@@ -53,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             'contact' => $contact,
             'image_filename' => $image_filename
         ], 'POST', ['return_json' => true]);
-        
+
         // Parse JSON response
         if (is_array($response) && isset($response['success']) && $response['success']) {
             $message = '✅ Found item reported successfully! 
@@ -69,6 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -76,6 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="assets/style.css">
 </head>
+
 <body>
     <!-- Header -->
     <header>
@@ -125,44 +128,44 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <p style="text-align: center; color: var(--color-light); margin-bottom: 2rem;">
                 Found something on campus? Help reunite it with its owner by providing detailed information about the item and where you found it.
             </p>
-            
+
             <form method="POST" enctype="multipart/form-data" onsubmit="return validateForm();">
                 <div class="form-group">
                     <label for="title">Item Title *</label>
-                    <input type="text" 
-                           id="title" 
-                           name="title" 
-                           placeholder="e.g., Black iPhone 13, Blue Backpack, Silver Watch"
-                           value="<?php echo isset($title) ? htmlspecialchars($title) : ''; ?>"
-                           required>
+                    <input type="text"
+                        id="title"
+                        name="title"
+                        placeholder="e.g., Black iPhone 13, Blue Backpack, Silver Watch"
+                        value="<?php echo isset($title) ? htmlspecialchars($title) : ''; ?>"
+                        required>
                 </div>
 
                 <div class="form-group">
                     <label for="description">Detailed Description *</label>
-                    <textarea id="description" 
-                              name="description" 
-                              placeholder="Provide a detailed description including color, brand, size, unique features, or any identifying marks. Be specific but avoid sharing personal information found on the item..."
-                              required><?php echo isset($description) ? htmlspecialchars($description) : ''; ?></textarea>
+                    <textarea id="description"
+                        name="description"
+                        placeholder="Provide a detailed description including color, brand, size, unique features, or any identifying marks. Be specific but avoid sharing personal information found on the item..."
+                        required><?php echo isset($description) ? htmlspecialchars($description) : ''; ?></textarea>
                 </div>
 
                 <div class="form-group">
                     <label for="location">Where You Found It *</label>
-                    <input type="text" 
-                           id="location" 
-                           name="location" 
-                           placeholder="e.g., Library 2nd Floor Study Area, Student Center Lost & Found Desk, Engineering Building Hallway"
-                           value="<?php echo isset($location) ? htmlspecialchars($location) : ''; ?>"
-                           required>
+                    <input type="text"
+                        id="location"
+                        name="location"
+                        placeholder="e.g., Library 2nd Floor Study Area, Student Center Lost & Found Desk, Engineering Building Hallway"
+                        value="<?php echo isset($location) ? htmlspecialchars($location) : ''; ?>"
+                        required>
                 </div>
 
                 <div class="form-group">
                     <label for="contact">Your Contact Information *</label>
-                    <input type="email" 
-                           id="contact" 
-                           name="contact" 
-                           placeholder="your.email@university.edu"
-                           value="<?php echo isset($contact) ? htmlspecialchars($contact) : htmlspecialchars(getCurrentUserEmail()); ?>"
-                           required>
+                    <input type="email"
+                        id="contact"
+                        name="contact"
+                        placeholder="your.email@university.edu"
+                        value="<?php echo isset($contact) ? htmlspecialchars($contact) : htmlspecialchars(getCurrentUserEmail()); ?>"
+                        required>
                     <small style="color: var(--color-medium-light); font-size: 0.875rem;">
                         We recommend using your university email address. The item owner will use this to contact you for pickup arrangements.
                     </small>
@@ -170,11 +173,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
                 <div class="form-group">
                     <label for="image">Upload Image *</label>
-                    <input type="file" 
-                           id="image" 
-                           name="image" 
-                           accept="image/*"
-                           required>
+                    <input type="file"
+                        id="image"
+                        name="image"
+                        accept="image/*"
+                        required>
                     <small style="color: var(--color-medium-light); font-size: 0.875rem;">
                         A photo is required to help owners identify their items. Accepted formats: JPG, JPEG, PNG, GIF
                     </small>
@@ -200,7 +203,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         <li>Let the owner prove ownership through description</li>
                     </ul>
                 </div>
-                
+
                 <div>
                     <h4 style="color: var(--accent-success); margin-bottom: 1rem;">📸 Photo Guidelines</h4>
                     <ul style="padding-left: 1.5rem; color: var(--color-light);">
@@ -210,7 +213,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         <li>Multiple angles can be helpful</li>
                     </ul>
                 </div>
-                
+
                 <div>
                     <h4 style="color: var(--accent-success); margin-bottom: 1rem;">🤝 Safe Handoff</h4>
                     <ul style="padding-left: 1.5rem; color: var(--color-light);">
@@ -229,44 +232,44 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <p style="text-align: center; color: var(--color-light); margin-bottom: 1.5rem;">
                 See what others have found recently - maybe someone found your lost item!
             </p>
-            
+
             <?php
             // Get recent found items via ItemsServer API
             // This maintains the service-oriented architecture - Frontend never accesses DB directly
             $api_response = makeAPIRequest(ITEMSSERVER_URL . '/get_all_items.php', [
                 'type' => 'found'
             ], 'GET', ['return_json' => true]);
-            
+
             $recentFoundItems = [];
             if (is_array($api_response) && isset($api_response['items'])) {
                 // Get only the 3 most recent items
                 $recentFoundItems = array_slice($api_response['items'], 0, 3);
             }
             ?>
-            
+
             <?php if (count($recentFoundItems) > 0): ?>
                 <div class="items-grid">
                     <?php foreach ($recentFoundItems as $item): ?>
-                    <div class="item-card">
-                        <span class="item-type found">✅ Found</span>
-                        
-                        <?php if ($item['image']): ?>
-                            <img src="<?php echo getImageUrl($item['image']); ?>" 
-                                 alt="<?php echo htmlspecialchars($item['title']); ?>" 
-                                 class="item-image">
-                        <?php endif; ?>
-                        
-                        <h3><?php echo htmlspecialchars($item['title']); ?></h3>
-                        <p><strong>Description:</strong> <?php echo htmlspecialchars(substr($item['description'], 0, 80) . '...'); ?></p>
-                        <p><strong>📍 Found at:</strong> <?php echo htmlspecialchars($item['location']); ?></p>
-                        
-                        <div class="item-meta">
-                            <p><strong>Posted:</strong> <?php echo date('M j, Y', strtotime($item['created_at'])); ?></p>
+                        <div class="item-card">
+                            <span class="item-type found">✅ Found</span>
+
+                            <?php if ($item['image']): ?>
+                                <img src="<?php echo getImageUrl($item['image']); ?>"
+                                    alt="<?php echo htmlspecialchars($item['title']); ?>"
+                                    class="item-image">
+                            <?php endif; ?>
+
+                            <h3><?php echo htmlspecialchars($item['title']); ?></h3>
+                            <p><strong>Description:</strong> <?php echo htmlspecialchars(substr($item['description'], 0, 80) . '...'); ?></p>
+                            <p><strong>📍 Found at:</strong> <?php echo htmlspecialchars($item['location']); ?></p>
+
+                            <div class="item-meta">
+                                <p><strong>Posted:</strong> <?php echo date('M j, Y', strtotime($item['created_at'])); ?></p>
+                            </div>
                         </div>
-                    </div>
                     <?php endforeach; ?>
                 </div>
-                
+
                 <div style="text-align: center; margin-top: 2rem;">
                     <a href="items.php?filter=found" class="btn btn-secondary">View All Found Items</a>
                 </div>
@@ -296,45 +299,46 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </footer>
     <script src="assets/script.js"></script>
     <script>
-    function validateForm() {
-        const title = document.getElementById('title').value.trim();
-        const description = document.getElementById('description').value.trim();
-        const location = document.getElementById('location').value.trim();
-        const contact = document.getElementById('contact').value.trim();
-        const image = document.getElementById('image').files[0];
-        
-        if (!title || !description || !location || !contact) {
-            alert('Please fill in all required fields.');
-            return false;
+        function validateForm() {
+            const title = document.getElementById('title').value.trim();
+            const description = document.getElementById('description').value.trim();
+            const location = document.getElementById('location').value.trim();
+            const contact = document.getElementById('contact').value.trim();
+            const image = document.getElementById('image').files[0];
+
+            if (!title || !description || !location || !contact) {
+                alert('Please fill in all required fields.');
+                return false;
+            }
+
+            if (!image) {
+                alert('Please upload an image of the found item.');
+                return false;
+            }
+
+            // Validate email format
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(contact)) {
+                alert('Please enter a valid email address.');
+                return false;
+            }
+
+            // Validate image file type
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+            if (!allowedTypes.includes(image.type)) {
+                alert('Please upload a valid image file (JPG, JPEG, PNG, or GIF).');
+                return false;
+            }
+
+            // Validate image file size (max 5MB)
+            if (image.size > 5 * 1024 * 1024) {
+                alert('Image file size must be less than 5MB.');
+                return false;
+            }
+
+            return true;
         }
-        
-        if (!image) {
-            alert('Please upload an image of the found item.');
-            return false;
-        }
-        
-        // Validate email format
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(contact)) {
-            alert('Please enter a valid email address.');
-            return false;
-        }
-        
-        // Validate image file type
-        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
-        if (!allowedTypes.includes(image.type)) {
-            alert('Please upload a valid image file (JPG, JPEG, PNG, or GIF).');
-            return false;
-        }
-        
-        // Validate image file size (max 5MB)
-        if (image.size > 5 * 1024 * 1024) {
-            alert('Image file size must be less than 5MB.');
-            return false;
-        }
-        
-        return true;
-    }
     </script>
 </body>
+
 </html>

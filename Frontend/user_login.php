@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Server C - User Login Page
  */
@@ -22,21 +23,21 @@ if (isset($_GET['registered']) && $_GET['registered'] == '1') {
 if ($_POST) {
     $username = $_POST['username'];
     $password = $_POST['password'];
-    
+
     if (!empty($username) && !empty($password)) {
         // Call UserServer API to verify user
         $response = makeAPIRequest(USERSERVER_URL . '/verify_user.php', [
             'username' => $username,
             'password' => $password
         ], 'POST', ['return_json' => true, 'force_json' => true]);
-        
+
         // Parse JSON response
         if (is_array($response) && isset($response['success']) && $response['success']) {
             $_SESSION['user_id'] = $response['user_id'];
             $_SESSION['username'] = $response['username'];
             $_SESSION['user_email'] = $response['email'];
             $_SESSION['is_admin'] = $response['is_admin'] ?? 0;
-            
+
             header('Location: user_dashboard.php');
             exit();
         } else {
@@ -50,6 +51,7 @@ if ($_POST) {
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -57,6 +59,7 @@ if ($_POST) {
     <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="assets/style.css">
 </head>
+
 <body>
     <!-- Header -->
     <header>
@@ -100,29 +103,29 @@ if ($_POST) {
 
         <div class="form-container">
             <h2>🔑 Sign In</h2>
-            
+
             <?php if ($error): ?>
                 <div class="alert alert-error"><?php echo htmlspecialchars($error); ?></div>
             <?php endif; ?>
-            
+
             <?php if ($success): ?>
                 <div class="alert alert-success"><?php echo htmlspecialchars($success); ?></div>
             <?php endif; ?>
-            
+
             <form method="POST">
                 <div class="form-group">
                     <label for="username">Username</label>
                     <input type="text" id="username" name="username" required>
                 </div>
-                
+
                 <div class="form-group">
                     <label for="password">Password</label>
                     <input type="password" id="password" name="password" required>
                 </div>
-                
+
                 <button type="submit" class="btn">Login</button>
             </form>
-            
+
             <div style="text-align: center; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">
                 <p>Don't have an account? <a href="user_register.php" style="color: var(--primary); text-decoration: none; font-weight: 600;">Register here</a></p>
                 <p><a href="index.php" style="color: var(--text-secondary); text-decoration: none;">Back to Home</a></p>
@@ -135,4 +138,5 @@ if ($_POST) {
         document.getElementById('username').focus();
     </script>
 </body>
+
 </html>

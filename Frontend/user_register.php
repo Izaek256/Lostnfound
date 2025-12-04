@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Server C - User Registration Page
  */
@@ -19,7 +20,7 @@ if ($_POST) {
     $email = $_POST['email'];
     $password = $_POST['password'];
     $confirm_password = $_POST['confirm_password'];
-    
+
     if (empty($username) || empty($email) || empty($password) || empty($confirm_password)) {
         $error = 'Please fill all fields';
     } elseif ($password != $confirm_password) {
@@ -31,14 +32,14 @@ if ($_POST) {
             'email' => $email,
             'password' => $password
         ], 'POST', ['return_json' => true, 'force_json' => true]);
-        
+
         // Parse JSON response
         if (is_array($response) && isset($response['success']) && $response['success']) {
             $_SESSION['user_id'] = $response['user_id'];
             $_SESSION['username'] = $response['username'];
             $_SESSION['user_email'] = $response['email'];
             $_SESSION['is_admin'] = $response['is_admin'] ?? 0;
-            
+
             header('Location: user_dashboard.php');
             exit();
         } else {
@@ -50,6 +51,7 @@ if ($_POST) {
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -57,6 +59,7 @@ if ($_POST) {
     <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="assets/style.css">
 </head>
+
 <body>
     <!-- Header -->
     <header>
@@ -100,39 +103,39 @@ if ($_POST) {
 
         <div class="form-container">
             <h2>📝 Create Account</h2>
-            
+
             <?php if ($error): ?>
                 <div class="alert alert-error"><?php echo htmlspecialchars($error); ?></div>
             <?php endif; ?>
-            
+
             <?php if ($success): ?>
                 <div class="alert alert-success"><?php echo htmlspecialchars($success); ?></div>
             <?php endif; ?>
-            
+
             <form method="POST">
                 <div class="form-group">
                     <label for="username">Username</label>
                     <input type="text" id="username" name="username" required>
                 </div>
-                
+
                 <div class="form-group">
                     <label for="email">Email</label>
                     <input type="email" id="email" name="email" required>
                 </div>
-                
+
                 <div class="form-group">
                     <label for="password">Password</label>
                     <input type="password" id="password" name="password" required minlength="6" placeholder="At least 6 characters">
                 </div>
-                
+
                 <div class="form-group">
                     <label for="confirm_password">Confirm Password</label>
                     <input type="password" id="confirm_password" name="confirm_password" required minlength="6">
                 </div>
-                
+
                 <button type="submit" class="btn">Register</button>
             </form>
-            
+
             <div style="text-align: center; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">
                 <p>Already have an account? <a href="user_login.php" style="color: var(--primary); text-decoration: none; font-weight: 600;">Login here</a></p>
                 <p><a href="index.php" style="color: var(--text-secondary); text-decoration: none;">Back to Home</a></p>
@@ -145,4 +148,5 @@ if ($_POST) {
         document.getElementById('username').focus();
     </script>
 </body>
+
 </html>

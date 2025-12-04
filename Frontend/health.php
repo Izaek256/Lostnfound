@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Frontend Health Check Endpoint
  * Returns JSON status of Frontend and its connectivity to other servers
@@ -47,4 +48,3 @@ if (!$all_services_ok) {
 }
 
 echo json_encode($health_data, JSON_PRETTY_PRINT);
-?>

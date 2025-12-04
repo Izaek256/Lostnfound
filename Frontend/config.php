@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Frontend Configuration
  * Communicates with ItemsServer and UserServer via API calls only
@@ -8,77 +9,85 @@ require_once __DIR__ . '/deployment_config.php';
 session_start();
 
 // Frontend is a client and does not connect to database directly
-function connectDB() {
+function connectDB()
+{
     die("ERROR: Frontend cannot connect directly to the database. Use API calls.");
 }
 
-function connectItemsServer() {
+function connectItemsServer()
+{
     die("ERROR: Frontend cannot connect directly to the database.");
 }
 
-function connectUserServer() {
+function connectUserServer()
+{
     die("ERROR: Frontend cannot connect directly to the database.");
 }
 
-function connectFrontend() {
+function connectFrontend()
+{
     die("ERROR: Frontend cannot connect directly to the database.");
 }
 
 // Image handling helpers
-function getImageUrl($filename) {
+function getImageUrl($filename)
+{
     if (empty($filename)) return '';
-    
+
     $localPath = UPLOADS_PATH . $filename;
     if (file_exists($localPath)) {
         return UPLOADS_URL . $filename;
     }
-    
+
     return UPLOADS_HTTP_URL . $filename;
 }
 
-function getImagePath($filename) {
+function getImagePath($filename)
+{
     if (empty($filename)) return '';
     return UPLOADS_PATH . $filename;
 }
 
-function imageExists($filename) {
+function imageExists($filename)
+{
     if (empty($filename)) return false;
     return file_exists(getImagePath($filename));
 }
 
 // API request handler with retry logic and timeout management
-function makeAPIRequest($url, $data = [], $method = 'POST', $options = []) {
+function makeAPIRequest($url, $data = [], $method = 'POST', $options = [])
+{
     $retry_count = $options['retry_count'] ?? 3;
     $retry_delay = $options['retry_delay'] ?? 1;
     $timeout = $options['timeout'] ?? 30;
     $connect_timeout = $options['connect_timeout'] ?? 10;
     $return_json = $options['return_json'] ?? false;
     $verify_ssl = $options['verify_ssl'] ?? false;
-    
+
     $attempt = 0;
     $last_error = null;
-    
+
     while ($attempt < $retry_count) {
         $attempt++;
-        
+
         try {
             $ch = curl_init();
-            
+
             // Validate URL
             if (!filter_var($url, FILTER_VALIDATE_URL)) {
                 throw new Exception("Invalid URL format: $url");
             }
-            
+
             // Add a custom header to identify API requests from frontend
             $headers = [
                 'User-Agent: LostFound-Frontend/2.0',
                 'X-Requested-With: XMLHttpRequest'
             ];
-            
+
             if ($method === 'POST') {
                 curl_setopt($ch, CURLOPT_URL, $url);
                 curl_setopt($ch, CURLOPT_POST, true);
-                
+
                 $is_json = $options['send_json'] ?? false;
                 if ($is_json) {
                     $post_data = json_encode($data);
@@ -90,7 +99,6 @@ function makeAPIRequest($url, $data = [], $method = 'POST', $options = []) {
                     $headers[] = 'Accept: application/json';
                 }
                 curl_setopt($ch, CURLOPT_POSTFIELDS, $post_data);
-                
             } elseif ($method === 'GET') {
                 if (!empty($data)) {
                     $url .= '?' . http_build_query($data);
@@ -98,7 +106,6 @@ function makeAPIRequest($url, $data = [], $method = 'POST', $options = []) {
                 curl_setopt($ch, CURLOPT_URL, $url);
                 curl_setopt($ch, CURLOPT_HTTPGET, true);
                 $headers[] = 'Accept: application/json';
-                
             } elseif ($method === 'DELETE') {
                 curl_setopt($ch, CURLOPT_URL, $url);
                 curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
@@ -107,7 +114,6 @@ function makeAPIRequest($url, $data = [], $method = 'POST', $options = []) {
                 }
                 $headers[] = 'Content-Type: application/x-www-form-urlencoded';
                 $headers[] = 'Accept: application/json';
-                
             } elseif ($method === 'PUT') {
                 curl_setopt($ch, CURLOPT_URL, $url);
                 curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
@@ -116,7 +122,7 @@ function makeAPIRequest($url, $data = [], $method = 'POST', $options = []) {
                 $headers[] = 'Content-Type: application/x-www-form-urlencoded';
                 $headers[] = 'Accept: application/json';
             }
-            
+
             curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
             curl_setopt($ch, CURLOPT_MAXREDIRS, 5);
             curl_setopt($ch, CURLOPT_ENCODING, 'gzip, deflate, br');
@@ -125,31 +131,31 @@ function makeAPIRequest($url, $data = [], $method = 'POST', $options = []) {
             curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
             curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $connect_timeout);
             curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-            
+
             if (!$verify_ssl) {
                 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
                 curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
             }
-            
+
             $start_time = microtime(true);
             $response = curl_exec($ch);
             $elapsed_time = round((microtime(true) - $start_time) * 1000, 2);
-            
+
             $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             $curl_error = curl_error($ch);
             $curl_errno = curl_errno($ch);
             $content_type = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
             curl_close($ch);
-            
+
             if ($curl_errno !== 0) {
                 $error_msg = "cURL error ($curl_errno): $curl_error";
                 throw new Exception($error_msg);
             }
-            
+
             if (empty($response)) {
                 throw new Exception("Empty response from server (HTTP $http_code)");
             }
-            
+
             if ($http_code >= 500) {
                 throw new Exception("Server error (HTTP $http_code): " . substr($response, 0, 100));
             } elseif ($http_code >= 400) {
@@ -157,14 +163,14 @@ function makeAPIRequest($url, $data = [], $method = 'POST', $options = []) {
             } elseif ($http_code == 0) {
                 throw new Exception("No HTTP response received. Server may be unreachable.");
             }
-            
+
             error_log("[APIRequest] Success: $method $url | HTTP $http_code | {$elapsed_time}ms");
-            
+
             if ($return_json) {
                 // Check if we should force JSON parsing regardless of content type
-                $should_parse_json = ($options['force_json'] ?? false) || 
-                                   (strpos($content_type, 'application/json') !== false);
-                                    
+                $should_parse_json = ($options['force_json'] ?? false) ||
+                    (strpos($content_type, 'application/json') !== false);
+
                 if ($should_parse_json) {
                     $decoded = json_decode($response, true);
                     if ($decoded === null && json_last_error() !== JSON_ERROR_NONE) {
@@ -178,17 +184,16 @@ function makeAPIRequest($url, $data = [], $method = 'POST', $options = []) {
                     return $decoded;
                 }
             }
-            
+
             return $response;
-            
         } catch (Exception $e) {
             $last_error = $e->getMessage();
             error_log("[APIRequest] Attempt $attempt/$retry_count failed: $last_error");
-            
+
             if (isset($http_code) && $http_code >= 400 && $http_code < 500) {
                 break;
             }
-            
+
             if ($attempt < $retry_count) {
                 $wait_time = $retry_delay * $attempt;
                 error_log("[APIRequest] Waiting {$wait_time}s before retry...");
@@ -196,10 +201,10 @@ function makeAPIRequest($url, $data = [], $method = 'POST', $options = []) {
             }
         }
     }
-    
+
     $error_message = $last_error ?? "Unknown error after $retry_count attempts";
     error_log("[APIRequest] Final error for $method $url: $error_message");
-    
+
     if ($return_json) {
         return [
             'success' => false,
@@ -208,7 +213,7 @@ function makeAPIRequest($url, $data = [], $method = 'POST', $options = []) {
             'method' => $method
         ];
     }
-    
+
     // Return structured error instead of raw error string
     return [
         'success' => false,
@@ -226,41 +231,49 @@ define('UPLOADS_URL', '../ItemsServer/uploads/');
 define('UPLOADS_HTTP_URL', UPLOADS_BASE_URL);
 
 // User session helpers
-function isUserLoggedIn() {
+function isUserLoggedIn()
+{
     return isset($_SESSION['user_id']);
 }
 
-function getCurrentUserId() {
+function getCurrentUserId()
+{
     return $_SESSION['user_id'] ?? null;
 }
 
-function getCurrentUsername() {
+function getCurrentUsername()
+{
     return $_SESSION['username'] ?? null;
 }
 
-function getCurrentUserEmail() {
+function getCurrentUserEmail()
+{
     return $_SESSION['user_email'] ?? null;
 }
 
-function isCurrentUserAdmin() {
+function isCurrentUserAdmin()
+{
     return isset($_SESSION['is_admin']) && $_SESSION['is_admin'] == 1;
 }
 
-function requireUser() {
+function requireUser()
+{
     if (!isUserLoggedIn()) {
         header('Location: user_login.php');
         exit();
     }
 }
 
-function logoutUser() {
+function logoutUser()
+{
     session_destroy();
     header('Location: index.php');
     exit();
 }
 
 // Server connectivity testing
-function testServerConnection($server_url, $timeout = 5) {
+function testServerConnection($server_url, $timeout = 5)
+{
     if (empty($server_url)) {
         return [
             'success' => false,
@@ -268,10 +281,10 @@ function testServerConnection($server_url, $timeout = 5) {
             'response_time' => 0
         ];
     }
-    
+
     try {
         $health_url = $server_url . '/health.php';
-        
+
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $health_url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -284,15 +297,15 @@ function testServerConnection($server_url, $timeout = 5) {
             'User-Agent: LostFound-Frontend/2.0',
             'X-Requested-With: XMLHttpRequest'
         ]);
-        
+
         $start_time = microtime(true);
         $response = curl_exec($ch);
         $response_time = round((microtime(true) - $start_time) * 1000, 2);
-        
+
         $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $error = curl_error($ch);
         curl_close($ch);
-        
+
         if ($error) {
             return [
                 'success' => false,
@@ -301,7 +314,7 @@ function testServerConnection($server_url, $timeout = 5) {
                 'response_time' => $response_time
             ];
         }
-        
+
         return [
             'success' => ($http_code === 200),
             'http_code' => $http_code,
@@ -318,9 +331,10 @@ function testServerConnection($server_url, $timeout = 5) {
     }
 }
 
-function getServerStatus($server_url, $server_name, $timeout = 5) {
+function getServerStatus($server_url, $server_name, $timeout = 5)
+{
     $result = testServerConnection($server_url, $timeout);
-    
+
     return [
         'name' => $server_name,
         'url' => $server_url,
@@ -332,10 +346,10 @@ function getServerStatus($server_url, $server_name, $timeout = 5) {
     ];
 }
 
-function areAllServersOnline() {
+function areAllServersOnline()
+{
     $itemsserver_check = testServerConnection(ITEMSSERVER_URL, 3);
     $userserver_check = testServerConnection(USERSERVER_URL, 3);
-    
+
     return $itemsserver_check['success'] && $userserver_check['success'];
 }
-?>
