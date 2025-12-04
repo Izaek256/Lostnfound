@@ -44,3 +44,4 @@ error_log
 *.local
 
 server_status.php
+must.html
